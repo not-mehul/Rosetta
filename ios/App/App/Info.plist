@@ -76,10 +76,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>bookshelf</string>
-	</array>
 	<!-- File types Rosetta reads that iOS doesn't declare itself. -->
 	<key>UTImportedTypeDeclarations</key>
 	<array>
@@ -255,5 +251,12 @@
 	<!-- Exported notes and backups go to Documents/Rosetta; this shows the folder in Files. -->
 	<key>UIFileSharingEnabled</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>waymark</string>
+		<string>bookshelf</string>
+		<string>ledger</string>
+		<string>colophon</string>
+	</array>
 </dict>
 </plist>

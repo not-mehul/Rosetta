@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vite build && playwright test",
+    "test:pdf": "vite build && playwright test -g \"every format|accessibility|contents, chapters\"",
     "check": "node design/build-tokens.mjs --check && npm run lint && npm run typecheck && npm test",
     "tokens": "node design/build-tokens.mjs --css src/styles/tokens.css --fonts src/styles/fonts",
     "icons": "node scripts/build-icons.mjs",
@@ -28,10 +29,14 @@
     "ios": "npm run sync:ios && cap open ios"
   },
   "dependencies": {
+    "@capacitor-community/keep-awake": "8.0.1",
+    "@capacitor-community/text-to-speech": "8.0.2",
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
+    "@capacitor/app-launcher": "8.0.1",
     "@capacitor/core": "^8.6.0",
     "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/haptics": "8.0.2",
     "@capacitor/ios": "^8.6.0",
     "@capacitor/share": "^8.0.3",
     "@capacitor/splash-screen": "^8.0.2",
@@ -40,9 +45,10 @@
     "fflate": "^0.8.3",
     "mammoth": "^1.13.0",
     "marked": "^18.1.3",
-    "pdfjs-dist": "^6.5.438"
+    "pdfjs-dist": "6.5.438"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@capacitor/cli": "^8.6.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",

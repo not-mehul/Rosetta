@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '../../i18n/index.svelte';
   // style.md §8.11: rises from the bottom on phones, a modal from 900px up.
   // Swipe down on the handle or the header to dismiss.
   import type { Snippet } from 'svelte';
@@ -64,7 +65,7 @@
     <div class="sheet-handle" aria-hidden="true"></div>
     <div class="sheet-head">
       <h2 class="sheet-title" id={titleId}>{title}</h2>
-      <button type="button" class="btn btn-muted" onclick={onclose}>Close</button>
+      <button type="button" class="btn btn-muted" onclick={onclose}>{t('action.close')}</button>
     </div>
   </div>
   <div class="sheet-body">

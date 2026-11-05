@@ -1,6 +1,17 @@
-// Small formatting helpers for the UI.
+// Small formatting helpers for the UI, in the reader's language.
 
-export const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString('en')} ${n === 1 ? one : many}`;
+import { locale, t } from '../i18n/index.svelte';
+
+export const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString(locale())} ${n === 1 ? one : many}`;
+
+/** Reading time: "45 min", "3 h 10 min". */
+export function duration(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 60) return t('time.minutes', { count: minutes });
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m ? t('time.hoursMinutes', { h, m }) : t('time.hours', { count: h });
+}
 
 export function fileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -10,10 +21,12 @@ export function fileSize(bytes: number): string {
 
 export function relativeDay(when: number, now = Date.now()): string {
   const days = Math.floor((new Date(now).setHours(0, 0, 0, 0) - new Date(when).setHours(0, 0, 0, 0)) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 7) return `${days} days ago`;
-  return new Date(when).toLocaleDateString('en', { day: 'numeric', month: 'short', year: new Date(when).getFullYear() === new Date(now).getFullYear() ? undefined : 'numeric' });
+  if (days < 7) return new Intl.RelativeTimeFormat(locale(), { numeric: 'auto' }).format(-Math.max(0, days), 'day');
+  return new Date(when).toLocaleDateString(locale(), {
+    day: 'numeric',
+    month: 'short',
+    year: new Date(when).getFullYear() === new Date(now).getFullYear() ? undefined : 'numeric',
+  });
 }
 
 /** An object URL for bytes, for <img>; the caller revokes it. */

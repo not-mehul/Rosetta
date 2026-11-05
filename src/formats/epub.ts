@@ -4,7 +4,12 @@
 
 import { strFromU8, unzipSync } from 'fflate';
 import { clean } from './sanitize';
-import { FormatError, type DocInfo, type FlowDoc, type Section, type TocEntry } from './types';
+import { scopeCss } from './styles';
+import { FormatError, type DocInfo, type FixedPage, type FlowDoc, type Section, type TocEntry } from './types';
+import { t } from '../i18n/index.svelte';
+
+/** The scope a book's CSS is placed under in the reading column (app.css turns it on). */
+export const PUBLISHER_SCOPE = '.reading.publisher';
 
 type Files = Map<string, Uint8Array>;
 
@@ -16,7 +21,7 @@ function unzip(bytes: Uint8Array): Files {
     for (const [path, data] of Object.entries(unzipSync(bytes))) if (!path.endsWith('/')) files.set(path, data);
     return files;
   } catch {
-    throw new FormatError('This EPUB is damaged: it is not a readable zip archive.');
+    throw new FormatError(t('error.epubZip'));
   }
 }
 
@@ -63,10 +68,35 @@ interface Package {
   coverPath: string | null;
   navPath: string | null;
   ncxPath: string | null;
+  lang: string;
+  dir: 'ltr' | 'rtl';
+  series: string;
+  seriesIndex: number | null;
+  /** Pre-paginated: every page drawn by the publisher at a fixed size. */
+  fixed: boolean;
+}
+
+/** Font obfuscation is not DRM; anything else in encryption.xml is. */
+const FONT_OBFUSCATION = ['http://www.idpf.org/2008/embedding', 'http://ns.adobe.com/pdf/enc#RC'];
+
+function checkDrm(files: Files): void {
+  if (files.has('META-INF/rights.xml') || files.has('META-INF/sinf.xml') || files.has('META-INF/license.lcpl')) {
+    throw new FormatError(t('error.drm'));
+  }
+  const enc = files.get('META-INF/encryption.xml');
+  if (!enc) return;
+  try {
+    const doc = parseXml(decode(enc));
+    const methods = byLocal(doc, 'EncryptionMethod').map((m) => m.getAttribute('Algorithm') ?? '');
+    if (methods.some((m) => !FONT_OBFUSCATION.includes(m))) throw new FormatError(t('error.drm'));
+  } catch (err) {
+    if (err instanceof FormatError) throw err;
+  }
 }
 
 function readPackage(bytes: Uint8Array): Package {
   const files = unzip(bytes);
+  checkDrm(files);
   let opfPath = '';
   try {
     opfPath = first(parseXml(decode(files.get('META-INF/container.xml'))), 'rootfile')?.getAttribute('full-path') ?? '';
@@ -74,12 +104,12 @@ function readPackage(bytes: Uint8Array): Package {
     // Fall back to any package document below.
   }
   if (!files.has(opfPath)) opfPath = [...files.keys()].find((p) => p.toLowerCase().endsWith('.opf')) ?? '';
-  if (!opfPath) throw new FormatError('This EPUB has no package document, so its chapters can’t be found.');
+  if (!opfPath) throw new FormatError(t('error.epubNoPackage'));
   let opf: Document;
   try {
     opf = parseXml(decode(files.get(opfPath)));
   } catch {
-    throw new FormatError('This EPUB’s package document is damaged.');
+    throw new FormatError(t('error.epubPackage'));
   }
   const opfDir = dirname(opfPath);
 
@@ -98,14 +128,42 @@ function readPackage(bytes: Uint8Array): Package {
     .filter((p): p is string => !!p && files.has(p));
 
   const items = [...manifest.values()];
-  const metaCover = byLocal(opf, 'meta').find((m) => m.getAttribute('name') === 'cover')?.getAttribute('content');
+  const metaCover = byLocal(opf, 'meta')
+    .find((m) => m.getAttribute('name') === 'cover')
+    ?.getAttribute('content');
   const coverPath =
     items.find((i) => i.props.includes('cover-image'))?.path ??
     (metaCover ? manifest.get(metaCover)?.path : undefined) ??
     items.find((i) => i.type.startsWith('image/') && /cover/i.test(i.path))?.path;
 
-  const creators = byLocal(opf, 'creator').map((c) => squash(c.textContent)).filter(Boolean);
+  const creators = byLocal(opf, 'creator')
+    .map((c) => squash(c.textContent))
+    .filter(Boolean);
+  const metas = byLocal(opf, 'meta');
+  const metaName = (name: string) =>
+    metas
+      .find((m) => m.getAttribute('name') === name)
+      ?.getAttribute('content')
+      ?.trim() ?? '';
+  const metaProp = (prop: string) => squash(metas.find((m) => m.getAttribute('property') === prop)?.textContent);
+  // Calibre's series, or EPUB 3's belongs-to-collection with its group-position.
+  let series = metaName('calibre:series');
+  let seriesIndex = Number.parseFloat(metaName('calibre:series_index'));
+  if (!series) {
+    const coll = metas.find((m) => m.getAttribute('property') === 'belongs-to-collection');
+    if (coll) {
+      series = squash(coll.textContent);
+      const id = coll.getAttribute('id');
+      const pos = id ? metas.find((m) => m.getAttribute('refines') === `#${id}` && m.getAttribute('property') === 'group-position') : undefined;
+      seriesIndex = Number.parseFloat(squash(pos?.textContent));
+    }
+  }
   return {
+    lang: squash(first(opf, 'language')?.textContent),
+    dir: spineEl?.getAttribute('page-progression-direction') === 'rtl' ? 'rtl' : 'ltr',
+    series,
+    seriesIndex: Number.isFinite(seriesIndex) ? seriesIndex : null,
+    fixed: metaProp('rendition:layout') === 'pre-paginated' || metaName('fixed-layout') === 'true',
     files,
     opfDir,
     title: squash(first(opf, 'title')?.textContent),
@@ -118,15 +176,28 @@ function readPackage(bytes: Uint8Array): Package {
   };
 }
 
-const IMAGE_TYPES: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', avif: 'image/avif' };
+const IMAGE_TYPES: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  avif: 'image/avif',
+};
 export const imageType = (path: string) => IMAGE_TYPES[path.split('.').pop()?.toLowerCase() ?? ''] ?? 'application/octet-stream';
 
-export function epubInfo(bytes: Uint8Array): Omit<DocInfo, 'cover'> & { coverBytes: Uint8Array | null; coverType: string } {
+export function epubInfo(bytes: Uint8Array): Omit<DocInfo, 'cover'> & {
+  coverBytes: Uint8Array | null;
+  coverType: string;
+} {
   const pkg = readPackage(bytes);
   return {
     format: 'epub',
     title: pkg.title,
     author: pkg.author,
+    series: pkg.series,
+    seriesIndex: pkg.seriesIndex,
     coverBytes: pkg.coverPath ? pkg.files.get(pkg.coverPath)! : null,
     coverType: pkg.coverPath ? imageType(pkg.coverPath) : '',
   };
@@ -134,29 +205,64 @@ export function epubInfo(bytes: Uint8Array): Omit<DocInfo, 'cover'> & { coverByt
 
 export function openEpub(bytes: Uint8Array): FlowDoc {
   const pkg = readPackage(bytes);
-  if (!pkg.spine.length) throw new FormatError('This EPUB’s reading order is empty.');
+  if (!pkg.spine.length) throw new FormatError(t('error.epubSpine'));
   const urls = new Map<string, string>();
   const index = new Map(pkg.spine.map((p, i) => [p, i]));
+  /** An object URL for a file in the book (images, fonts), made once. */
+  const urlFor = (target: string): string | null => {
+    const data = pkg.files.get(target);
+    if (!data) return null;
+    let url = urls.get(target);
+    if (!url) {
+      url = URL.createObjectURL(new Blob([data as BlobPart], { type: imageType(target) }));
+      urls.set(target, url);
+    }
+    return url;
+  };
+  // Each stylesheet once, in the order the chapters use them.
+  const sheets = new Map<string, string>();
+  const fixed: FixedPage[] = [];
 
   const sections: Section[] = pkg.spine.map((path) => {
     const doc = parseContent(decode(pkg.files.get(path)));
+    const base0 = dirname(path);
+    const pageCss: string[] = [];
+    for (const link of byLocal(doc, 'link')) {
+      if (!/stylesheet/i.test(link.getAttribute('rel') ?? '')) continue;
+      const cssPath = resolvePath(base0, link.getAttribute('href') ?? '');
+      const source = decode(pkg.files.get(cssPath));
+      if (!source) continue;
+      const resolveUrl = (u: string) => urlFor(resolvePath(dirname(cssPath), u));
+      if (!sheets.has(cssPath)) sheets.set(cssPath, scopeCss(source, { scope: PUBLISHER_SCOPE, resolveUrl }));
+      if (pkg.fixed) pageCss.push(scopeCss(source, { scope: '.fx', keepAll: true, resolveUrl }));
+    }
+    for (const style of byLocal(doc, 'style')) {
+      const resolveUrl = (u: string) => urlFor(resolvePath(base0, u));
+      const key = `${path}#style${sheets.size}`;
+      sheets.set(
+        key,
+        scopeCss(style.textContent ?? '', {
+          scope: PUBLISHER_SCOPE,
+          resolveUrl,
+        }),
+      );
+      if (pkg.fixed)
+        pageCss.push(
+          scopeCss(style.textContent ?? '', {
+            scope: '.fx',
+            keepAll: true,
+            resolveUrl,
+          }),
+        );
+    }
     const body = (doc.getElementsByTagName('body')[0] ?? doc.documentElement) as Element;
     // Serialise as HTML, not XML, so <a/> and friends parse the same way back.
     const holder = document.implementation.createHTMLDocument('');
     for (const node of [...body.childNodes]) holder.body.appendChild(holder.importNode(node, true));
     const base = dirname(path);
     const cleaned = clean(holder.body.innerHTML, {
-      resolveSrc: (src) => {
-        const target = resolvePath(base, src);
-        const data = pkg.files.get(target);
-        if (!data) return null;
-        let url = urls.get(target);
-        if (!url) {
-          url = URL.createObjectURL(new Blob([data as BlobPart], { type: imageType(target) }));
-          urls.set(target, url);
-        }
-        return url;
-      },
+      keepStyle: pkg.fixed,
+      resolveSrc: (src) => urlFor(resolvePath(base, src)),
       resolveLink: (href) => {
         const target = resolvePath(base, href);
         const at = index.get(target);
@@ -165,15 +271,47 @@ export function openEpub(bytes: Uint8Array): FlowDoc {
         return frag ? `${at}#r-${decodeURIComponent(frag)}` : String(at);
       },
     });
+    if (pkg.fixed) {
+      // The viewport meta gives the page's drawing size.
+      const viewport =
+        byLocal(doc, 'meta')
+          .find((m) => m.getAttribute('name') === 'viewport')
+          ?.getAttribute('content') ?? '';
+      const w = Number(/width\s*=\s*(\d+)/.exec(viewport)?.[1]) || 1200;
+      const h = Number(/height\s*=\s*(\d+)/.exec(viewport)?.[1]) || 1600;
+      fixed.push({
+        width: w,
+        height: h,
+        html: cleaned.html,
+        css: pageCss.join('\n'),
+      });
+    }
     const heading = holder.querySelector('h1, h2, h3') ?? doc.getElementsByTagName('title')[0];
-    return { title: squash(heading?.textContent), html: cleaned.html, text: cleaned.text, path };
+    return {
+      title: squash(heading?.textContent),
+      html: cleaned.html,
+      text: cleaned.text,
+      path,
+    };
   });
 
   const toc = readToc(pkg, index);
   return {
     kind: 'flow',
+    lang: pkg.lang || undefined,
+    dir: pkg.dir,
+    css: [...sheets.values()].join('\n'),
+    fixed: pkg.fixed ? fixed : undefined,
     sections,
-    toc: toc.length ? toc : sections.map((s, i) => ({ label: s.title || `Section ${i + 1}`, section: i, depth: 0 })).filter((e) => sections[e.section]!.text.trim()),
+    toc: toc.length
+      ? toc
+      : sections
+          .map((s, i) => ({
+            label: s.title || `Section ${i + 1}`,
+            section: i,
+            depth: 0,
+          }))
+          .filter((e) => sections[e.section]!.text.trim()),
     dispose: () => {
       for (const url of urls.values()) URL.revokeObjectURL(url);
     },

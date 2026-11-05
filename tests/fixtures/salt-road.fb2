@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><author><first-name>Mira</first-name><last-name>Holt</last-name></author><book-title>The Salt Road</book-title><lang>en</lang><sequence name="Coast" number="2"/></title-info></description>
+<body><section><title><p>Inland</p></title><p>The caravan left at first light.</p><p>Salt was worth its weight in silver.</p></section>
+<section><title><p>The well</p></title><p>The well at the crossroads had run dry.</p></section></body>
+</FictionBook>

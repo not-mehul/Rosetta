@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.svelte';
 // Transient UI state: the open sheet, the toast, confirm requests and
 // the overlay stack that Android's back button unwinds.
 
@@ -28,8 +29,19 @@ export interface ConfirmRequest {
   resolve: (ok: boolean) => void;
 }
 
+export interface PromptRequest {
+  title: string;
+  message: string;
+  label: string;
+  action: string;
+  value?: string;
+  /** A password field. */
+  secret?: boolean;
+  resolve: (value: string | null) => void;
+}
+
 /** Overlays the app opens; one at a time per kind. */
-export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | null;
+export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | 'edit' | 'stats' | 'notes' | 'catalog' | 'storage' | null;
 
 /** How long a toast stays (style.md §8.12): longer when it offers an action. */
 export const TOAST_MS = 4000;
@@ -43,6 +55,7 @@ class UiState {
   detailsId = $state<string | null>(null);
   toast = $state.raw<Toast | null>(null);
   confirmRequest = $state.raw<ConfirmRequest | null>(null);
+  promptRequest = $state.raw<PromptRequest | null>(null);
   /** Called by back when no overlay is open: closes the reader. False when there is nothing to close. */
   onBack: (() => boolean) | null = null;
 
@@ -59,7 +72,7 @@ class UiState {
 
   /** A toast with Undo. */
   undoable(message: string, undo: () => void): void {
-    this.notify(message, 'success', { label: 'Undo', run: undo });
+    this.notify(message, 'success', { label: t('action.undo'), run: undo });
   }
 
   /** Holds the toast on screen while it is touched or hovered. */
@@ -103,6 +116,20 @@ class UiState {
         resolve: (ok) => {
           this.confirmRequest = null;
           resolve(ok);
+        },
+      };
+    });
+  }
+
+  /** Asks for a line of text (a password, a name). Null when cancelled. */
+  prompt(request: Omit<PromptRequest, 'resolve'>): Promise<string | null> {
+    this.promptRequest?.resolve(null);
+    return new Promise((resolve) => {
+      this.promptRequest = {
+        ...request,
+        resolve: (value) => {
+          this.promptRequest = null;
+          resolve(value);
         },
       };
     });

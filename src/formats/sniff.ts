@@ -1,6 +1,7 @@
 // Which reader a file needs, from its first bytes and, failing that, its name.
 
-import { unzipSync } from 'fflate';
+import { strFromU8, unzipSync } from 'fflate';
+import { isComicArchive } from './cbz';
 import type { Format } from './types';
 
 const EXT: Record<string, Format> = {
@@ -16,17 +17,27 @@ const EXT: Record<string, Format> = {
   html: 'html',
   htm: 'html',
   xhtml: 'html',
+  fb2: 'fb2',
+  cbz: 'cbz',
+  rtf: 'rtf',
+  odt: 'odt',
 };
 
 /** The `accept` list for the file picker. */
 export const ACCEPT = [
-  '.epub,.pdf,.docx,.md,.markdown,.txt,.html,.htm,.xhtml',
+  '.epub,.pdf,.docx,.md,.markdown,.txt,.html,.htm,.xhtml,.fb2,.cbz,.rtf,.odt',
   'application/epub+zip',
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/markdown',
   'text/plain',
   'text/html',
+  'application/x-fictionbook+xml',
+  'application/vnd.comicbook+zip',
+  'application/x-cbz',
+  'application/rtf',
+  'text/rtf',
+  'application/vnd.oasis.opendocument.text',
 ].join(',');
 
 export function extension(name: string): string {
@@ -40,19 +51,32 @@ export function detectFormat(bytes: Uint8Array, name: string): Format | null {
   // PDF may have junk before the header; the spec allows it within 1 KB.
   if (startsWith(bytes, '%PDF') || new TextDecoder('latin1').decode(bytes.subarray(0, 1024)).includes('%PDF-')) return 'pdf';
   if (startsWith(bytes, 'PK\u0003\u0004')) {
-    let names: string[];
+    const all: string[] = [];
+    let found: Record<string, Uint8Array>;
     try {
-      names = Object.keys(unzipSync(bytes, { filter: (f) => f.name === 'mimetype' || f.name === 'word/document.xml' || f.name === 'META-INF/container.xml' }));
+      found = unzipSync(bytes, {
+        filter: (f) => {
+          all.push(f.name);
+          return f.name === 'mimetype' || f.name === 'word/document.xml' || f.name === 'META-INF/container.xml';
+        },
+      });
     } catch {
       return null;
     }
-    if (names.includes('word/document.xml')) return 'docx';
-    if (names.includes('mimetype') || names.includes('META-INF/container.xml')) return 'epub';
+    if (found['word/document.xml']) return 'docx';
+    const mimetype = found.mimetype ? strFromU8(found.mimetype).trim() : '';
+    if (mimetype === 'application/vnd.oasis.opendocument.text') return 'odt';
+    if (mimetype.startsWith('application/vnd.oasis.opendocument')) return null;
+    if (found.mimetype || found['META-INF/container.xml']) return 'epub';
+    if (isComicArchive(all)) return 'cbz';
     return null;
   }
+  if (startsWith(bytes, '{\\rtf')) return 'rtf';
   if (!looksLikeText(bytes)) return null;
+  const start = new TextDecoder().decode(bytes.subarray(0, 1024)).replace(/^\uFEFF/, '');
+  if (/^\s*(<\?xml[^>]*>\s*)?<FictionBook\b/.test(start)) return 'fb2';
   const byName = EXT[extension(name)];
-  if (byName && byName !== 'epub' && byName !== 'pdf' && byName !== 'docx') return byName;
+  if (byName && !['epub', 'pdf', 'docx', 'fb2', 'cbz', 'rtf', 'odt'].includes(byName)) return byName;
   // No useful extension (an Android content:// URI): look at the text itself.
   const head = new TextDecoder().decode(bytes.subarray(0, 4096)).trimStart().toLowerCase();
   if (head.startsWith('<!doctype html') || head.startsWith('<html')) return 'html';

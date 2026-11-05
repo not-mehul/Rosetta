@@ -6,28 +6,40 @@
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-import { FormatError, type DocInfo, type PdfDoc, type TocEntry } from './types';
+import { FormatError, PasswordError, type DocInfo, type PdfDoc, type TocEntry } from './types';
+import { t } from '../i18n/index.svelte';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const ASSETS = `${import.meta.env.BASE_URL}pdfjs/`;
 
-async function load(bytes: Uint8Array): Promise<{ pdf: PDFDocumentProxy; destroy: () => void }> {
+/** pdf.js's reasons for asking (PasswordResponses). */
+const NEED_PASSWORD = 1;
+const INCORRECT_PASSWORD = 2;
+
+async function load(bytes: Uint8Array, password?: string): Promise<{ pdf: PDFDocumentProxy; destroy: () => void }> {
   // pdf.js hands the buffer to its worker, so give it a copy.
   const task = pdfjs.getDocument({
-      data: bytes.slice(),
-      cMapUrl: `${ASSETS}cmaps/`,
-      cMapPacked: true,
-      standardFontDataUrl: `${ASSETS}standard_fonts/`,
-      wasmUrl: `${ASSETS}wasm/`,
-      iccUrl: `${ASSETS}iccs/`,
-    });
+    data: bytes.slice(),
+    password,
+    cMapUrl: `${ASSETS}cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `${ASSETS}standard_fonts/`,
+    wasmUrl: `${ASSETS}wasm/`,
+    iccUrl: `${ASSETS}iccs/`,
+  });
+  // Asked for a password: stop and let the reader ask the person.
+  let asked: number | null = null;
+  task.onPassword = (_update: unknown, reason: number) => {
+    asked = reason;
+    void task.destroy();
+  };
   try {
     return { pdf: await task.promise, destroy: () => void task.destroy() };
   } catch (err) {
     void task.destroy();
-    if ((err as { name?: string })?.name === 'PasswordException') throw new FormatError('This PDF is protected by a password, which Rosetta can’t open yet.');
-    throw new FormatError(`This PDF couldn’t be read (${err instanceof Error ? err.message : String(err)}).`);
+    if (asked === NEED_PASSWORD || asked === INCORRECT_PASSWORD || (err as { name?: string })?.name === 'PasswordException') throw new PasswordError(asked === INCORRECT_PASSWORD || !!password);
+    throw new FormatError(t('error.pdf', { reason: err instanceof Error ? err.message : String(err) }));
   }
 }
 
@@ -43,7 +55,12 @@ async function outline(pdf: PDFDocumentProxy): Promise<TocEntry[]> {
         const dest = typeof item.dest === 'string' ? await pdf.getDestination(item.dest) : item.dest;
         const ref = dest?.[0];
         const section = typeof ref === 'number' ? ref : ref ? await pdf.getPageIndex(ref as Parameters<PDFDocumentProxy['getPageIndex']>[0]) : -1;
-        if (section >= 0 && item.title.trim()) out.push({ label: item.title.replace(/\s+/g, ' ').trim(), section, depth });
+        if (section >= 0 && item.title.trim())
+          out.push({
+            label: item.title.replace(/\s+/g, ' ').trim(),
+            section,
+            depth,
+          });
       } catch {
         // An outline entry pointing nowhere is skipped.
       }
@@ -54,8 +71,8 @@ async function outline(pdf: PDFDocumentProxy): Promise<TocEntry[]> {
   return out;
 }
 
-export async function openPdf(bytes: Uint8Array): Promise<PdfDoc> {
-  const { pdf, destroy } = await load(bytes);
+export async function openPdf(bytes: Uint8Array, password?: string): Promise<PdfDoc> {
+  const { pdf, destroy } = await load(bytes, password);
   const pages = new Map<number, Promise<PDFPageProxy>>();
   const page = (i: number) => {
     let p = pages.get(i);
@@ -90,11 +107,19 @@ export async function openPdf(bytes: Uint8Array): Promise<PdfDoc> {
       const ratio = Math.min(globalThis.devicePixelRatio || 1, 3);
       canvas.width = Math.floor(viewport.width * ratio);
       canvas.height = Math.floor(viewport.height * ratio);
-      const task = p.render({ canvas, viewport, transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0] });
+      const task = p.render({
+        canvas,
+        viewport,
+        transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0],
+      });
       renders.set(canvas, task);
       textLayer.replaceChildren();
       textLayer.style.setProperty('--total-scale-factor', String(scale));
-      const layer = new pdfjs.TextLayer({ textContentSource: p.streamTextContent(), container: textLayer, viewport });
+      const layer = new pdfjs.TextLayer({
+        textContentSource: p.streamTextContent(),
+        container: textLayer,
+        viewport,
+      });
       try {
         await Promise.all([task.promise, layer.render()]);
       } catch (err) {
@@ -103,13 +128,29 @@ export async function openPdf(bytes: Uint8Array): Promise<PdfDoc> {
         if (renders.get(canvas) === task) renders.delete(canvas);
       }
     },
+    renderThumb: async (i, canvas, cssWidth) => {
+      const p = await page(i);
+      const viewport = p.getViewport({ scale: cssWidth / sizes[i]!.width });
+      const ratio = Math.min(globalThis.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(viewport.width * ratio);
+      canvas.height = Math.floor(viewport.height * ratio);
+      try {
+        await p.render({
+          canvas,
+          viewport,
+          transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0],
+        }).promise;
+      } catch (err) {
+        if ((err as { name?: string })?.name !== 'RenderingCancelledException') throw err;
+      }
+    },
     dispose: destroy,
   };
 }
 
 /** Title, author and a thumbnail of the first page. */
-export async function pdfInfo(bytes: Uint8Array): Promise<DocInfo> {
-  const { pdf, destroy } = await load(bytes);
+export async function pdfInfo(bytes: Uint8Array, password?: string): Promise<DocInfo> {
+  const { pdf, destroy } = await load(bytes, password);
   try {
     const meta = await pdf.getMetadata().catch(() => null);
     const info = (meta?.info ?? {}) as { Title?: string; Author?: string };
@@ -127,7 +168,12 @@ export async function pdfInfo(bytes: Uint8Array): Promise<DocInfo> {
     } catch {
       // No thumbnail; the card shows its placeholder.
     }
-    return { format: 'pdf', title: (meta?.metadata?.get('dc:title') as string | undefined) || info.Title?.trim() || '', author: info.Author?.trim() ?? '', cover };
+    return {
+      format: 'pdf',
+      title: (meta?.metadata?.get('dc:title') as string | undefined) || info.Title?.trim() || '',
+      author: info.Author?.trim() ?? '',
+      cover,
+    };
   } finally {
     destroy();
   }

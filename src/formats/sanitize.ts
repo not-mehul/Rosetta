@@ -1,6 +1,7 @@
 // Every document's HTML passes through here before it reaches the page.
-// Scripts, forms, frames, styles and classes go (the reader sets the type, not
-// the publisher), ids are prefixed so they can't collide with the app's own,
+// Scripts, forms, frames and inline styles go (the reader sets the type, not
+// the publisher), ids and classes are prefixed so they can't collide with the
+// app's own (a book's CSS, when kept, is rewritten to match; see styles.ts),
 // and image and link targets are resolved by the caller.
 
 import DOMPurify from 'dompurify';
@@ -16,6 +17,8 @@ export interface CleanOptions {
    * link. Same-document "#x" links are handled here.
    */
   resolveLink?: (href: string) => string | null;
+  /** Keep inline style attributes (fixed-layout pages, whose positions live there). */
+  keepStyle?: boolean;
 }
 
 export interface Cleaned {
@@ -24,7 +27,15 @@ export interface Cleaned {
 }
 
 const FORBID_TAGS = ['style', 'script', 'form', 'input', 'button', 'select', 'textarea', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'video', 'audio', 'source', 'track', 'noscript', 'title'];
-const FORBID_ATTR = ['style', 'class', 'width', 'height', 'align', 'bgcolor', 'color', 'face', 'size', 'background', 'border', 'tabindex', 'contenteditable'];
+const FORBID_ATTR = ['align', 'bgcolor', 'color', 'face', 'size', 'background', 'border', 'tabindex', 'contenteditable'];
+
+/** Removes anything in CSS that would reach the network: a book must read offline and privately. */
+export function offlineCss(css: string): string {
+  return css
+    .replace(/url\(\s*(['"]?)\s*(?:https?:|\/\/)[^)]*\)/gi, 'none')
+    .replace(/@import[^;]*;?/gi, '')
+    .replace(/expression\s*\(/gi, '(');
+}
 
 /** The text a container's textContent will have once `html` is rendered in it. */
 export function textOf(html: string): string {
@@ -39,6 +50,21 @@ export function clean(html: string, options: CleanOptions = {}): Cleaned {
     if (!el.getAttribute) return;
     const id = el.getAttribute('id');
     if (id) el.setAttribute('id', ID_PREFIX + id);
+    const cls = el.getAttribute('class');
+    if (cls) {
+      const prefixed = cls
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((c) => ID_PREFIX + c)
+        .join(' ');
+      if (prefixed) el.setAttribute('class', prefixed);
+      else el.removeAttribute('class');
+    }
+    const style = el.getAttribute('style');
+    if (style !== null) {
+      if (options.keepStyle) el.setAttribute('style', offlineCss(style));
+      else el.removeAttribute('style');
+    }
     // name anchors are how older books mark footnotes.
     if (el.tagName === 'A' && el.getAttribute('name') && !id) el.setAttribute('id', ID_PREFIX + el.getAttribute('name'));
 
@@ -83,8 +109,8 @@ export function clean(html: string, options: CleanOptions = {}): Cleaned {
   try {
     const out = DOMPurify.sanitize(html, {
       FORBID_TAGS,
-      FORBID_ATTR,
-      ADD_ATTR: ['epub:type', 'xlink:href', 'data-link'],
+      FORBID_ATTR: options.keepStyle ? FORBID_ATTR : [...FORBID_ATTR, 'style', 'width', 'height'],
+      ADD_ATTR: ['epub:type', 'xlink:href', 'data-link', 'role', 'lang', 'dir'],
       ALLOW_DATA_ATTR: false,
       USE_PROFILES: { html: true, svg: true },
     });
@@ -109,7 +135,12 @@ export function headingToc(html: string): { html: string; toc: TocEntry[] } {
     if (!label) return;
     // clean() prefixes every id, so the contents point at the prefixed one.
     if (!h.id) h.id = `h${i}`;
-    toc.push({ label, section: 0, anchor: ID_PREFIX + h.id, depth: Number(h.tagName[1]) - top });
+    toc.push({
+      label,
+      section: 0,
+      anchor: ID_PREFIX + h.id,
+      depth: Number(h.tagName[1]) - top,
+    });
   });
   return { html: t.innerHTML, toc };
 }

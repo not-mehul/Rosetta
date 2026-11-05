@@ -147,7 +147,8 @@ test('resumes where reading stopped and keeps the place through type changes', a
     const p = [...document.querySelectorAll('.reading p')].find((el) => el.getBoundingClientRect().bottom > 90)!;
     return p.textContent!.slice(0, 13);
   });
-  expect(top).toBe('Paragraph 11 ');
+  // The chapter opens with a picture, so the eleventh paragraph is the tenth of text.
+  expect(top).toBe('Paragraph 10 ');
 
   // Reload: back in the same chapter at the same place.
   await page.reload();

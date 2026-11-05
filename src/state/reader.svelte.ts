@@ -1,13 +1,16 @@
 // The open document: its content, where the reader is, and its bookmarks and
 // highlights. The views render from here and report the location back.
 
-import { openDocument, type OpenDoc } from '../formats';
+import { openDocument, PasswordError, type OpenDoc } from '../formats';
 import { FORMAT_LABEL } from '../formats/types';
 import { excerpt } from '../reader/offsets';
 import { flowProgress, pageProgress, START, type Location } from '../reader/progress';
 import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
+import { t } from '../i18n/index.svelte';
+import { tick } from '../platform/device';
 import { db, type HighlightColour, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
+import { stats } from './stats.svelte';
 import { settings } from './settings.svelte';
 import { ui } from './ui.svelte';
 
@@ -37,6 +40,10 @@ class ReaderState {
   chrome = $state(true);
   /** When the last jump happened: the scrolling it causes doesn't hide the toolbars. */
   jumpedAt = 0;
+  /** The view on screen turns a page (paged mode) or a screen (scrolling); set by the view. */
+  turner: ((direction: 1 | -1) => void) | null = null;
+  /** Called when a document is finished (main.ts offers BookShelf). */
+  onFinished: ((doc: StoredDoc) => void) | null = null;
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   private jumpKey = 0;
@@ -82,10 +89,15 @@ class ReaderState {
   whereIs(section: number, offset = 0): string {
     const c = this.content;
     if (!c) return '';
-    if (c.kind === 'pdf') return `Page ${section + 1}`;
-    if (c.sections.length === 1) return this.anchorOffsets().filter((h) => h.offset <= offset).at(-1)?.label ?? '';
+    if (c.kind === 'pdf') return t('reader.page', { page: section + 1 });
+    if (c.sections.length === 1)
+      return (
+        this.anchorOffsets()
+          .filter((h) => h.offset <= offset)
+          .at(-1)?.label ?? ''
+      );
     const own = c.toc.find((e) => e.section === section);
-    return own?.label || c.sections[section]?.title || c.toc.filter((e) => e.section < section).at(-1)?.label || `Section ${section + 1}`;
+    return own?.label || c.sections[section]?.title || c.toc.filter((e) => e.section < section).at(-1)?.label || t('reader.section', { section: section + 1 });
   }
 
   private anchors: { label: string; offset: number }[] | null = null;
@@ -111,13 +123,25 @@ class ReaderState {
   async open(id: string): Promise<void> {
     const doc = library.get(id);
     if (!doc) return;
+    if (doc.offloaded) {
+      ui.notify(t('reader.offloaded', { title: doc.title }), 'info', {
+        label: t('reader.addFile'),
+        run: () => void import('./intake').then((m) => m.restoreFile(id)),
+      });
+      return;
+    }
     this.close();
     this.loading = true;
     this.doc = doc;
     try {
       const bytes = await library.bytes(id);
-      if (!bytes) throw new Error('the file is missing from the library');
-      const [content, marks] = await Promise.all([openDocument(bytes, doc.format), library.marks(id)]);
+      if (!bytes) throw new Error(t('error.fileMissing'));
+      const [content, marks] = await Promise.all([this.openWithPassword(bytes, doc), library.marks(id)]);
+      if (!content) {
+        this.doc = null;
+        return;
+      }
+      if (content.kind === 'pdf') this.cacheText(id, content);
       if (this.doc?.id !== id) {
         content.dispose();
         return;
@@ -131,18 +155,75 @@ class ReaderState {
       this.jump = { to: at, key: ++this.jumpKey };
       this.jumpedAt = performance.now();
       this.chrome = true;
+      stats.begin(id);
       void library.update(id, { openedAt: Date.now() });
       void settings.update({ lastDocId: id });
     } catch (err) {
       this.doc = null;
-      ui.notify(`Couldn’t open ${doc.title}. ${err instanceof Error ? err.message : String(err)}`, 'error');
+      ui.notify(
+        t('reader.openFailed', {
+          title: doc.title,
+          reason: err instanceof Error ? err.message : String(err),
+        }),
+        'error',
+      );
     } finally {
       this.loading = false;
     }
   }
 
+  /** Opens a document at a mark: the notes view and sync use it. */
+  async openAt(id: string, to: Location, flash?: Jump['flash']): Promise<void> {
+    if (this.doc?.id !== id) await this.open(id);
+    if (this.doc?.id === id) this.goTo(to, flash);
+  }
+
+  /** Opens the file, asking for a PDF's password when it needs one. Null when the person cancels. */
+  private async openWithPassword(bytes: Uint8Array, doc: StoredDoc): Promise<OpenDoc | null> {
+    let password = doc.password;
+    for (;;) {
+      try {
+        const content = await openDocument(bytes, doc.format, password);
+        if (password && password !== doc.password) void library.update(doc.id, { password }, { touch: false });
+        return content;
+      } catch (err) {
+        if (!(err instanceof PasswordError)) throw err;
+        const answer = await ui.prompt({
+          title: t('password.title'),
+          message: err.retry && password ? t('password.wrong') : t('password.message', { title: doc.title }),
+          label: t('password.label'),
+          action: t('password.open'),
+          secret: true,
+        });
+        if (answer === null) return null;
+        password = answer;
+      }
+    }
+  }
+
+  /** Keeps a PDF's page text in the database, so later searches don't read every page again. */
+  private cacheText(id: string, content: Extract<OpenDoc, { kind: 'pdf' }>): void {
+    const read = content.pageText;
+    let cache: (string | null)[] | null = null;
+    const loaded = db.pdfText.get(id).then((row) => (cache = row?.pages ?? Array.from({ length: content.pageCount }, () => null)));
+    let saveTimer: ReturnType<typeof setTimeout> | undefined;
+    content.pageText = async (i) => {
+      await loaded;
+      const hit = cache?.[i];
+      if (typeof hit === 'string') return hit;
+      const text = await read(i);
+      if (cache) {
+        cache[i] = text;
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => void db.pdfText.put({ id, pages: cache! }).catch(() => undefined), 1500);
+      }
+      return text;
+    };
+  }
+
   close(): void {
     this.flush();
+    stats.end();
     this.content?.dispose();
     this.content = null;
     this.doc = null;
@@ -159,7 +240,12 @@ class ReaderState {
     const section = Math.max(0, Math.min(this.sectionCount - 1, to.section));
     if (this.content.kind === 'flow') this.section = section;
     this.location = { section, offset: to.offset };
-    this.jump = { to: { section, offset: to.offset }, flash, anchor, key: ++this.jumpKey };
+    this.jump = {
+      to: { section, offset: to.offset },
+      flash,
+      anchor,
+      key: ++this.jumpKey,
+    };
     this.jumpedAt = performance.now();
     this.chrome = true;
     this.save();
@@ -173,11 +259,21 @@ class ReaderState {
     if (this.section > 0) this.goTo({ section: this.section - 1, offset: 0 });
   }
 
-  /** Called by the views as the reader scrolls. */
+  /** Called by the views as the reader scrolls or turns. */
   report(location: Location, visibleEnd: number): void {
+    const before = this.globalChar(this.location);
     this.location = location;
     this.visibleEnd = visibleEnd;
+    if (this.doc) stats.activity(this.doc.id, Math.abs(this.globalChar(location) - before));
     this.save();
+  }
+
+  /** Characters from the start of the document to a place (flow documents). */
+  private globalChar(at: Location): number {
+    if (this.content?.kind !== 'flow') return 0;
+    let n = 0;
+    for (let i = 0; i < at.section && i < this.lengths.length; i++) n += this.lengths[i]!;
+    return n + at.offset;
   }
 
   private save(): void {
@@ -188,22 +284,29 @@ class ReaderState {
   /** Writes the place now (on pause, close and leaving the page). */
   flush(): void {
     clearTimeout(this.saveTimer);
+    void stats.flush();
     const doc = this.doc;
     if (!doc || !this.content) return;
     const progress = this.progress;
-    const patch: Partial<StoredDoc> = { location: $state.snapshot(this.location), progress };
+    const patch: Partial<StoredDoc> = {
+      location: $state.snapshot(this.location),
+      progress,
+    };
     const justFinished = progress >= 0.999 && doc.finishedAt === null;
     if (justFinished) patch.finishedAt = Date.now();
     void library.update(doc.id, patch);
     this.doc = { ...doc, ...patch };
     if (justFinished) {
-      ui.notify('Finished. Moved to the finished shelf.', 'success', {
-        label: 'Undo',
+      const finished = { ...doc, ...patch };
+      ui.notify(t('reader.finished'), 'success', {
+        label: t('action.undo'),
         run: () => {
           if (!this.doc) return;
           this.doc = { ...this.doc, finishedAt: null };
           void library.update(doc.id, { finishedAt: null });
         },
+        // Once the Undo has passed, the finished book can go on to BookShelf.
+        dismissed: () => this.onFinished?.(finished),
       });
     }
   }
@@ -211,8 +314,20 @@ class ReaderState {
   // ─── Marks ─────────────────────────────────────────────────
 
   private async putMark(mark: Mark): Promise<void> {
+    mark = { ...mark, updatedAt: Date.now() };
     this.marks = [...this.marks.filter((m) => m.id !== mark.id), mark];
-    await db.marks.put($state.snapshot(mark) as Mark);
+    await db.transaction('rw', db.marks, db.tombstones, async () => {
+      await db.marks.put($state.snapshot(mark) as Mark);
+      await db.tombstones.delete(mark.id);
+    });
+  }
+
+  private async deleteMarks(ids: string[]): Promise<void> {
+    const at = Date.now();
+    await db.transaction('rw', db.marks, db.tombstones, async () => {
+      await db.marks.bulkDelete(ids);
+      await db.tombstones.bulkPut(ids.map((id) => ({ id, deletedAt: at })));
+    });
   }
 
   async toggleBookmark(): Promise<void> {
@@ -238,7 +353,8 @@ class ReaderState {
       note: '',
       createdAt: Date.now(),
     });
-    ui.notify('Bookmarked.', 'success');
+    if (settings.value.haptics) tick();
+    ui.notify(t('reader.bookmarked'), 'success');
   }
 
   async highlight(section: number, start: number, end: number, text: string, colour: HighlightColour, note = ''): Promise<Mark | null> {
@@ -263,9 +379,10 @@ class ReaderState {
       const sectionText = this.content?.kind === 'flow' ? this.content.sections[section]?.text : await (this.content as Extract<OpenDoc, { kind: 'pdf' }>).pageText(section);
       if (sectionText) mark.text = sectionText.slice(mark.start, mark.end).replace(/\s+/g, ' ').trim();
       this.marks = this.marks.filter((m) => !overlapping.includes(m));
-      await db.marks.bulkDelete(overlapping.map((m) => m.id));
+      await this.deleteMarks(overlapping.map((m) => m.id));
     }
     await this.putMark(mark);
+    if (settings.value.haptics) tick();
     return mark;
   }
 
@@ -278,8 +395,8 @@ class ReaderState {
     const mark = this.marks.find((m) => m.id === id);
     if (!mark) return;
     this.marks = this.marks.filter((m) => m.id !== id);
-    await db.marks.delete(id);
-    ui.undoable(mark.kind === 'bookmark' ? 'Bookmark removed.' : 'Highlight removed.', () => void this.putMark(mark));
+    await this.deleteMarks([id]);
+    ui.undoable(mark.kind === 'bookmark' ? t('reader.bookmarkRemoved') : t('reader.highlightRemoved'), () => void this.putMark(mark));
   }
 
   // ─── Search ────────────────────────────────────────────────

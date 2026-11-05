@@ -1,6 +1,6 @@
 <script lang="ts">
   // Search the whole document; a result takes you there and flashes the words.
-  import { plural } from '../../lib/format';
+  import { t } from '../../i18n/index.svelte';
   import type { Hit } from '../../reader/search';
   import { reader } from '../../state/reader.svelte';
   import Sheet from '../ui/Sheet.svelte';
@@ -47,13 +47,13 @@
   const memory = { query: '' };
 </script>
 
-<Sheet title="Search" {onclose}>
+<Sheet title={t('search.title')} {onclose}>
   <label class="field">
-    <span class="t-field-label">Words to find</span>
-    <input class="input" id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder="A word or a phrase" bind:this={input} bind:value={query} />
+    <span class="t-field-label">{t('search.label')}</span>
+    <input class="input" id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder={t('search.placeholder')} bind:this={input} bind:value={query} />
   </label>
   {#if query.trim().length >= 2}
-    <p class="t-data-small dim" role="status">{done ? (hits.length ? plural(hits.length, 'match', 'matches') : 'No matches') : `Searching… ${plural(hits.length, 'match', 'matches')}`}</p>
+    <p class="t-data-small dim" role="status">{done ? (hits.length ? t('search.matches', { count: hits.length }) : t('search.none')) : t('search.searching', { count: hits.length })}</p>
     {#if hits.length}
       <ul class="row-list" id="searchResults">
         {#each hits.slice(0, SHOWN) as hit, i (i)}
@@ -68,7 +68,7 @@
           </li>
         {/each}
       </ul>
-      {#if hits.length > SHOWN}<p class="t-hint">Showing the first {SHOWN}. Add a word to narrow it down.</p>{/if}
+      {#if hits.length > SHOWN}<p class="t-hint">{t('search.capped', { count: SHOWN })}</p>{/if}
     {/if}
   {/if}
 </Sheet>

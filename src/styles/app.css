@@ -1,7 +1,7 @@
 /* Rosetta's own layout. Everything shared (buttons, fields, panels, sheets,
-   toasts, the tab rail) is in components.css; every colour is a token. */
-@import './tokens.css';
-@import './components.css';
+   toasts, the tab rail) is in the dusk-dawn package; every colour is a token. */
+@import 'dusk-dawn/tokens.css';
+@import 'dusk-dawn/components.css';
 
 html {
   scroll-behavior: smooth;

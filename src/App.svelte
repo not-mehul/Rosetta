@@ -19,7 +19,7 @@
   import ConfirmModal from './components/ui/ConfirmModal.svelte';
   import PromptModal from './components/ui/PromptModal.svelte';
   import { setLocale, t } from './i18n/index.svelte';
-  import Toast from './components/ui/Toast.svelte';
+  import { Toast } from 'dusk-dawn';
 
   let dropping = $state(false);
 

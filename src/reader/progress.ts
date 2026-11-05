@@ -1,5 +1,7 @@
 // Where the reader is, and how far through.
 
+import { t } from '../i18n/index.svelte';
+
 export interface Location {
   /** Section index (a page, for PDF). */
   section: number;
@@ -36,12 +38,15 @@ export function flowLocationAt(lengths: readonly number[], fraction: number): Lo
 
 export const percent = (fraction: number) => `${Math.floor(fraction * 100)}%`;
 
-/** Time left at about 250 words a minute, from the characters left. */
-export function timeLeft(charsLeft: number): string {
-  const minutes = Math.round(charsLeft / 6 / 250);
-  if (minutes < 1) return 'Under a minute left';
-  if (minutes < 60) return `${minutes} min left`;
+/** About 250 words a minute, in characters: the pace before the reader's own is known. */
+export const DEFAULT_PACE = 250 * 6;
+
+/** Time left from the characters left, at `pace` characters a minute. */
+export function timeLeft(charsLeft: number, pace = DEFAULT_PACE): string {
+  const minutes = Math.round(charsLeft / Math.max(100, pace));
+  if (minutes < 1) return t('stats.leftUnder');
+  if (minutes < 60) return t('stats.leftMin', { min: minutes });
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m ? `${h} h ${m} min left` : `${h} h left`;
+  return m ? t('stats.leftHoursMin', { h, min: m }) : t('stats.leftHours', { h });
 }

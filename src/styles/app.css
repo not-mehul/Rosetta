@@ -1102,3 +1102,384 @@ mark.hl-flash {
 .textLayer mark {
   color: transparent;
 }
+
+/* ─── Paged reading ─────────────────────────────────────────── */
+
+/* The pager fills the screen between the bars' resting places; the bars float over it. */
+.reader.is-paged .reader-page {
+  padding: 0;
+}
+.pager {
+  position: fixed;
+  z-index: 1;
+  top: calc(3.75rem + var(--inset-top));
+  bottom: calc(3.5rem + var(--inset-bottom));
+  left: var(--inset-left);
+  right: var(--inset-right);
+  overflow: hidden;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.reading.paged {
+  max-width: none;
+  margin: 0;
+  column-fill: auto;
+  overflow: visible;
+  will-change: transform;
+}
+.reading.paged :is(img, svg, video) {
+  max-height: calc(100dvh - 9rem - var(--inset-top) - var(--inset-bottom));
+  object-fit: contain;
+  break-inside: avoid;
+}
+.reading.paged :is(figure, table, pre, blockquote) {
+  break-inside: avoid;
+}
+.reading.paged :is(h1, h2, h3) {
+  break-after: avoid;
+}
+.page-number {
+  position: fixed;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: calc(0.75rem + var(--inset-bottom));
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+}
+.reader:not(.chrome-hidden) ~ .page-number,
+.reader:not(.chrome-hidden) .page-number {
+  opacity: 0;
+}
+
+/* The page curl (src/reader/curl.ts): layers over the pager, all from tokens. */
+.curl {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.curl > div,
+.curl-flap,
+.curl-mirror {
+  position: absolute;
+  inset: 0;
+}
+.curl-page {
+  background: var(--sheet-bg);
+  overflow: hidden;
+}
+.curl-flap {
+  overflow: hidden;
+}
+.curl-mirror {
+  transform-origin: 0 0;
+  opacity: 0.08;
+}
+.curl .reading {
+  position: absolute;
+}
+
+/* ─── Fixed layout and pictures ─────────────────────────────── */
+
+.fixed-pager {
+  touch-action: pan-y;
+}
+.fixed-page {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center;
+  box-shadow: 0 8px 24px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-strength)));
+}
+.fixed-page.slide-next {
+  animation: page-in-next var(--dur-settle) var(--ease-settle);
+}
+.fixed-page.slide-prev {
+  animation: page-in-prev var(--dur-settle) var(--ease-settle);
+}
+@keyframes page-in-next {
+  from {
+    opacity: 0.4;
+    translate: 24px 0;
+  }
+}
+@keyframes page-in-prev {
+  from {
+    opacity: 0.4;
+    translate: -24px 0;
+  }
+}
+.reading.pictures {
+  max-width: 960px;
+}
+.reading.pictures figure.r-picture,
+.reading.pictures figure.picture {
+  margin: 0 0 var(--space-4);
+  text-align: center;
+}
+.reading.pictures img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.reading.paged.pictures img {
+  width: auto;
+  max-width: 100%;
+}
+.reading.pictures figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: var(--space-1);
+}
+
+/* ─── Reading aloud, the night veil ─────────────────────────── */
+
+mark.tts {
+  background: rgba(var(--accent-sage-rgb), 0.28);
+  color: inherit;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px rgba(var(--accent-sage-rgb), 0.28);
+}
+.speech-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: var(--space-1) var(--space-2);
+}
+.speech-bar .speech-main {
+  color: var(--accent-amber);
+}
+.speech-rate {
+  min-width: 3ch;
+  text-align: center;
+}
+.night-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  background: linear-gradient(rgba(var(--accent-amber-rgb), calc(var(--warmth) * 0.22)), rgba(var(--accent-amber-rgb), calc(var(--warmth) * 0.22))), rgba(var(--shadow-rgb), var(--dim));
+  mix-blend-mode: multiply;
+}
+
+/* ─── Notes, pictures, pages ────────────────────────────────── */
+
+.note-body {
+  font-size: 1rem;
+  max-width: none;
+}
+.image-viewer {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--sheet-bg);
+  color: var(--text-body);
+}
+.image-viewer::backdrop {
+  background: var(--modal-backdrop);
+}
+.image-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  touch-action: none;
+}
+.image-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  user-select: none;
+}
+.image-close {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--space-2) + var(--inset-top));
+  right: calc(var(--space-2) + var(--inset-right));
+  background: var(--modal-bg);
+}
+.image-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--space-4) + var(--inset-bottom));
+  text-align: center;
+  padding: 0 var(--space-5);
+}
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--space-3);
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+}
+.page-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  background: var(--panel-bg-faint);
+  color: var(--text-dim);
+}
+.page-thumb canvas {
+  width: 100%;
+  height: auto;
+  background: var(--chip-bg);
+}
+.page-thumb.current {
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+}
+.pdf-column {
+  touch-action: pan-x pan-y;
+}
+.pdf-pages {
+  transition: none;
+}
+
+/* ─── Library: collections, tags, edit ──────────────────────── */
+
+.chip-row.collections {
+  margin: var(--space-4) 0 var(--space-2);
+}
+.collection-tools {
+  margin: 0 0 var(--space-2);
+}
+.tag-row {
+  margin: var(--space-2) 0 0;
+}
+.chip-small {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  font-size: 0.8rem;
+}
+.details-tags {
+  margin-top: var(--space-3);
+}
+.edit-cover {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 7rem;
+  gap: var(--space-3);
+}
+.hl-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: var(--space-1);
+}
+.hl-dot.hl-amber {
+  background: rgba(var(--accent-amber-rgb), 0.85);
+}
+.hl-dot.hl-sage {
+  background: rgba(var(--accent-sage-rgb), 0.85);
+}
+.hl-dot.hl-bright {
+  background: rgba(var(--accent-bright-rgb), 0.85);
+}
+.notes-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+/* ─── Stats (style.md §8.15) ────────────────────────────────── */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-2);
+  background: var(--sheet-bg);
+  text-align: center;
+}
+.stat-value {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+}
+.bar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.bar-list li {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 4.5rem;
+  align-items: center;
+  gap: var(--space-3);
+}
+.bar-label {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.bar-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--chart-track);
+  overflow: hidden;
+}
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--series-1);
+  transform-origin: left;
+}
+.bar-value {
+  text-align: right;
+  color: var(--text-muted);
+}
+.catalog-entry {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+.danger {
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fixed-page.slide-next,
+  .fixed-page.slide-prev {
+    animation: none;
+  }
+}

@@ -77,3 +77,18 @@ export async function shareText(title: string, text: string): Promise<boolean> {
     return true;
   }
 }
+
+/**
+ * Looks a word or phrase up. On a phone the share sheet offers the
+ * dictionary and translation apps installed; in a browser a single word
+ * opens Wiktionary, and anything longer goes to the share sheet or clipboard.
+ */
+export async function lookUp(text: string): Promise<void> {
+  const q = text.trim();
+  if (!q) return;
+  if (!isNative && !/\s/.test(q) && navigator.onLine) {
+    window.open(`https://en.wiktionary.org/wiki/${encodeURIComponent(q.toLowerCase())}`, '_blank', 'noopener');
+    return;
+  }
+  await shareText(q, q);
+}

@@ -67,6 +67,43 @@ jobs:
           name: rosetta-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
+  android-smoke:
+    name: Android emulator smoke test
+    runs-on: ubuntu-latest
+    needs: android
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: rosetta-debug-apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install, launch, and check the app stays up
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            adb install -r app-debug.apk
+            adb shell am start -W -n io.github.notmehul.rosetta/.MainActivity
+            sleep 15
+            adb shell pidof io.github.notmehul.rosetta
+            adb shell am start -W -a android.intent.action.VIEW -d 'rosetta://open?title=Guide' io.github.notmehul.rosetta
+            sleep 5
+            adb shell pidof io.github.notmehul.rosetta
+            adb exec-out screencap -p > smoke.png
+            ! adb logcat -d | grep -E 'FATAL EXCEPTION|AndroidRuntime: Process: io.github.notmehul.rosetta'
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: android-smoke-screenshot
+          path: smoke.png
+          if-no-files-found: ignore
+
   ios:
     name: iOS simulator build
     runs-on: macos-latest

@@ -1,6 +1,6 @@
 // Adding files to the library from the picker, a drop, or "Open with".
 
-import { plural } from '../lib/format';
+import { t } from '../i18n/index.svelte';
 import { fileBytes } from '../lib/pick';
 import { library } from './library.svelte';
 import { reader } from './reader.svelte';
@@ -37,10 +37,26 @@ export async function addFiles(files: (File | IncomingFile)[], { openSingle = fa
     return;
   }
   if (errors.length) {
-    ui.notify(errors.length === 1 ? errors[0]! : `${plural(errors.length, 'file')} couldn’t be read. Rosetta reads EPUB, PDF, Word, Markdown, HTML and text.`, 'error');
+    ui.notify(errors.length === 1 ? errors[0]! : t('intake.unreadable', { count: errors.length }), 'error');
   } else if (added) {
-    ui.notify(`Added ${plural(added, 'document')}${known ? `; ${known} already here` : ''}.`, 'success');
+    ui.notify(known ? t('intake.addedSome', { count: added, known }) : t('intake.added', { count: added }), 'success');
   } else if (known) {
-    ui.notify(known === 1 ? 'That one is already in the library.' : 'Those are already in the library.', 'info');
+    ui.notify(known === 1 ? t('intake.knownOne') : t('intake.knownMany'), 'info');
   }
+}
+
+/** Brings back the file of an offloaded document: it must be the same file. */
+export async function restoreFile(id: string): Promise<void> {
+  const { pickFiles } = await import('../lib/pick');
+  const { ACCEPT } = await import('../formats/sniff');
+  const { hashBytes } = await import('./db');
+  const [file] = await pickFiles(ACCEPT, false);
+  if (!file) return;
+  const bytes = await fileBytes(file);
+  if ((await hashBytes(bytes)) !== id) {
+    ui.notify(t('intake.differentFile'), 'error');
+    return;
+  }
+  await library.add(bytes, file.name);
+  await reader.open(id);
 }

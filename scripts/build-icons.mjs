@@ -18,7 +18,7 @@ const pkgDir = dirname(require.resolve('lucide-static/package.json'));
 const version = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8')).version;
 
 const EXTRA = [
-  'book-open', 'file-text', 'file-type', 'file-code', 'file', 'globe', 'info', 'circle-check', 'triangle-alert', 'bookmark', 'bookmark-check', 'highlighter',
+  'book-open', 'file-text', 'file-type', 'file-code', 'file', 'globe', 'info', 'circle-check', 'triangle-alert', 'bookmark', 'bookmark-check', 'highlighter', 'image',
 ];
 
 function walk(dir) {

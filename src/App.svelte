@@ -6,17 +6,25 @@
   import { addFiles } from './state/intake';
   import LibraryView from './components/LibraryView.svelte';
   import ReaderView from './components/reader/ReaderView.svelte';
+  import CatalogSheet from './components/sheets/CatalogSheet.svelte';
   import ContentsSheet from './components/sheets/ContentsSheet.svelte';
   import DetailsSheet from './components/sheets/DetailsSheet.svelte';
+  import EditSheet from './components/sheets/EditSheet.svelte';
+  import NotesSheet from './components/sheets/NotesSheet.svelte';
   import SearchSheet from './components/sheets/SearchSheet.svelte';
   import SettingsSheet from './components/sheets/SettingsSheet.svelte';
+  import StatsSheet from './components/sheets/StatsSheet.svelte';
+  import StorageSheet from './components/sheets/StorageSheet.svelte';
   import TypeSheet from './components/sheets/TypeSheet.svelte';
   import ConfirmModal from './components/ui/ConfirmModal.svelte';
+  import PromptModal from './components/ui/PromptModal.svelte';
+  import { setLocale, t } from './i18n/index.svelte';
   import Toast from './components/ui/Toast.svelte';
 
   let dropping = $state(false);
 
   $effect(() => applyTheme(settings.value.theme));
+  $effect(() => void setLocale(settings.value.locale));
 
   function close() {
     ui.close();
@@ -51,13 +59,23 @@
 {/if}
 
 {#if dropping}
-  <div class="drop-veil" aria-hidden="true"><p class="t-verdict">Drop to add to the library</p></div>
+  <div class="drop-veil" aria-hidden="true"><p class="t-verdict">{t('library.drop')}</p></div>
 {/if}
 
 {#if ui.overlay === 'settings'}
   <SettingsSheet onclose={close} />
 {:else if ui.overlay === 'details' && ui.detailsId}
   <DetailsSheet id={ui.detailsId} onclose={close} />
+{:else if ui.overlay === 'edit' && ui.detailsId}
+  <EditSheet id={ui.detailsId} onclose={() => ui.open('details')} />
+{:else if ui.overlay === 'notes'}
+  <NotesSheet onclose={close} />
+{:else if ui.overlay === 'stats'}
+  <StatsSheet onclose={close} />
+{:else if ui.overlay === 'catalog'}
+  <CatalogSheet onclose={close} />
+{:else if ui.overlay === 'storage'}
+  <StorageSheet onclose={close} />
 {:else if ui.overlay === 'type'}
   <TypeSheet onclose={close} />
 {:else if reader.content}
@@ -69,5 +87,6 @@
 {/if}
 
 <ConfirmModal />
+<PromptModal />
 
 <Toast toast={ui.toast} onpause={() => ui.pauseToast()} onresume={() => ui.resumeToast()} onaction={() => ui.actOnToast()} />

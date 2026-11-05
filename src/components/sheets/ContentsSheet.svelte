@@ -1,26 +1,30 @@
 <script lang="ts">
   // Contents, bookmarks and highlights, each a list that takes you there.
+  import { t } from '../../i18n/index.svelte';
   import { notesMarkdown, slug } from '../../lib/export';
   import { relativeDay } from '../../lib/format';
   import { saveFile } from '../../platform/output';
   import { reader } from '../../state/reader.svelte';
   import { ui } from '../../state/ui.svelte';
   import MarkModal from '../reader/MarkModal.svelte';
+  import PageGrid from '../reader/PageGrid.svelte';
   import EmptyState from '../ui/EmptyState.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
   import TabRail from '../ui/TabRail.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
-  type View = 'contents' | 'bookmarks' | 'highlights';
+  type View = 'contents' | 'pages' | 'bookmarks' | 'highlights';
   const content = $derived(reader.content!);
-  let view = $state<View>(reader.content?.toc.length ? 'contents' : 'bookmarks');
+  // A PDF with no outline (a scan) starts on its pages.
+  let view = $state<View>(reader.content?.toc.length ? 'contents' : reader.content?.kind === 'pdf' ? 'pages' : 'bookmarks');
   let editing = $state<string | null>(null);
 
   const tabs = $derived([
-    { id: 'contents' as const, label: 'Contents', domId: 'tab-contents', controls: 'contents-panel' },
-    { id: 'bookmarks' as const, label: 'Bookmarks', badge: reader.bookmarks.length || undefined, domId: 'tab-bookmarks', controls: 'contents-panel' },
-    { id: 'highlights' as const, label: 'Highlights', badge: reader.highlights.length || undefined, domId: 'tab-highlights', controls: 'contents-panel' },
+    { id: 'contents' as const, label: t('contents.contents'), domId: 'tab-contents', controls: 'contents-panel' },
+    ...(content.kind === 'pdf' ? [{ id: 'pages' as const, label: t('contents.pages'), domId: 'tab-pages', controls: 'contents-panel' }] : []),
+    { id: 'bookmarks' as const, label: t('contents.bookmarks'), badge: reader.bookmarks.length || undefined, domId: 'tab-bookmarks', controls: 'contents-panel' },
+    { id: 'highlights' as const, label: t('contents.highlights'), badge: reader.highlights.length || undefined, domId: 'tab-highlights', controls: 'contents-panel' },
   ]);
 
   /** The contents entry the reader is in: the last one at or before the place. */
@@ -42,12 +46,12 @@
     const doc = reader.doc!;
     const md = notesMarkdown(doc, reader.marks);
     const out = await saveFile({ name: `${slug(doc.title)}-notes.md`, data: new TextEncoder().encode(md), mime: 'text/markdown' });
-    ui.notify(`Saved to ${out.label}.`, 'success');
+    ui.notify(t('saved.to', { where: out.label }), 'success');
   }
 </script>
 
-<Sheet title={reader.doc?.title ?? 'Contents'} {onclose}>
-  <TabRail {tabs} value={view} label="Lists" onselect={(id) => (view = id)} />
+<Sheet title={reader.doc?.title ?? t('contents.contents')} {onclose} wide={view === 'pages'}>
+  <TabRail {tabs} value={view} label={t('contents.lists')} onselect={(id) => (view = id)} />
   <div id="contents-panel" role="tabpanel" aria-labelledby="tab-{view}">
     {#if view === 'contents'}
       {#if content.toc.length}
@@ -62,8 +66,10 @@
           {/each}
         </ul>
       {:else}
-        <p class="t-hint empty-line">This document has no contents list.</p>
+        <p class="t-hint empty-line">{t('contents.none')}</p>
       {/if}
+    {:else if view === 'pages' && content.kind === 'pdf'}
+      <PageGrid {content} current={reader.location.section} onpick={(p) => go(p)} />
     {:else if view === 'bookmarks'}
       {#if reader.bookmarks.length}
         <ul class="row-list">
@@ -76,12 +82,12 @@
                 </span>
                 <span class="t-data-small faint">{relativeDay(b.createdAt)}</span>
               </button>
-              <button type="button" class="btn-icon" aria-label="Remove bookmark" onclick={() => void reader.removeMark(b.id)}><Icon name="x" /></button>
+              <button type="button" class="btn-icon" aria-label={t('reader.removeBookmark')} onclick={() => void reader.removeMark(b.id)}><Icon name="x" /></button>
             </li>
           {/each}
         </ul>
       {:else}
-        <EmptyState icon="bookmark" title="No bookmarks yet" text="The bookmark at the top of the page marks the place on screen." />
+        <EmptyState icon="bookmark" title={t('contents.noBookmarks')} text={t('contents.noBookmarksText')} />
       {/if}
     {:else if reader.highlights.length}
       <ul class="row-list">
@@ -95,15 +101,15 @@
                 <span class="t-data-small faint">{h.where}</span>
               </span>
             </button>
-            <button type="button" class="btn-icon" aria-label="Edit highlight" onclick={() => (editing = h.id)}><Icon name="pencil" /></button>
+            <button type="button" class="btn-icon" aria-label={t('contents.editHighlight')} onclick={() => (editing = h.id)}><Icon name="pencil" /></button>
           </li>
         {/each}
       </ul>
       <div class="btn-row btn-row-start">
-        <button type="button" class="btn btn-secondary" id="exportNotes" onclick={() => void exportNotes()}><Icon name="file-down" />Export as Markdown</button>
+        <button type="button" class="btn btn-secondary" id="exportNotes" onclick={() => void exportNotes()}><Icon name="file-down" />{t('contents.export')}</button>
       </div>
     {:else}
-      <EmptyState icon="highlighter" title="No highlights yet" text="Select some words on the page and pick a colour, or add a note." />
+      <EmptyState icon="highlighter" title={t('contents.noHighlights')} text={t('contents.noHighlightsText')} />
     {/if}
   </div>
 </Sheet>

@@ -17,6 +17,12 @@ const doc = (over: Partial<StoredDoc>): StoredDoc => ({
   location: null,
   progress: 0,
   finishedAt: null,
+  tags: [],
+  collections: [],
+  series: '',
+  seriesIndex: null,
+  offloaded: false,
+  updatedAt: 1,
   ...over,
 });
 

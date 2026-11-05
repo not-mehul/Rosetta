@@ -5,14 +5,26 @@ import { marked } from 'marked';
 import { clean, headingToc } from './sanitize';
 import type { DocInfo, FlowDoc } from './types';
 
-export const decodeText = (bytes: Uint8Array) => new TextDecoder().decode(bytes).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+export const decodeText = (bytes: Uint8Array) =>
+  new TextDecoder()
+    .decode(bytes)
+    .replace(/^\uFEFF/, '')
+    .replace(/\r\n?/g, '\n');
 
 /** YAML front matter: the fields Rosetta uses, and the body without it. */
-export function frontMatter(source: string): { title: string; author: string; body: string } {
+export function frontMatter(source: string): {
+  title: string;
+  author: string;
+  body: string;
+} {
   const m = /^---\n([\s\S]*?)\n(?:---|\.\.\.)\n/.exec(source);
   if (!m) return { title: '', author: '', body: source };
   const field = (name: string) => new RegExp(`^${name}:\\s*["']?(.+?)["']?\\s*$`, 'mi').exec(m[1]!)?.[1] ?? '';
-  return { title: field('title'), author: field('author'), body: source.slice(m[0].length) };
+  return {
+    title: field('title'),
+    author: field('author'),
+    body: source.slice(m[0].length),
+  };
 }
 
 export function markdownToHtml(source: string): string {
@@ -43,7 +55,12 @@ export function textToHtml(source: string): string {
 function single(html: string): FlowDoc {
   const { html: withIds, toc } = headingToc(html);
   const cleaned = clean(withIds);
-  return { kind: 'flow', sections: [{ title: '', html: cleaned.html, text: cleaned.text }], toc, dispose: () => undefined };
+  return {
+    kind: 'flow',
+    sections: [{ title: '', html: cleaned.html, text: cleaned.text }],
+    toc,
+    dispose: () => undefined,
+  };
 }
 
 function firstHeading(html: string): string {
@@ -58,7 +75,11 @@ export function openMarkdown(bytes: Uint8Array): FlowDoc {
 
 export function markdownInfo(bytes: Uint8Array): Omit<DocInfo, 'cover'> {
   const { title, author, body } = frontMatter(decodeText(bytes));
-  return { format: 'md', title: title || firstHeading(markdownToHtml(body.slice(0, 20000))), author };
+  return {
+    format: 'md',
+    title: title || firstHeading(markdownToHtml(body.slice(0, 20000))),
+    author,
+  };
 }
 
 export function openText(bytes: Uint8Array): FlowDoc {
@@ -76,5 +97,9 @@ export function openHtml(bytes: Uint8Array): FlowDoc {
 export function htmlInfo(bytes: Uint8Array): Omit<DocInfo, 'cover'> {
   const doc = parseHtml(bytes);
   const meta = (name: string) => doc.querySelector(`meta[name="${name}"]`)?.getAttribute('content')?.trim() ?? '';
-  return { format: 'html', title: doc.title.trim() || firstHeading(doc.body?.innerHTML ?? ''), author: meta('author') };
+  return {
+    format: 'html',
+    title: doc.title.trim() || firstHeading(doc.body?.innerHTML ?? ''),
+    author: meta('author'),
+  };
 }

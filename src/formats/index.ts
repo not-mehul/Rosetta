@@ -1,10 +1,13 @@
 // The one door into the formats: what a file is, what it's called, and the
 // readable document inside it. PDF and Word are loaded only when needed.
 
+import { cbzInfo, openCbz } from './cbz';
 import { epubInfo, openEpub } from './epub';
+import { fb2Info, openFb2 } from './fb2';
 import { htmlInfo, markdownInfo, openHtml, openMarkdown, openText } from './flow';
 import { detectFormat, titleFromName } from './sniff';
-import { FormatError, type DocInfo, type Format, type OpenDoc } from './types';
+import { FormatError, PasswordError, type DocInfo, type Format, type OpenDoc } from './types';
+import { t } from '../i18n/index.svelte';
 
 /** Scales an image down to a 240px-wide JPEG for the library card. */
 export async function thumbnail(bytes: Uint8Array, type: string, width = 240): Promise<Uint8Array | null> {
@@ -24,18 +27,36 @@ export async function thumbnail(bytes: Uint8Array, type: string, width = 240): P
 }
 
 /** Reads what the library shows for a file. Throws FormatError for files Rosetta can't read. */
-export async function readInfo(bytes: Uint8Array, name: string): Promise<DocInfo> {
+export async function readInfo(bytes: Uint8Array, name: string, password?: string): Promise<DocInfo> {
   const format = detectFormat(bytes, name);
-  if (!format) throw new FormatError('Rosetta reads EPUB, PDF, Word (.docx), Markdown, HTML and plain text.');
+  if (!format) throw new FormatError(t('error.unknown'));
   let info: DocInfo;
   switch (format) {
     case 'epub': {
       const { coverBytes, coverType, ...rest } = epubInfo(bytes);
-      info = { ...rest, cover: coverBytes ? await thumbnail(coverBytes, coverType) : null };
+      info = {
+        ...rest,
+        cover: coverBytes ? await thumbnail(coverBytes, coverType) : null,
+      };
       break;
     }
+    case 'fb2':
+    case 'cbz': {
+      const { coverBytes, coverType, ...rest } = format === 'fb2' ? fb2Info(bytes) : cbzInfo(bytes);
+      info = {
+        ...rest,
+        cover: coverBytes ? await thumbnail(coverBytes, coverType) : null,
+      };
+      break;
+    }
+    case 'rtf':
+      info = { ...(await import('./rtf')).rtfInfo(bytes), cover: null };
+      break;
+    case 'odt':
+      info = { ...(await import('./odt')).odtInfo(bytes), cover: null };
+      break;
     case 'pdf':
-      info = await (await import('./pdf')).pdfInfo(bytes);
+      info = await (await import('./pdf')).pdfInfo(bytes, password);
       break;
     case 'docx':
       info = { ...(await import('./docx')).docxInfo(bytes), cover: null };
@@ -52,12 +73,20 @@ export async function readInfo(bytes: Uint8Array, name: string): Promise<DocInfo
   return { ...info, title: info.title || titleFromName(name) };
 }
 
-export async function openDocument(bytes: Uint8Array, format: Format): Promise<OpenDoc> {
+export async function openDocument(bytes: Uint8Array, format: Format, password?: string): Promise<OpenDoc> {
   switch (format) {
     case 'epub':
       return openEpub(bytes);
+    case 'fb2':
+      return openFb2(bytes);
+    case 'cbz':
+      return openCbz(bytes);
+    case 'rtf':
+      return (await import('./rtf')).openRtf(bytes);
+    case 'odt':
+      return (await import('./odt')).openOdt(bytes);
     case 'pdf':
-      return (await import('./pdf')).openPdf(bytes);
+      return (await import('./pdf')).openPdf(bytes, password);
     case 'docx':
       return (await import('./docx')).openDocx(bytes);
     case 'md':
@@ -69,4 +98,4 @@ export async function openDocument(bytes: Uint8Array, format: Format): Promise<O
   }
 }
 
-export { FormatError, type DocInfo, type Format, type OpenDoc };
+export { FormatError, PasswordError, type DocInfo, type Format, type OpenDoc };

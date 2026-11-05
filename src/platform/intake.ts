@@ -24,11 +24,15 @@ async function read(url: string): Promise<Incoming | null> {
   return { name: nameFrom(url), bytes };
 }
 
-/** Calls `onOpen` for the file the app was launched with, and for each one after. */
-export async function listenForFiles(onOpen: (file: Incoming) => void, onError: (err: unknown) => void): Promise<void> {
+/** Calls `onOpen` for the file the app was launched with, and for each one after; `onLink` for rosetta:// links. */
+export async function listenForFiles(onOpen: (file: Incoming) => void, onError: (err: unknown) => void, onLink: (url: string) => void = () => undefined): Promise<void> {
   if (!isNative) return;
   const handle = (url: string | undefined) => {
     if (!url) return;
+    if (/^rosetta:/i.test(url)) {
+      onLink(url);
+      return;
+    }
     read(url)
       .then((file) => file && onOpen(file))
       .catch(onError);

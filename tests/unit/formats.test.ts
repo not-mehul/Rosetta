@@ -39,9 +39,9 @@ describe('titleFromName', () => {
 });
 
 describe('clean', () => {
-  it('drops scripts, styles, classes and handlers, and prefixes ids and anchors', () => {
+  it('drops scripts, styles and handlers, and prefixes ids, classes and anchors', () => {
     const out = clean('<p id="a" class="x" style="color:red" onclick="evil()">Hi <a href="#a">me</a></p><script>alert(1)</script><style>p{}</style>');
-    expect(out.html).toBe('<p id="r-a">Hi <a href="#r-a" data-link="#r-a">me</a></p>');
+    expect(out.html).toBe('<p id="r-a" class="r-x">Hi <a href="#r-a" data-link="#r-a">me</a></p>');
     expect(out.text).toBe('Hi me');
   });
 

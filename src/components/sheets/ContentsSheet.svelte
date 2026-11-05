@@ -11,7 +11,7 @@
   import EmptyState from '../ui/EmptyState.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
-  import TabRail from '../ui/TabRail.svelte';
+  import { TabRail } from 'dusk-dawn';
 
   let { onclose }: { onclose: () => void } = $props();
   type View = 'contents' | 'pages' | 'bookmarks' | 'highlights';

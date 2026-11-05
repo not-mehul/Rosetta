@@ -16,7 +16,7 @@ const config: CapacitorConfig = {
   plugins: {
     SystemBars: {
       // index.html opts into edge-to-edge with viewport-fit=cover; the CSS
-      // pads the layout with the --inset-* variables (components.css).
+      // pads the layout with the --inset-* variables (dusk-dawn's components.css).
       insetsHandling: 'css',
       initialViewportFitValueHint: 'cover',
       // Follow the system until src/platform/theme.svelte.ts applies the user's theme.

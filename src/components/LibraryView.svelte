@@ -15,8 +15,7 @@
   import DocCard from './DocCard.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
-  import TabRail from './ui/TabRail.svelte';
-  import ThemeToggle from './ui/ThemeToggle.svelte';
+  import { TabRail, ThemeToggle } from 'dusk-dawn';
 
   let filter = $state('');
   const v = $derived(settings.value);

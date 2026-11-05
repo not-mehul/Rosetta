@@ -4,7 +4,7 @@
 //
 //   npm run assets
 //
-// Colours come from design/tokens.json. The R is Fraunces (opsz 72, wght 400),
+// Colours come from the dusk-dawn package's tokens.json. The R is Fraunces (opsz 72, wght 400),
 // the UI's own serif, outlined once so the drawing doesn't depend on the
 // fonts installed where this runs.
 
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const tokens = JSON.parse(readFileSync(join(root, 'design/tokens.json'), 'utf8')).color;
+const tokens = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('dusk-dawn/tokens.json')), 'utf8')).color;
 const BG = tokens['bg-grad-mid'].dusk;
 const AMBER = tokens['accent-amber'].dusk;
 

@@ -2,7 +2,7 @@
 
 A quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB2, comic archives, Markdown, HTML and plain-text documents. Add your files, read them in one calm typeface, and come back to the exact place you stopped. It runs in the browser and as an Android and iOS app, and everything stays on your device.
 
-Rosetta uses **Editorial Dusk & Dawn**, the design system it shares with Waymark, BookShelf, Ledger and Colophon. The spec is [`design/style.md`](design/style.md).
+Rosetta uses **Editorial Dusk & Dawn**, the design system it shares with Waymark, BookShelf, Ledger and Colophon. Everything shared (tokens, Fraunces, the shared components and the colour checks) comes from one package, [`dusk-dawn`](https://github.com/not-mehul/dusk-dawn), whose `style.md` is the spec.
 
 ## What it does
 
@@ -52,25 +52,21 @@ npm run assets       # redraw the app icon and splash screens
 | `src/formats/` | Format detection, sanitising, and the readers for each format, with no UI |
 | `src/reader/` | Text offsets and highlight painting, search, progress, selection, pages, the page curl, footnotes and sentences |
 | `src/state/` | The library, the open document and its marks, settings, reading stats, read aloud, backup and sync, and UI state |
-| `src/components/` | The library, the reader views and the sheets; `ui/` holds the shared pieces (TabRail, Toast, ThemeToggle, Sheet and Modal are the same as in the other apps) |
+| `src/components/` | The library, the reader views and the sheets; `ui/` holds Rosetta's own pieces (Sheet, Modal and the rest); TabRail, Toast and ThemeToggle come from `dusk-dawn` |
 | `src/platform/` | Native bridges: files in and out, theme and system bars, haptics, keep-awake, volume keys and hand-off to the other apps |
 | `src/i18n/` | The interface strings: `en.ts` is the reference, and `es.ts`, `fr.ts` and `de.ts` must have every key (a unit test checks the placeholders) |
 | `src/lib/` | Pickers, exports, quote cards, OPDS catalogs and the guide |
-| `src/styles/` | `tokens.css` (generated), `components.css` (shared, identical to the other apps) and `app.css` |
+| `src/styles/` | `app.css`, which imports `dusk-dawn/tokens.css` and `dusk-dawn/components.css` first |
 | `tests/` | Vitest unit tests, Playwright end-to-end tests, and the fixtures (`tests/fixtures/make-fixtures.mjs` rebuilds them) |
 | `android/`, `ios/` | The Capacitor projects |
-| `design/` | `style.md`, `tokens.json`, `build-tokens.mjs` and the Fraunces fonts, identical to the other apps |
 
 ## Design tokens
 
-Edit `design/tokens.json`, never `tokens.css`:
+Tokens, fonts and the shared components live in the [`dusk-dawn`](https://github.com/not-mehul/dusk-dawn) package, installed at a tag. To change the design, change the package, tag a release, and move the tag in `package.json` (`style.md` §18). `dusk-dawn check` (part of `npm run check`) tests contrast in both themes, and `dusk-dawn colours` (part of `npm run lint`) fails on any literal colour in `src/`.
 
 ```sh
-npm run tokens       # regenerate src/styles/tokens.css and copy the fonts
 npm run icons        # regenerate src/components/ui/icons.ts after using a new Lucide name
 ```
-
-`scripts/check-colours.mjs` (part of `npm run lint`) fails on any literal colour in `src/`.
 
 ## Updates
 
@@ -78,4 +74,4 @@ Renovate (`renovate.json`) groups dev tooling and the Capacitor plugins. pdf.js 
 
 ## Licences
 
-Fraunces: SIL Open Font License (`design/fonts/Fraunces-OFL.txt`). Lucide: ISC. pdf.js: Apache 2.0. mammoth: BSD 2-Clause. marked and fflate: MIT. DOMPurify: Apache 2.0 or MPL 2.0. Dexie: Apache 2.0. Capacitor and its plugins: MIT.
+Fraunces: SIL Open Font License (shipped in `dusk-dawn`). Lucide: ISC. pdf.js: Apache 2.0. mammoth: BSD 2-Clause. marked and fflate: MIT. DOMPurify: Apache 2.0 or MPL 2.0. Dexie: Apache 2.0. Capacitor and its plugins: MIT.

@@ -3,7 +3,7 @@
   // A document in the library (style.md §7.2): cover, serif title, a mono line,
   // and one trailing figure, the share read.
   import { FORMAT_LABEL } from '../formats/types';
-  import { fileSize } from '../lib/format';
+  import { fileSize, relativeDay } from '../lib/format';
   import type { StoredDoc } from '../state/db';
   import { reader } from '../state/reader.svelte';
   import { ui } from '../state/ui.svelte';
@@ -38,8 +38,10 @@
     <span class="doc-figure">
       {#if status === 'finished'}
         <span class="chip-status is-done">{t('library.finishedChip')}</span>
+        <span class="t-data-small faint doc-when">{relativeDay(doc.finishedAt!)}</span>
       {:else if status === 'reading'}
         <span class="t-data amber tabular">{Math.floor(doc.progress * 100)}%</span>
+        <span class="t-data-small faint doc-when">{relativeDay(doc.openedAt!)}</span>
       {:else}
         <span class="chip-status">{t('library.new')}</span>
       {/if}

@@ -4,9 +4,10 @@
 import { openDocument, PasswordError, type OpenDoc } from '../formats';
 import { FORMAT_LABEL } from '../formats/types';
 import { excerpt } from '../reader/offsets';
-import { flowProgress, pageProgress, START, type Location } from '../reader/progress';
+import { chapterAt, chapterTicks, FAR_CHARS, flowProgress, globalOffset, pageProgress, START, type Location } from '../reader/progress';
 import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
 import { t } from '../i18n/index.svelte';
+import { duration } from '../lib/format';
 import { tick } from '../platform/device';
 import { db, type HighlightColour, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
@@ -42,12 +43,19 @@ class ReaderState {
   jumpedAt = 0;
   /** The view on screen turns a page (paged mode) or a screen (scrolling); set by the view. */
   turner: ((direction: 1 | -1) => void) | null = null;
+  /** Where the reader was before a long jump (contents, search, a link), to go back to. */
+  returnTo = $state.raw<Location | null>(null);
   /** Called when a document is finished (main.ts offers BookShelf). */
   onFinished: ((doc: StoredDoc) => void) | null = null;
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   private jumpKey = 0;
   private lengths: number[] = [];
+  /** Where a remembered jump landed; reading on a few screens from it lets the way back go. */
+  private landed: Location | null = null;
+  /** Progress when the document was opened, for the note on leaving. */
+  private openedProgress = 0;
+  private starts: Location[] | null = null;
 
   get isPdf(): boolean {
     return this.content?.kind === 'pdf';
@@ -69,6 +77,27 @@ class ReaderState {
     if (this.content?.kind !== 'flow') return 0;
     const total = this.lengths.reduce((a, b) => a + b, 0);
     return Math.max(0, total - Math.round(this.progress * total));
+  }
+
+  /** Where each chapter starts: contents entries, or sections when there are none. */
+  get chapterStarts(): Location[] {
+    if (this.starts) return this.starts;
+    const c = this.content;
+    if (c?.kind !== 'flow') return [];
+    if (c.sections.length === 1) return (this.starts = [START, ...this.anchorOffsets().map((a) => ({ section: 0, offset: a.offset }))]);
+    const fromToc = [...new Set(c.toc.map((e) => e.section))].filter((i) => i >= 0 && i < c.sections.length);
+    const sections = fromToc.length > 1 ? fromToc : c.sections.map((_, i) => i);
+    return (this.starts = sections.map((section) => ({ section, offset: 0 })));
+  }
+
+  /** Chapter boundaries as fractions, for ticks on the footer's meter. */
+  get ticks(): number[] {
+    return this.content?.kind === 'flow' ? chapterTicks(this.lengths, this.chapterStarts) : [];
+  }
+
+  /** The chapter on screen: its number, how many, and the characters left in it. */
+  get chapter(): { index: number; count: number; charsLeft: number } {
+    return chapterAt(this.lengths, this.chapterStarts, this.location);
   }
 
   get bookmarks(): Mark[] {
@@ -149,6 +178,7 @@ class ReaderState {
       this.lengths = content.kind === 'flow' ? content.sections.map((s) => s.text.length) : [];
       this.content = content;
       this.marks = marks;
+      this.openedProgress = doc.progress;
       const at = doc.location && doc.location.section < this.sectionCount ? doc.location : START;
       this.location = at;
       this.section = content.kind === 'flow' ? at.section : 0;
@@ -175,7 +205,7 @@ class ReaderState {
   /** Opens a document at a mark: the notes view and sync use it. */
   async openAt(id: string, to: Location, flash?: Jump['flash']): Promise<void> {
     if (this.doc?.id !== id) await this.open(id);
-    if (this.doc?.id === id) this.goTo(to, flash);
+    if (this.doc?.id === id) this.goTo(to, flash, undefined, true);
   }
 
   /** Opens the file, asking for a PDF's password when it needs one. Null when the person cancels. */
@@ -230,13 +260,39 @@ class ReaderState {
     this.marks = [];
     this.jump = null;
     this.anchors = null;
+    this.starts = null;
+    this.returnTo = null;
+    this.landed = null;
     this.section = 0;
     if (settings.value.lastDocId) void settings.update({ lastDocId: null });
   }
 
-  /** Moves to a place; the view scrolls there and clears `jump`. */
-  goTo(to: Location, flash?: Jump['flash'], anchor?: string): void {
+  /**
+   * Leaves the document for the library, with a word on how the sitting went
+   * when there was real reading in it.
+   */
+  leave(): void {
+    const doc = this.doc;
+    const ms = stats.sessionMs;
+    const gained = this.content ? this.progress - this.openedProgress : 0;
+    this.close();
+    // A toast that offers something (Undo, BookShelf) is worth more than the note.
+    if (!doc || ms < 60_000 || ui.toast?.action) return;
+    const percent = Math.floor(gained * 100);
+    ui.notify(percent >= 1 ? t('reader.sitting', { time: duration(ms), percent }) : t('reader.sittingShort', { time: duration(ms) }), 'info');
+  }
+
+  /**
+   * Moves to a place; the view scrolls there and clears `jump`. `remember`
+   * keeps the place left, when it is far, so the footer can offer the way back.
+   */
+  goTo(to: Location, flash?: Jump['flash'], anchor?: string, remember = false): void {
     if (!this.content) return;
+    if (remember) {
+      const from = $state.snapshot(this.location);
+      this.returnTo = this.isFar(from, to) ? from : this.returnTo;
+      this.landed = null;
+    }
     const section = Math.max(0, Math.min(this.sectionCount - 1, to.section));
     if (this.content.kind === 'flow') this.section = section;
     this.location = { section, offset: to.offset };
@@ -249,6 +305,19 @@ class ReaderState {
     this.jumpedAt = performance.now();
     this.chrome = true;
     this.save();
+  }
+
+  /** Back to the place before the jump; the place left becomes the way back, so the two can be compared. */
+  goBack(): void {
+    const back = this.returnTo;
+    if (!back) return;
+    this.goTo(back, undefined, undefined, true);
+  }
+
+  /** More than a couple of screens (or `times` that) apart. */
+  private isFar(a: Location, b: Location, times = 1): boolean {
+    if (this.isPdf) return Math.abs(a.section - b.section) > times;
+    return Math.abs(globalOffset(this.lengths, a) - globalOffset(this.lengths, b)) > FAR_CHARS * times;
   }
 
   nextSection(): void {
@@ -265,15 +334,20 @@ class ReaderState {
     this.location = location;
     this.visibleEnd = visibleEnd;
     if (this.doc) stats.activity(this.doc.id, Math.abs(this.globalChar(location) - before));
+    if (this.returnTo) {
+      // The scroll a jump causes settles where it lands; reading on from there lets the way back go.
+      if (!this.landed || performance.now() - this.jumpedAt < 800) this.landed = location;
+      else if (this.isFar(this.landed, location, 4)) {
+        this.returnTo = null;
+        this.landed = null;
+      }
+    }
     this.save();
   }
 
   /** Characters from the start of the document to a place (flow documents). */
   private globalChar(at: Location): number {
-    if (this.content?.kind !== 'flow') return 0;
-    let n = 0;
-    for (let i = 0; i < at.section && i < this.lengths.length; i++) n += this.lengths[i]!;
-    return n + at.offset;
+    return this.content?.kind === 'flow' ? globalOffset(this.lengths, at) : 0;
   }
 
   private save(): void {
@@ -298,17 +372,29 @@ class ReaderState {
     this.doc = { ...doc, ...patch };
     if (justFinished) {
       const finished = { ...doc, ...patch };
-      ui.notify(t('reader.finished'), 'success', {
-        label: t('action.undo'),
-        run: () => {
-          if (!this.doc) return;
-          this.doc = { ...this.doc, finishedAt: null };
-          void library.update(doc.id, { finishedAt: null });
-        },
-        // Once the Undo has passed, the finished book can go on to BookShelf.
-        dismissed: () => this.onFinished?.(finished),
-      });
+      void this.finishedMessage(doc.id).then((message) => this.notifyFinished(doc, finished, message));
     }
+  }
+
+  /** "Finished after 6 h 10 min over 9 days", from the reading kept for it. */
+  private async finishedMessage(id: string): Promise<string> {
+    await stats.flush();
+    const sessions = await db.sessions.where('docId').equals(id).toArray().catch(() => []);
+    const ms = sessions.reduce((a, s) => a + s.ms, 0);
+    if (ms < 60_000) return t('reader.finished');
+    return t('reader.finishedAfter', { time: duration(ms), days: t('stats.days', { count: sessions.length }) });
+  }
+
+  private notifyFinished(doc: StoredDoc, finished: StoredDoc, message: string): void {
+    ui.notify(message, 'success', {
+      label: t('action.undo'),
+      run: () => {
+        if (this.doc?.id === doc.id) this.doc = { ...this.doc, finishedAt: null };
+        void library.update(doc.id, { finishedAt: null });
+      },
+      // Once the Undo has passed, the finished book can go on to BookShelf.
+      dismissed: () => this.onFinished?.(finished),
+    });
   }
 
   // ─── Marks ─────────────────────────────────────────────────

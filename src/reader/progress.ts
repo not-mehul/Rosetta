@@ -50,3 +50,40 @@ export function timeLeft(charsLeft: number, pace = DEFAULT_PACE): string {
   const m = minutes % 60;
   return m ? t('stats.leftHoursMin', { h, min: m }) : t('stats.leftHours', { h });
 }
+
+/** Characters from the start of a flow document to a place. */
+export function globalOffset(lengths: readonly number[], at: Location): number {
+  let n = 0;
+  for (let i = 0; i < at.section && i < lengths.length; i++) n += lengths[i]!;
+  return n + Math.min(at.offset, lengths[at.section] ?? 0);
+}
+
+/** Where chapters start, as characters from the start, sorted and without repeats. */
+export function chapterOffsets(lengths: readonly number[], starts: readonly Location[]): number[] {
+  return [...new Set(starts.map((s) => globalOffset(lengths, s)))].sort((a, b) => a - b);
+}
+
+/** The chapter boundaries as fractions of the document, for ticks on the meter. */
+export function chapterTicks(lengths: readonly number[], starts: readonly Location[], max = 60): number[] {
+  const total = lengths.reduce((a, b) => a + b, 0);
+  if (!total) return [];
+  const ticks = chapterOffsets(lengths, starts)
+    .map((o) => o / total)
+    .filter((f) => f > 0.004 && f < 0.996);
+  // Past a point, ticks are noise rather than chapters.
+  return ticks.length > max ? [] : ticks;
+}
+
+/** The chapter a place is in: its number (from 1) and how many there are. */
+export function chapterAt(lengths: readonly number[], starts: readonly Location[], at: Location): { index: number; count: number; charsLeft: number } {
+  const offsets = chapterOffsets(lengths, starts);
+  const total = lengths.reduce((a, b) => a + b, 0);
+  const here = globalOffset(lengths, at);
+  let index = 0;
+  while (index < offsets.length && offsets[index]! <= here) index++;
+  const next = offsets[index] ?? total;
+  return { index: Math.max(1, index), count: Math.max(1, offsets.length), charsLeft: Math.max(0, next - here) };
+}
+
+/** A jump is worth coming back from when it lands more than a few screens away. */
+export const FAR_CHARS = 3000;

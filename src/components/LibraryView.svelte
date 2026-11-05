@@ -15,6 +15,7 @@
   import { ui } from '../state/ui.svelte';
   import { addGuide } from '../lib/guide';
   import DocCard from './DocCard.svelte';
+  import BlobImg from './ui/BlobImg.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
   import { TabRail, ThemeToggle } from 'dusk-dawn';
@@ -119,6 +120,7 @@
         <section class="resume panel" aria-label={t('library.continue')}>
           <p class="t-section-label">{t('library.continue')}</p>
           <button type="button" class="resume-body" id="resume" onclick={() => void reader.open(current.id)}>
+            {#if current.cover}<span class="doc-thumb resume-thumb" aria-hidden="true"><BlobImg bytes={current.cover} alt="" /></span>{/if}
             <span class="resume-text">
               <span class="t-card-title ellipsis-2">{current.title}</span>
               {#if current.author}<span class="doc-author ellipsis">{current.author}</span>{/if}
@@ -135,6 +137,7 @@
         <section class="resume panel" aria-label={t('library.upNext')}>
           <p class="t-section-label">{t('library.upNext')}</p>
           <button type="button" class="resume-body" id="upNext" onclick={() => void reader.open(next.next.id)}>
+            {#if next.next.cover}<span class="doc-thumb resume-thumb" aria-hidden="true"><BlobImg bytes={next.next.cover} alt="" /></span>{/if}
             <span class="resume-text">
               <span class="t-card-title ellipsis-2">{next.next.title}</span>
               <span class="doc-author ellipsis">{t('library.upNextAfter', { series: next.next.series, title: next.after.title })}</span>

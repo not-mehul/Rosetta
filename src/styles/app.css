@@ -289,9 +289,13 @@ ol {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-/* Reading progress is completion, so it fills in sage (§8.15). */
+/* Reading progress is completion, so it fills in sage (§8.15), and eases to a new value. */
 .meter-fill {
   background: var(--accent-sage);
+}
+.meter-fill,
+.bar-fill {
+  transition: transform var(--dur-settle) var(--ease-settle);
 }
 
 /* ─── The library ────────────────────────────────────────────── */
@@ -526,6 +530,10 @@ ol {
   color: var(--accent-amber);
   box-shadow: inset 2px 0 0 var(--accent-amber);
 }
+/* Chapters behind the place step back, so the way ahead reads first. */
+.toc-row.read {
+  color: var(--text-dim);
+}
 .highlight-row {
   align-items: stretch;
 }
@@ -546,6 +554,7 @@ ol {
 .search-match {
   background: none;
   color: var(--accent-amber);
+  box-shadow: inset 0 -1px 0 rgba(var(--accent-amber-rgb), 0.5);
 }
 .empty-line {
   padding: var(--space-5) 0;
@@ -900,6 +909,15 @@ body:has(.reader-foot) {
 .reading h1 {
   font-size: 1.9em;
   letter-spacing: -0.02em;
+}
+.reading:not(.publisher) h1::after {
+  /* A short amber hairline under a chapter's title: the one ornament on the page. */
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  margin-top: 0.6em;
+  background: rgba(var(--accent-amber-rgb), 0.6);
 }
 .reading h2 {
   font-size: 1.45em;
@@ -1701,4 +1719,18 @@ mark.tts {
 }
 .next-volume .btn {
   max-width: 100%;
+}
+
+/* When a card was last read or finished, under its figure. */
+.doc-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.doc-when {
+  white-space: nowrap;
+}
+.resume-thumb {
+  width: 44px;
 }

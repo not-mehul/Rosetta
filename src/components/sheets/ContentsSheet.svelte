@@ -37,6 +37,11 @@
     return at;
   });
 
+  /** Opens the list with the current chapter in view, not at the top. */
+  function showCurrent(list: HTMLElement) {
+    list.querySelector('[aria-current]')?.scrollIntoView({ block: 'center' });
+  }
+
   function go(section: number, offset = 0, anchor?: string, flash?: { start: number; end: number }) {
     onclose();
     reader.goTo({ section, offset }, flash, anchor, true);
@@ -55,10 +60,10 @@
   <div id="contents-panel" role="tabpanel" aria-labelledby="tab-{view}">
     {#if view === 'contents'}
       {#if content.toc.length}
-        <ul class="row-list toc-list">
+        <ul class="row-list toc-list" {@attach showCurrent}>
           {#each content.toc as entry, i (i)}
             <li>
-              <button type="button" class="row toc-row" class:current={i === currentEntry} style:--depth={Math.min(entry.depth, 4)} onclick={() => go(entry.section, 0, entry.anchor)}>
+              <button type="button" class="row toc-row" class:current={i === currentEntry} class:read={i < currentEntry} aria-current={i === currentEntry ? 'location' : undefined} style:--depth={Math.min(entry.depth, 4)} onclick={() => go(entry.section, 0, entry.anchor)}>
                 <span class="row-main">{entry.label}</span>
                 {#if content.kind === 'pdf'}<span class="t-data-small faint tabular">{entry.section + 1}</span>{/if}
               </button>

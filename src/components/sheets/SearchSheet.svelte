@@ -38,7 +38,7 @@
 
   function go(hit: Hit) {
     onclose();
-    reader.goTo({ section: hit.section, offset: reader.isPdf ? 0 : hit.start }, { start: hit.start, end: hit.end });
+    reader.goTo({ section: hit.section, offset: reader.isPdf ? 0 : hit.start }, { start: hit.start, end: hit.end }, undefined, true);
   }
 </script>
 

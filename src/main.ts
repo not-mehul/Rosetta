@@ -37,9 +37,14 @@ async function start(): Promise<void> {
     ui.notify(t('handoff.finished'), 'success', { label: t('handoff.logIt'), run: () => void sendToBookShelf(doc) });
   };
 
+  // Today's goal, met while reading: said once, quietly.
+  stats.onGoal = (minutes) => {
+    if (!ui.toast?.action) ui.notify(t('stats.goalMet', { count: minutes }), 'success');
+  };
+
   ui.onBack = () => {
     if (!reader.doc) return false;
-    reader.close();
+    reader.leave();
     return true;
   };
 

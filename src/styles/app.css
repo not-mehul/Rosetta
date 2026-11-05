@@ -766,6 +766,62 @@ ol {
   min-height: 24px;
   align-items: center;
 }
+.reader-foot-row > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.reader-foot .meter {
+  position: relative;
+}
+/* A chapter boundary: a cut in the line, in the page colour. */
+.meter-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--sheet-bg);
+  pointer-events: none;
+}
+/* The footer's figure changes on a tap; the target is taller than it looks (§14). */
+.foot-figure {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -10px 0;
+  padding: 0;
+  text-align: left;
+  color: var(--text-dim);
+  border-radius: var(--radius);
+  transition: color var(--dur-hover);
+}
+.foot-figure:hover {
+  color: var(--text-heading);
+}
+/* The way back after a jump: one quiet amber action. */
+.return-to {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 55%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  margin: -10px 0;
+  padding: 0 var(--space-2);
+  color: var(--accent-amber);
+  border-radius: var(--radius);
+  animation: fade-in var(--dur-settle);
+  transition: background-color var(--dur-hover);
+}
+.return-to:hover {
+  background: var(--hover-bg);
+}
+.return-to svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
 .chrome-hidden .reader-bar {
   transform: translateY(-100%);
   opacity: 0;
@@ -1482,4 +1538,167 @@ mark.tts {
   .fixed-page.slide-prev {
     animation: none;
   }
+}
+
+/* ─── Depth: the library's figures, the calendar, most read ─── */
+
+.resume-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+.goal-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* A calendar of reading: one cell a day, Monday at the top, weeks left to right. */
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.calendar-months,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(var(--weeks), minmax(0, 1fr));
+  gap: 3px;
+}
+.calendar-months {
+  min-height: 1rem;
+}
+.calendar-months > span {
+  overflow: visible;
+  white-space: nowrap;
+}
+.calendar-days {
+  grid-template-rows: repeat(7, auto);
+  grid-auto-flow: column;
+}
+.calendar-days:focus {
+  outline: none;
+}
+.calendar-day {
+  display: block;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border-radius: var(--radius);
+  background: var(--chart-track);
+}
+.calendar-day.level-1 {
+  background: rgba(var(--accent-amber-rgb), 0.3);
+}
+.calendar-day.level-2 {
+  background: rgba(var(--accent-amber-rgb), 0.5);
+}
+.calendar-day.level-3 {
+  background: rgba(var(--accent-amber-rgb), 0.75);
+}
+.calendar-day.level-4 {
+  background: var(--accent-amber);
+}
+.calendar-day.is-future {
+  background: transparent;
+}
+.calendar-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--text-dim);
+}
+.calendar-day[aria-pressed='true'] {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+.calendar-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.calendar-foot p {
+  margin: 0;
+}
+.calendar-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.calendar-legend .calendar-day {
+  width: 10px;
+}
+.calendar-legend .calendar-day:first-child {
+  margin-left: var(--space-1);
+}
+.calendar-legend .calendar-day:last-of-type {
+  margin-right: var(--space-1);
+}
+
+/* Most read: a title, its time, and a bar that compares it with the first. */
+.most-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.most-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+}
+.most-title {
+  font-family: var(--font-serif);
+  color: var(--text-heading);
+}
+.most-days {
+  text-align: right;
+}
+
+/* The next volume, from a document's details: a row that opens it. */
+.details-next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px var(--space-3);
+  width: 100%;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-2);
+  text-align: left;
+  border-top: 1px solid var(--border-faint);
+  border-bottom: 1px solid var(--border-faint);
+  transition: background-color var(--dur-hover);
+}
+.details-next:hover {
+  background: var(--hover-bg);
+}
+.details-next > svg {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  width: 18px;
+  height: 18px;
+  color: var(--text-faint);
+}
+.details-next-title {
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  color: var(--text-heading);
+}
+
+/* After the last page: the next volume in the series. */
+.next-volume {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: var(--read-measure, 38em);
+  margin: var(--space-6) auto 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.next-volume .btn {
+  max-width: 100%;
 }

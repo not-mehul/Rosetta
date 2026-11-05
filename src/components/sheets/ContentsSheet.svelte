@@ -39,7 +39,7 @@
 
   function go(section: number, offset = 0, anchor?: string, flash?: { start: number; end: number }) {
     onclose();
-    reader.goTo({ section, offset }, flash, anchor);
+    reader.goTo({ section, offset }, flash, anchor, true);
   }
 
   async function exportNotes() {

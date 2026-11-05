@@ -12,6 +12,7 @@
   import { findPage, firstOffsetOnPage, pageCount, pageOfOffset, pageOfRect, TextIndex, type Columns } from '../../reader/paging';
   import { watchSelection, type PageSelection } from '../../reader/selection.svelte';
   import type { HighlightColour } from '../../state/db';
+  import { library, nextInSeries } from '../../state/library.svelte';
   import { reader } from '../../state/reader.svelte';
   import { settings } from '../../state/settings.svelte';
   import { MEASURE_VALUE, SPACING_VALUE } from '../../state/settings';
@@ -414,7 +415,7 @@
         e.preventDefault();
         const { section: at, anchor, el } = targetOf(to);
         if (!Number.isFinite(at)) return;
-        const go = () => reader.goTo({ section: at, offset: 0 }, undefined, anchor);
+        const go = () => reader.goTo({ section: at, offset: 0 }, undefined, anchor, true);
         if (el && isNoteRef(link, el)) onnote(noteHtml(el), go);
         else go();
       }
@@ -531,6 +532,8 @@
 
   const next = $derived(content.sections[index + 1]);
   const nextTitle = $derived(next ? reader.whereIs(index + 1) : '');
+  /** At the end of the last section: the series' next volume, when it is in the library. */
+  const following = $derived(!next && reader.doc ? nextInSeries(library.items, reader.doc) : undefined);
 </script>
 
 <svelte:window {onkeydown} />
@@ -596,6 +599,12 @@
       {/if}
     </nav>
     {#if next && nextTitle}<p class="t-hint next-title">{t('reader.nextTitle', { title: nextTitle })}</p>{/if}
+  {/if}
+  {#if following}
+    <div class="next-volume">
+      <p class="t-section-label">{t('reader.nextVolume')}</p>
+      <button type="button" class="btn btn-secondary" id="nextVolume" onclick={() => void reader.open(following.id)}>{following.title}<Icon name="chevron-right" /></button>
+    </div>
   {/if}
 {/if}
 

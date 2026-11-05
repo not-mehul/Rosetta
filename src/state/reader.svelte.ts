@@ -1,0 +1,331 @@
+// The open document: its content, where the reader is, and its bookmarks and
+// highlights. The views render from here and report the location back.
+
+import { openDocument, type OpenDoc } from '../formats';
+import { FORMAT_LABEL } from '../formats/types';
+import { excerpt } from '../reader/offsets';
+import { flowProgress, pageProgress, START, type Location } from '../reader/progress';
+import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
+import { db, type HighlightColour, type Mark, type StoredDoc } from './db';
+import { library } from './library.svelte';
+import { settings } from './settings.svelte';
+import { ui } from './ui.svelte';
+
+export interface Jump {
+  to: Location;
+  /** Characters to flash after arriving: a search hit or a highlight. */
+  flash?: { start: number; end: number };
+  /** An element id in the section to scroll to instead of the offset. */
+  anchor?: string;
+  key: number;
+}
+
+const SAVE_MS = 800;
+
+class ReaderState {
+  doc = $state.raw<StoredDoc | null>(null);
+  content = $state.raw<OpenDoc | null>(null);
+  loading = $state(false);
+  /** The flow section on screen. PDF shows every page, so it follows the location. */
+  section = $state(0);
+  location = $state<Location>(START);
+  /** The last character on screen, for "is this place bookmarked". */
+  visibleEnd = $state(0);
+  marks = $state.raw<Mark[]>([]);
+  jump = $state.raw<Jump | null>(null);
+  /** The toolbars; hidden by a tap on the page. */
+  chrome = $state(true);
+  /** When the last jump happened: the scrolling it causes doesn't hide the toolbars. */
+  jumpedAt = 0;
+
+  private saveTimer: ReturnType<typeof setTimeout> | undefined;
+  private jumpKey = 0;
+  private lengths: number[] = [];
+
+  get isPdf(): boolean {
+    return this.content?.kind === 'pdf';
+  }
+
+  get sectionCount(): number {
+    const c = this.content;
+    return !c ? 0 : c.kind === 'pdf' ? c.pageCount : c.sections.length;
+  }
+
+  get progress(): number {
+    const c = this.content;
+    if (!c) return 0;
+    return c.kind === 'pdf' ? pageProgress(c.pageCount, this.location) : flowProgress(this.lengths, this.location);
+  }
+
+  /** Characters after the reader's place, for the time left. */
+  get charsLeft(): number {
+    if (this.content?.kind !== 'flow') return 0;
+    const total = this.lengths.reduce((a, b) => a + b, 0);
+    return Math.max(0, total - Math.round(this.progress * total));
+  }
+
+  get bookmarks(): Mark[] {
+    return this.marks.filter((m) => m.kind === 'bookmark').sort(byPlace);
+  }
+
+  get highlights(): Mark[] {
+    return this.marks.filter((m) => m.kind === 'highlight').sort(byPlace);
+  }
+
+  /** The bookmark on screen now, if there is one. */
+  get bookmarkHere(): Mark | undefined {
+    const { section, offset } = this.location;
+    return this.bookmarks.find((b) => b.section === section && (this.isPdf || (b.start >= offset && b.start <= Math.max(offset, this.visibleEnd))));
+  }
+
+  /** The chapter (or page) a place is in, for lists and the footer. */
+  whereIs(section: number, offset = 0): string {
+    const c = this.content;
+    if (!c) return '';
+    if (c.kind === 'pdf') return `Page ${section + 1}`;
+    if (c.sections.length === 1) return this.anchorOffsets().filter((h) => h.offset <= offset).at(-1)?.label ?? '';
+    const own = c.toc.find((e) => e.section === section);
+    return own?.label || c.sections[section]?.title || c.toc.filter((e) => e.section < section).at(-1)?.label || `Section ${section + 1}`;
+  }
+
+  private anchors: { label: string; offset: number }[] | null = null;
+  /** For one-section documents: where each heading in the contents starts. */
+  private anchorOffsets(): { label: string; offset: number }[] {
+    if (this.anchors) return this.anchors;
+    const c = this.content;
+    if (c?.kind !== 'flow') return [];
+    const t = document.createElement('template');
+    t.innerHTML = c.sections[0]!.html;
+    const out: { label: string; offset: number }[] = [];
+    for (const e of c.toc) {
+      const el = e.anchor ? t.content.getElementById(e.anchor) : null;
+      if (!el) continue;
+      const r = document.createRange();
+      r.setStart(t.content, 0);
+      r.setEndBefore(el);
+      out.push({ label: e.label, offset: r.toString().length });
+    }
+    return (this.anchors = out.sort((a, b) => a.offset - b.offset));
+  }
+
+  async open(id: string): Promise<void> {
+    const doc = library.get(id);
+    if (!doc) return;
+    this.close();
+    this.loading = true;
+    this.doc = doc;
+    try {
+      const bytes = await library.bytes(id);
+      if (!bytes) throw new Error('the file is missing from the library');
+      const [content, marks] = await Promise.all([openDocument(bytes, doc.format), library.marks(id)]);
+      if (this.doc?.id !== id) {
+        content.dispose();
+        return;
+      }
+      this.lengths = content.kind === 'flow' ? content.sections.map((s) => s.text.length) : [];
+      this.content = content;
+      this.marks = marks;
+      const at = doc.location && doc.location.section < this.sectionCount ? doc.location : START;
+      this.location = at;
+      this.section = content.kind === 'flow' ? at.section : 0;
+      this.jump = { to: at, key: ++this.jumpKey };
+      this.jumpedAt = performance.now();
+      this.chrome = true;
+      void library.update(id, { openedAt: Date.now() });
+      void settings.update({ lastDocId: id });
+    } catch (err) {
+      this.doc = null;
+      ui.notify(`Couldn’t open ${doc.title}. ${err instanceof Error ? err.message : String(err)}`, 'error');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  close(): void {
+    this.flush();
+    this.content?.dispose();
+    this.content = null;
+    this.doc = null;
+    this.marks = [];
+    this.jump = null;
+    this.anchors = null;
+    this.section = 0;
+    if (settings.value.lastDocId) void settings.update({ lastDocId: null });
+  }
+
+  /** Moves to a place; the view scrolls there and clears `jump`. */
+  goTo(to: Location, flash?: Jump['flash'], anchor?: string): void {
+    if (!this.content) return;
+    const section = Math.max(0, Math.min(this.sectionCount - 1, to.section));
+    if (this.content.kind === 'flow') this.section = section;
+    this.location = { section, offset: to.offset };
+    this.jump = { to: { section, offset: to.offset }, flash, anchor, key: ++this.jumpKey };
+    this.jumpedAt = performance.now();
+    this.chrome = true;
+    this.save();
+  }
+
+  nextSection(): void {
+    if (this.section < this.sectionCount - 1) this.goTo({ section: this.section + 1, offset: 0 });
+  }
+
+  previousSection(): void {
+    if (this.section > 0) this.goTo({ section: this.section - 1, offset: 0 });
+  }
+
+  /** Called by the views as the reader scrolls. */
+  report(location: Location, visibleEnd: number): void {
+    this.location = location;
+    this.visibleEnd = visibleEnd;
+    this.save();
+  }
+
+  private save(): void {
+    clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => this.flush(), SAVE_MS);
+  }
+
+  /** Writes the place now (on pause, close and leaving the page). */
+  flush(): void {
+    clearTimeout(this.saveTimer);
+    const doc = this.doc;
+    if (!doc || !this.content) return;
+    const progress = this.progress;
+    const patch: Partial<StoredDoc> = { location: $state.snapshot(this.location), progress };
+    const justFinished = progress >= 0.999 && doc.finishedAt === null;
+    if (justFinished) patch.finishedAt = Date.now();
+    void library.update(doc.id, patch);
+    this.doc = { ...doc, ...patch };
+    if (justFinished) {
+      ui.notify('Finished. Moved to the finished shelf.', 'success', {
+        label: 'Undo',
+        run: () => {
+          if (!this.doc) return;
+          this.doc = { ...this.doc, finishedAt: null };
+          void library.update(doc.id, { finishedAt: null });
+        },
+      });
+    }
+  }
+
+  // ─── Marks ─────────────────────────────────────────────────
+
+  private async putMark(mark: Mark): Promise<void> {
+    this.marks = [...this.marks.filter((m) => m.id !== mark.id), mark];
+    await db.marks.put($state.snapshot(mark) as Mark);
+  }
+
+  async toggleBookmark(): Promise<void> {
+    const doc = this.doc;
+    if (!doc || !this.content) return;
+    const here = this.bookmarkHere;
+    if (here) {
+      await this.removeMark(here.id);
+      return;
+    }
+    const { section, offset } = this.location;
+    const text = this.content.kind === 'flow' ? this.content.sections[section]!.text.slice(offset, offset + 160) : await this.content.pageText(section).then((t) => t.slice(0, 160));
+    await this.putMark({
+      id: crypto.randomUUID(),
+      docId: doc.id,
+      kind: 'bookmark',
+      section,
+      start: this.isPdf ? 0 : offset,
+      end: this.isPdf ? 0 : offset,
+      text: text.replace(/\s+/g, ' ').trim(),
+      where: this.whereIs(section, offset),
+      colour: 'amber',
+      note: '',
+      createdAt: Date.now(),
+    });
+    ui.notify('Bookmarked.', 'success');
+  }
+
+  async highlight(section: number, start: number, end: number, text: string, colour: HighlightColour, note = ''): Promise<Mark | null> {
+    const doc = this.doc;
+    if (!doc) return null;
+    // A highlight laid over existing ones absorbs them.
+    const overlapping = this.highlights.filter((h) => h.section === section && h.start < end && h.end > start);
+    const mark: Mark = {
+      id: crypto.randomUUID(),
+      docId: doc.id,
+      kind: 'highlight',
+      section,
+      start: Math.min(start, ...overlapping.map((h) => h.start)),
+      end: Math.max(end, ...overlapping.map((h) => h.end)),
+      text,
+      where: this.whereIs(section, start),
+      colour,
+      note: [...overlapping.map((h) => h.note), note].filter(Boolean).join('\n\n'),
+      createdAt: Date.now(),
+    };
+    if (overlapping.length) {
+      const sectionText = this.content?.kind === 'flow' ? this.content.sections[section]?.text : await (this.content as Extract<OpenDoc, { kind: 'pdf' }>).pageText(section);
+      if (sectionText) mark.text = sectionText.slice(mark.start, mark.end).replace(/\s+/g, ' ').trim();
+      this.marks = this.marks.filter((m) => !overlapping.includes(m));
+      await db.marks.bulkDelete(overlapping.map((m) => m.id));
+    }
+    await this.putMark(mark);
+    return mark;
+  }
+
+  async updateMark(id: string, patch: Partial<Pick<Mark, 'colour' | 'note'>>): Promise<void> {
+    const mark = this.marks.find((m) => m.id === id);
+    if (mark) await this.putMark({ ...mark, ...patch });
+  }
+
+  async removeMark(id: string): Promise<void> {
+    const mark = this.marks.find((m) => m.id === id);
+    if (!mark) return;
+    this.marks = this.marks.filter((m) => m.id !== id);
+    await db.marks.delete(id);
+    ui.undoable(mark.kind === 'bookmark' ? 'Bookmark removed.' : 'Highlight removed.', () => void this.putMark(mark));
+  }
+
+  // ─── Search ────────────────────────────────────────────────
+
+  /**
+   * Searches the whole document, calling `onHits` as results arrive (PDF pages
+   * are read one at a time). Returns a function that stops the search.
+   */
+  search(query: string, onHits: (hits: Hit[], done: boolean) => void): () => void {
+    const c = this.content;
+    const pattern = queryPattern(query);
+    let stopped = false;
+    if (!c || !pattern) {
+      onHits([], true);
+      return () => undefined;
+    }
+    const hits: Hit[] = [];
+    if (c.kind === 'flow') {
+      c.sections.forEach((s, i) => searchText(s.text, pattern, i, hits));
+      onHits(hits, true);
+      return () => undefined;
+    }
+    void (async () => {
+      for (let i = 0; i < c.pageCount && !stopped && hits.length < MAX_HITS; i++) {
+        searchText(await c.pageText(i), pattern, i, hits);
+        if (i % 8 === 7) onHits([...hits], false);
+      }
+      if (!stopped) onHits([...hits], true);
+    })();
+    return () => {
+      stopped = true;
+    };
+  }
+
+  async excerptFor(hit: Hit) {
+    const c = this.content;
+    if (!c) return { before: '', match: '', after: '' };
+    const text = c.kind === 'flow' ? c.sections[hit.section]!.text : await c.pageText(hit.section);
+    return excerpt(text, hit.start, hit.end);
+  }
+
+  get formatLabel(): string {
+    return this.doc ? FORMAT_LABEL[this.doc.format] : '';
+  }
+}
+
+const byPlace = (a: Mark, b: Mark) => a.section - b.section || a.start - b.start;
+
+export const reader = new ReaderState();

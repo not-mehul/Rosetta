@@ -68,11 +68,24 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Android 11+: to ask whether BookShelf is installed before handing a book to it. -->
+    <!-- Lets the app ask whether a sibling app is installed before handing
+         off to it (style.md §14.1). -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="waymark" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
             <data android:scheme="bookshelf" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="ledger" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="colophon" />
         </intent>
     </queries>
 </manifest>

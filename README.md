@@ -14,7 +14,7 @@ Rosetta uses **Editorial Dusk & Dawn**, the design system it shares with Waymark
 - **Catalogs.** Browse and download from OPDS catalogs (Project Gutenberg and Standard Ebooks are built in; add a Calibre server or a library's feed).
 - **Your data.** Export every note as Markdown; back up places, marks, details and collections as JSON, or save the whole library with its files as a zip. On a phone, a dated backup is written each week (the last five are kept). **Sync with a folder** merges places and marks with a file in a folder you choose (or `Documents/Rosetta/sync` on a phone, for iCloud Drive, Syncthing or Dropbox), last write wins, deletions included. *Storage* shows what each file takes and can offload a file while keeping its place and notes.
 - **Languages.** English, Spanish, French and German, following the system or chosen in Settings.
-- **The sibling apps.** A finished book can be logged in BookShelf (`bookshelf://log?…`, the same URL scheme on Android and iOS), and an EPUB can be opened in Colophon through the share sheet. Other apps can open a document with `rosetta://open?id=…` or `rosetta://open?title=…`.
+- **The sibling apps.** A finished book can be logged in BookShelf (`bookshelf://log?…`, the same URL scheme on Android and iOS), and an EPUB can be opened in Colophon through the share sheet. Other apps can open a document with `rosetta://open?id=…` or `rosetta://open?title=…`. The scheme convention is the one all five apps share (`src/platform/links.ts`, style.md §14.1).
 
 ## Run it
 
@@ -40,7 +40,7 @@ npm run assets       # redraw the app icon and splash screens
 ```
 
 - **Open with.** Android registers VIEW intents for EPUB, PDF, Word, OpenDocument, RTF, FB2, CBZ, Markdown, text and HTML; iOS declares the matching document types. Both arrive through `appUrlOpen` (`src/platform/intake.ts`), and the format is read from the bytes, since Android content URIs rarely carry a file name.
-- **Links.** Both platforms register the `rosetta` URL scheme and are allowed to ask whether `bookshelf` is installed (`<queries>` on Android, `LSApplicationQueriesSchemes` on iOS).
+- **Links.** Both platforms register the `rosetta` URL scheme and are allowed to ask whether each sibling app (`waymark`, `bookshelf`, `ledger`, `colophon`) is installed (`<queries>` on Android, `LSApplicationQueriesSchemes` on iOS).
 - **Volume keys** turn pages through a small Android plugin (`VolumeKeysPlugin.java`); iOS has no public API for them.
 - **System.** The back button closes the topmost sheet, then the reader, then the app. The system bars follow the theme, and the splash is Dusk's `--bg-grad-mid` behind the amber R.
 - Notes and backups are saved to `Documents/Rosetta/` (the app's folder in Files on iOS), or downloaded in a browser.

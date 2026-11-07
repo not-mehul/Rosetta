@@ -1,4 +1,4 @@
-// Tests for the shared link module (style.md §14.1). Identical in all five apps
+// Tests for the shared link module (style.md §14.1). Identical in all six apps
 // apart from the import path.
 import { describe, expect, it } from 'vitest';
 import { buildLink, dateParam, fractionParam, isKnownAction, parseLink } from '../../src/platform/links';

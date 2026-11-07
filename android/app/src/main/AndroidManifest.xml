@@ -87,5 +87,9 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="colophon" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="mise" />
+        </intent>
     </queries>
 </manifest>

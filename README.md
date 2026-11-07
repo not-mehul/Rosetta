@@ -14,7 +14,7 @@ Rosetta uses **Editorial Dusk & Dawn**, the design system it shares with Waymark
 - **Catalogs.** Browse and download from OPDS catalogs (Project Gutenberg and Standard Ebooks are built in; add a Calibre server or a library's feed).
 - **Your data.** Export every note as Markdown; back up places, marks, details and collections as JSON, or save the whole library with its files as a zip. On a phone, a dated backup is written each week (the last five are kept). **Sync with a folder** merges places and marks with a file in a folder you choose (or `Documents/Rosetta/sync` on a phone, for iCloud Drive, Syncthing or Dropbox), last write wins, deletions included. *Storage* shows what each file takes and can offload a file while keeping its place and notes.
 - **Languages.** English, Spanish, French and German, following the system or chosen in Settings.
-- **The sibling apps.** A finished book can be logged in BookShelf (`bookshelf://log?…`, the same URL scheme on Android and iOS), and an EPUB can be opened in Colophon through the share sheet. Other apps can open a document with `rosetta://open?id=…` or `rosetta://open?title=…`. The scheme convention is the one all five apps share (`src/platform/links.ts`, style.md §14.1).
+- **The sibling apps.** A finished book can be logged in BookShelf (`bookshelf://log?…`, the same URL scheme on Android and iOS), and an EPUB can be opened in Colophon through the share sheet. Other apps can open a document with `rosetta://open?id=…` or `rosetta://open?title=…`. The scheme convention is the one all six apps share (`src/platform/links.ts`, style.md §14.1).
 
 ## Run it
 

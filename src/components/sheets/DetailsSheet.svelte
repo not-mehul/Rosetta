@@ -7,7 +7,9 @@
   import { openInColophon, sendToBookShelf } from '../../platform/handoff';
   import { saveFile, shareFile, shareText } from '../../platform/output';
   import { restoreFile } from '../../state/intake';
-  import { library } from '../../state/library.svelte';
+  import { duration } from '../../lib/format';
+  import { db } from '../../state/db';
+  import { library, nextInSeries } from '../../state/library.svelte';
   import { reader } from '../../state/reader.svelte';
   import { ui } from '../../state/ui.svelte';
   import type { Mark } from '../../state/db';
@@ -23,6 +25,17 @@
   });
   const highlights = $derived(marks.filter((m) => m.kind === 'highlight').length);
   const bookmarks = $derived(marks.filter((m) => m.kind === 'bookmark').length);
+  /** Time spent in this document, and on how many days. */
+  let time = $state.raw<{ ms: number; days: number }>({ ms: 0, days: 0 });
+  $effect(() => {
+    void db.sessions
+      .where('docId')
+      .equals(id)
+      .toArray()
+      .then((rows) => (time = { ms: rows.reduce((a, r) => a + r.ms, 0), days: rows.length }))
+      .catch(() => undefined);
+  });
+  const next = $derived(doc ? nextInSeries(library.items, doc) : undefined);
   const collectionNames = $derived(doc ? library.collections.filter((c) => doc.collections.includes(c.id)).map((c) => c.name) : []);
 
   function toggleFinished() {
@@ -95,6 +108,7 @@
           <dt class="t-field-label">{t('details.read')}</dt>
           <dd class="t-data">{doc.finishedAt ? t('details.finishedOn', { when: relativeDay(doc.finishedAt) }) : doc.openedAt ? t('details.progress', { percent: Math.floor(doc.progress * 100), when: relativeDay(doc.openedAt) }) : t('details.notOpened')}</dd>
         </div>
+        {#if time.ms >= 60_000}<div><dt class="t-field-label">{t('details.time')}</dt><dd class="t-data" id="detailsTime">{t('details.timeOver', { time: duration(time.ms), days: t('stats.days', { count: time.days }) })}</dd></div>{/if}
         {#if marks.length}<div><dt class="t-field-label">{t('details.marks')}</dt><dd class="t-data">{t('details.markCounts', { highlights, bookmarks })}</dd></div>{/if}
       </dl>
     </div>
@@ -105,6 +119,21 @@
       </div>
     {/if}
     <p class="t-data-small faint details-file ellipsis">{doc.fileName}</p>
+    {#if next}
+      <button
+        type="button"
+        class="details-next"
+        id="nextInSeries"
+        onclick={() => {
+          onclose();
+          void reader.open(next.id);
+        }}
+      >
+        <span class="t-field-label">{t('details.nextInSeries')}</span>
+        <span class="details-next-title ellipsis">{next.title}</span>
+        <Icon name="chevron-right" />
+      </button>
+    {/if}
 
     <div class="btn-row btn-row-start">
       {#if doc.offloaded}

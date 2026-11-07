@@ -34,6 +34,8 @@ Tap a footnote number and the note opens over the page. Tap a picture to see it 
 
 **Search** looks through the whole document. Tap a result and the words flash where they are.
 
+After you jump somewhere from the contents, a search, a link or a note, **Back to** appears in the footer and returns you to where you were. Tap the time left in the footer to see the time left in the chapter, or which chapter you are in.
+
 **Bookmarks** mark the place on screen. Tap the bookmark at the top again to remove it.
 
 **Highlights** start with a selection. Choose a colour from the bar that appears, or _Note_ to write something beside it. Tap a highlight later to change its colour, edit the note, share it as a card or remove it. _Look up_ asks the dictionary.
@@ -46,7 +48,7 @@ Rosetta has two themes. _Dusk_ is a late-night reading room and _Dawn_ is a sunl
 
 ## Your library
 
-Put documents on **collections** with the chips above the shelves, or from a document's details, where _Edit details_ also fixes the title, author, series, tags and cover. Search the library with `#tag`. **Reading** (the chart) shows time read today and this week, your streak and what you finished this year.
+Put documents on **collections** with the chips above the shelves, or from a document's details, where _Edit details_ also fixes the title, author, series, tags and cover. Search the library with `#tag`. **Reading** (the chart) shows time read today and this week, your streak, a calendar of the last few months and what you finished this year. Set a daily goal there if you'd like one.
 
 ## Your notes
 

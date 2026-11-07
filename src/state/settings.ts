@@ -11,6 +11,10 @@ export type PdfFit = 'width' | 'page';
 export type ReadingMode = 'scroll' | 'paged';
 export type PageTurn = 'curl' | 'slide' | 'none';
 export type LocaleSetting = 'system' | 'en' | 'es' | 'fr' | 'de';
+/** What the reader's footer shows on the left; a tap moves to the next. */
+export type FooterShows = 'book' | 'chapter' | 'place';
+/** Minutes a day, or 0 for no goal. */
+export const DAILY_GOALS = [0, 15, 30, 60] as const;
 
 export interface Settings {
   theme: ThemeSetting;
@@ -65,6 +69,10 @@ export interface Settings {
   lastAutoBackup: number;
   sort: LibrarySort;
   shelf: LibraryShelf;
+  /** Time left in the book, time left in the chapter, or which chapter. */
+  footerShows: FooterShows;
+  /** Minutes of reading a day to aim for; 0 is no goal. */
+  dailyGoal: number;
   /** The document open when the app last closed. */
   lastDocId: string | null;
 }
@@ -101,6 +109,8 @@ export const DEFAULT_SETTINGS: Settings = {
   lastAutoBackup: 0,
   sort: 'recent',
   shelf: 'all',
+  footerShows: 'book',
+  dailyGoal: 0,
   lastDocId: null,
 };
 
@@ -116,6 +126,8 @@ const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   locale: ['system', 'en', 'es', 'fr', 'de'],
   sort: ['recent', 'title', 'author', 'series'],
   shelf: ['reading', 'all', 'finished'],
+  footerShows: ['book', 'chapter', 'place'],
+  dailyGoal: DAILY_GOALS,
 };
 
 /** Numbers kept within their range: [min, max]. */

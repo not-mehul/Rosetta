@@ -234,3 +234,53 @@ test('a long book opens and turns within budget', async ({ page }) => {
   const turns = Date.now() - t0;
   expect(turns, `ten turns in ${turns} ms`).toBeLessThan(3000);
 });
+
+test('the way back after a jump, the footer’s figures and chapter ticks', async ({ page }) => {
+  await add(page, ['lantern.epub']);
+  await expect(page.locator('.reading h1')).toHaveText('The stair');
+  await showBars(page);
+
+  // Chapters cut the progress line; the footer's figure changes on a tap and stays changed.
+  await expect(page.locator('.reader-foot .meter-tick')).toHaveCount(2);
+  await expect(page.locator('#footerFigure')).toContainText('left');
+  await page.click('#footerFigure');
+  await expect(page.locator('#footerFigure')).toContainText('left in the chapter');
+  await page.click('#footerFigure');
+  await expect(page.locator('#footerFigure')).toHaveText('Chapter 1 of 3');
+
+  // A search result far away leaves a way back, and the way back leaves one to return.
+  await expect(page.locator('#returnTo')).toHaveCount(0);
+  await page.click('#openSearch');
+  await page.fill('#searchInput', 'albatross');
+  await page.locator('#searchResults button').click();
+  await expect(page.locator('mark.hl-flash')).toHaveText('albatross');
+  await showBars(page);
+  await expect(page.locator('#returnTo')).toHaveText('Back to The stair');
+  await expect(page.locator('#footerFigure')).toHaveText('Chapter 3 of 3');
+  await page.click('#returnTo');
+  await expect(page.locator('.reading h1')).toHaveText('The stair');
+  await showBars(page);
+  await expect(page.locator('#returnTo')).toHaveText('Back to The storm');
+  await expectAccessible(page, '.reader-foot');
+});
+
+test('a daily goal and the reading calendar', async ({ page }) => {
+  await add(page, ['lantern.epub']);
+  await page.click('#closeReader');
+  await page.click('#openStats');
+  await expect(page.locator('.calendar-day[data-day]')).toHaveCount(18 * 7);
+  await expect(page.locator('.calendar-day.is-today')).toHaveCount(1);
+  await page.click('[data-goal="30"]');
+  await expect(page.locator('#goalStatus')).toHaveText('0 of 30 min today');
+  await expectAccessible(page, '.sheet');
+
+  // Arrow keys move between days; a picked day shows its time.
+  await page.locator('.calendar-day.is-today').focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('.calendar-day[aria-pressed=true]')).not.toHaveClass(/is-today/);
+  await expect(page.locator('#calendarPicked')).toContainText('0 min');
+
+  // The goal shows beside Continue reading.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#goalToday')).toHaveText('0 of 30 min today');
+});

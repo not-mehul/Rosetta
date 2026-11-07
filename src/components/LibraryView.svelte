@@ -6,13 +6,16 @@
   import { canPickFolder, pickFiles, pickFolder } from '../lib/pick';
   import { shown, toggledTheme } from '../platform/theme.svelte';
   import { addFiles } from '../state/intake';
-  import { isFinished, isReading, library, shelve } from '../state/library.svelte';
+  import { isFinished, isReading, library, shelve, upNext } from '../state/library.svelte';
+  import { stats } from '../state/stats.svelte';
+  import { duration } from '../lib/format';
   import { reader } from '../state/reader.svelte';
   import { settings } from '../state/settings.svelte';
   import type { LibraryShelf, LibrarySort } from '../state/settings';
   import { ui } from '../state/ui.svelte';
   import { addGuide } from '../lib/guide';
   import DocCard from './DocCard.svelte';
+  import BlobImg from './ui/BlobImg.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
   import { TabRail, ThemeToggle } from 'dusk-dawn';
@@ -31,6 +34,9 @@
   const docs = $derived(shelve(library.items, v.shelf, v.sort, filter, collection));
   /** The document read most recently and not finished: the one to go back to. */
   const current = $derived(shelve(library.items.filter(isReading), 'reading', 'recent')[0]);
+  /** With nothing in progress: the next volume of a series just finished. */
+  const next = $derived(current ? undefined : upNext(library.items));
+  const goal = $derived(v.dailyGoal ? { done: Math.floor(stats.todayMs / 60_000), goal: v.dailyGoal } : null);
   const tags = $derived(library.tags.slice(0, 12));
 
   // New documents land on the collection being shown.
@@ -114,14 +120,30 @@
         <section class="resume panel" aria-label={t('library.continue')}>
           <p class="t-section-label">{t('library.continue')}</p>
           <button type="button" class="resume-body" id="resume" onclick={() => void reader.open(current.id)}>
+            {#if current.cover}<span class="doc-thumb resume-thumb" aria-hidden="true"><BlobImg bytes={current.cover} alt="" /></span>{/if}
             <span class="resume-text">
               <span class="t-card-title ellipsis-2">{current.title}</span>
               {#if current.author}<span class="doc-author ellipsis">{current.author}</span>{/if}
-              <span class="t-data-small amber tabular">{t('library.percentRead', { percent: Math.floor(current.progress * 100) })}</span>
+              <span class="t-data-small tabular resume-figures">
+                <span class="amber">{t('library.percentRead', { percent: Math.floor(current.progress * 100) })}</span>
+                {#if goal}<span class="dim" id="goalToday">{goal.done >= goal.goal ? t('stats.goalDone', { time: duration(stats.todayMs) }) : t('stats.goalToday', { done: goal.done, goal: goal.goal })}</span>{/if}
+              </span>
             </span>
             <Icon name="chevron-right" />
           </button>
           <div class="meter" aria-hidden="true"><div class="meter-fill" style:transform="scaleX({current.progress})"></div></div>
+        </section>
+      {:else if next}
+        <section class="resume panel" aria-label={t('library.upNext')}>
+          <p class="t-section-label">{t('library.upNext')}</p>
+          <button type="button" class="resume-body" id="upNext" onclick={() => void reader.open(next.next.id)}>
+            {#if next.next.cover}<span class="doc-thumb resume-thumb" aria-hidden="true"><BlobImg bytes={next.next.cover} alt="" /></span>{/if}
+            <span class="resume-text">
+              <span class="t-card-title ellipsis-2">{next.next.title}</span>
+              <span class="doc-author ellipsis">{t('library.upNextAfter', { series: next.next.series, title: next.after.title })}</span>
+            </span>
+            <Icon name="chevron-right" />
+          </button>
         </section>
       {/if}
 

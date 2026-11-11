@@ -5,3 +5,8 @@ playwright-report/
 public/pdfjs/
 .DS_Store
 scratch/
+
+# Signing material — never commit keystores or their passwords
+*.jks
+*.keystore
+keystore.properties

@@ -1,6 +1,7 @@
 // The open document: its content, where the reader is, and its bookmarks and
 // highlights. The views render from here and report the location back.
 
+import { cheer } from '../lib/delight';
 import { openDocument, PasswordError, type OpenDoc } from '../formats';
 import { FORMAT_LABEL } from '../formats/types';
 import { excerpt } from '../reader/offsets';
@@ -372,6 +373,7 @@ class ReaderState {
     this.doc = { ...doc, ...patch };
     if (justFinished) {
       const finished = { ...doc, ...patch };
+      cheer(null, { count: 80 });
       void this.finishedMessage(doc.id).then((message) => this.notifyFinished(doc, finished, message));
     }
   }

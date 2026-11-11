@@ -22,8 +22,8 @@
   }
 </script>
 
-<div class="doc-card">
-  <button type="button" class="doc-open" data-doc={doc.id} onclick={() => void reader.open(doc.id)}>
+<div class="doc-card dd-lift">
+  <button type="button" class="doc-open dd-pressable" data-doc={doc.id} onclick={() => void reader.open(doc.id)}>
     <span class="doc-thumb" aria-hidden="true">
       {#if doc.cover}<BlobImg bytes={doc.cover} alt="" />{:else}<Icon name={ICON[doc.format]} />{/if}
     </span>

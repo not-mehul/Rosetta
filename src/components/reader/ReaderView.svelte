@@ -2,6 +2,7 @@
   // The reader: a bar at the top (back, title, read aloud, search, contents,
   // bookmark, type), the page, and a footer with the place and progress. A
   // tap on the page, or scrolling on, hides the bars.
+  import { LoadingIndicator } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { captureVolumeKeys, keepAwake } from '../../platform/device';
   import { duration } from '../../lib/format';
@@ -137,7 +138,10 @@
 
   <main class="reader-page">
     {#if reader.loading || !reader.content}
-      <p class="t-hint reader-loading" role="status">{t('reader.opening', { title: doc.title })}</p>
+      <div class="reader-loading" role="status">
+        <LoadingIndicator label={t('reader.opening', { title: doc.title })} />
+        <p class="t-hint">{t('reader.opening', { title: doc.title })}</p>
+      </div>
     {:else if reader.content.kind === 'flow' && reader.content.fixed}
       <FixedView content={reader.content} />
     {:else if reader.content.kind === 'flow'}

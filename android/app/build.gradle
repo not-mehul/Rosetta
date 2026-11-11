@@ -1,5 +1,33 @@
 apply plugin: 'com.android.application'
 
+// The version comes from the release tag (.github/workflows/release.yml):
+// `-ProsettaVersion=1.2.3` gives versionName 1.2.3 and versionCode 10203, so
+// codes always rise. Without the property it is 1.0.0, the last version
+// shipped by hand.
+def rosettaVersion = (findProperty('rosettaVersion') ?: '').toString().replaceFirst(/^v/, '')
+if (!(rosettaVersion ==~ /\d+\.\d+\.\d+/)) rosettaVersion = '1.0.0'
+def rosettaVersionCode = Math.max(1, rosettaVersion.tokenize('.').collect { it as int }
+    .with { it[0] * 10000 + it[1] * 100 + it[2] })
+
+// The release key, read from android/keystore.properties (gitignored; see
+// keystore.properties.example) or the ROSETTA_KEYSTORE… environment that the
+// release workflow sets from repository secrets (RELEASING.md). Every
+// release must be signed with the same key, or Android refuses the update.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+def signingValue = { String key, String env ->
+    def value = keystoreProperties.getProperty(key) ?: System.getenv(env)
+    value?.trim() ?: null
+}
+def releaseStoreFile = signingValue('storeFile', 'ROSETTA_KEYSTORE')
+def releaseStorePassword = signingValue('storePassword', 'ROSETTA_KEYSTORE_PASSWORD')
+def releaseKeyAlias = signingValue('keyAlias', 'ROSETTA_KEY_ALIAS')
+def releaseKeyPassword = signingValue('keyPassword', 'ROSETTA_KEY_PASSWORD')
+def canSign = [releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { it != null }
+
 android {
     namespace = "io.github.notmehul.rosetta"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +35,8 @@ android {
         applicationId "io.github.notmehul.rosetta"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode rosettaVersionCode
+        versionName rosettaVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +44,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (canSign) {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (canSign) {
+                signingConfig = signingConfigs.release
+            }
         }
     }
 }

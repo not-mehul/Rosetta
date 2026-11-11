@@ -5,7 +5,9 @@
   import { LoadingIndicator } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { captureVolumeKeys, keepAwake } from '../../platform/device';
+  import { duration } from '../../lib/format';
   import { percent, timeLeft } from '../../reader/progress';
+  import type { FooterShows } from '../../state/settings';
   import { reader } from '../../state/reader.svelte';
   import { settings } from '../../state/settings.svelte';
   import { speech } from '../../state/speech.svelte';
@@ -24,10 +26,41 @@
   const v = $derived(settings.value);
   const where = $derived(reader.content ? reader.whereIs(reader.location.section, reader.location.offset) : '');
   const progress = $derived(reader.progress);
+  /** The figures the footer can show for this document; a tap on it moves to the next. */
+  const shows = $derived.by<FooterShows[]>(() => {
+    const c = reader.content;
+    if (!c) return ['book'];
+    if (c.kind === 'pdf') return c.pageCount > 1 ? ['book', 'chapter'] : ['book'];
+    if (c.pictures || c.fixed) return ['book'];
+    return reader.chapter.count > 1 ? ['book', 'chapter', 'place'] : ['book'];
+  });
+  const showing = $derived(shows.includes(v.footerShows) ? v.footerShows : 'book');
   const footer = $derived.by(() => {
-    if (!reader.content) return '';
-    if (reader.content.kind === 'pdf') return t('reader.pageOf', { page: reader.location.section + 1, pages: reader.content.pageCount });
+    const c = reader.content;
+    if (!c) return '';
+    if (c.kind === 'pdf') {
+      const left = c.pageCount - reader.location.section - 1;
+      if (showing === 'chapter') return left ? t('reader.pagesLeft', { count: left }) : t('reader.lastPage');
+      return t('reader.pageOf', { page: reader.location.section + 1, pages: c.pageCount });
+    }
+    if (showing === 'place') return t('reader.chapterOf', { index: reader.chapter.index, count: reader.chapter.count });
+    if (showing === 'chapter') {
+      const minutes = Math.round(reader.chapter.charsLeft / Math.max(100, stats.pace));
+      return minutes < 1 ? t('reader.chapterUnder') : t('reader.chapterLeft', { time: duration(minutes * 60_000) });
+    }
     return timeLeft(reader.charsLeft, stats.pace);
+  });
+  function cycleFooter() {
+    if (shows.length < 2) return;
+    void settings.update({ footerShows: shows[(shows.indexOf(showing) + 1) % shows.length] });
+  }
+  /** The way back after a long jump. */
+  const backLabel = $derived.by(() => {
+    const to = reader.returnTo;
+    if (!to || !reader.content) return '';
+    if (reader.content.kind === 'pdf') return t('reader.backToPage', { page: to.section + 1 });
+    const where = reader.whereIs(to.section, to.offset);
+    return where && where !== doc.title ? t('reader.backTo', { where }) : t('reader.backToPlace');
   });
   const paged = $derived(reader.content?.kind === 'flow' && (v.readingMode === 'paged' || !!reader.content.fixed));
   /** The highlight being edited in the modal. */
@@ -69,7 +102,7 @@
 
 <div class="reader" class:chrome-hidden={!reader.chrome} class:is-paged={paged} data-format={doc.format}>
   <header class="reader-bar" aria-label={t('reader.label')}>
-    <button type="button" class="btn-icon" id="closeReader" aria-label={t('reader.back')} onclick={() => reader.close()}><Icon name="arrow-left" /></button>
+    <button type="button" class="btn-icon" id="closeReader" aria-label={t('reader.back')} onclick={() => reader.leave()}><Icon name="arrow-left" /></button>
     <div class="reader-bar-text">
       <h1 class="reader-title ellipsis">{doc.title}</h1>
       {#if where && where !== doc.title}<p class="t-data-small dim ellipsis">{where}</p>{/if}
@@ -123,9 +156,18 @@
       {#if speech.active}<SpeechBar />{/if}
       <div class="meter" role="meter" aria-label={t('reader.read')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(progress * 100)}>
         <div class="meter-fill" style:transform="scaleX({progress})"></div>
+        <!-- Chapters cut the line into lengths, so the place reads against them. -->
+        {#each reader.ticks as at (at)}<span class="meter-tick" style:left="{at * 100}%"></span>{/each}
       </div>
       <div class="reader-foot-row">
-        <span class="t-data-small dim ellipsis">{footer}</span>
+        {#if shows.length > 1}
+          <button type="button" class="foot-figure t-data-small dim" id="footerFigure" aria-label={t('reader.footerFigure', { figure: footer })} onclick={cycleFooter}><span class="ellipsis">{footer}</span></button>
+        {:else}
+          <span class="t-data-small dim ellipsis">{footer}</span>
+        {/if}
+        {#if backLabel}
+          <button type="button" class="return-to t-data-small" id="returnTo" onclick={() => reader.goBack()}><Icon name="undo-2" /><span class="ellipsis">{backLabel}</span></button>
+        {/if}
         <span class="t-data-small amber tabular" id="progressLabel">{percent(progress)}</span>
       </div>
     </footer>

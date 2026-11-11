@@ -1,5 +1,6 @@
-// Hand-off with the sibling apps, through URL schemes so it works the same on
-// Android and iOS:
+// Hand-off with the sibling apps, through the URL schemes all five share
+// (style.md §14.1, src/platform/links.ts), so it works the same on Android
+// and iOS:
 //
 //   bookshelf://log?title=…&author=…&finished=YYYY-MM-DD&progress=0.42
 //     logs a book in BookShelf (sent when a book is finished, or on request).
@@ -10,6 +11,7 @@
 // "open with" sheet, which lists Colophon once it is installed.
 
 import { AppLauncher } from '@capacitor/app-launcher';
+import { buildLink, parseLink } from './links';
 import { isNative } from './native';
 import { shareFile } from './output';
 
@@ -21,9 +23,8 @@ export interface BookShelfEntry {
 }
 
 export function bookShelfUrl(e: BookShelfEntry): string {
-  const q = new URLSearchParams({ title: e.title, author: e.author, progress: e.progress.toFixed(2), source: 'rosetta' });
-  if (e.finishedAt) q.set('finished', new Date(e.finishedAt).toISOString().slice(0, 10));
-  return `bookshelf://log?${q.toString()}`;
+  const finished = e.finishedAt ? new Date(e.finishedAt).toISOString().slice(0, 10) : null;
+  return buildLink('bookshelf', 'log', { title: e.title, author: e.author, progress: e.progress.toFixed(2), finished }, 'rosetta');
 }
 
 /** Opens BookShelf with the entry. False when BookShelf isn't there to take it. */
@@ -47,12 +48,11 @@ export async function openInColophon(name: string, bytes: Uint8Array, title: str
 
 export type RosettaLink = { kind: 'open'; id?: string; title?: string } | null;
 
-/** Reads a rosetta:// link. */
+/** Reads a rosetta:// link: `open` with an id or a title. Other actions are null and just open Rosetta. */
 export function parseRosettaUrl(url: string): RosettaLink {
-  const m = /^rosetta:\/\/([a-z]+)\/?(\?.*)?$/i.exec(url.trim());
-  if (!m || m[1]!.toLowerCase() !== 'open') return null;
-  const q = new URLSearchParams(m[2] ?? '');
-  const id = q.get('id') ?? undefined;
-  const title = q.get('title') ?? undefined;
+  const link = parseLink(url, 'rosetta');
+  if (!link || link.action !== 'open') return null;
+  const id = link.params.id || undefined;
+  const title = link.params.title || undefined;
   return id || title ? { kind: 'open', id, title } : null;
 }

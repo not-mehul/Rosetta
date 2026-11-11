@@ -3,18 +3,17 @@
 // stats sheet its figures and "time left" the reader's own pace.
 
 import { DEFAULT_PACE } from '../reader/progress';
+import { dayKey, longestRun } from '../lib/calendar';
 import { db, type ReadingSession } from './db';
+import { settings } from './settings.svelte';
 
 /** A pause longer than this isn't reading. */
 export const IDLE_MS = 2 * 60_000;
 /** A jump (contents, search) moves a long way without being read. */
 const MAX_CHARS_PER_STEP = 4000;
 
-export const dayKey = (t: number | Date = Date.now()) => {
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity
-  const d = new Date(t);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
+
+export { calendarWeeks, dayKey, longestRun, readingLevel, type CalendarDay } from '../lib/calendar';
 
 export interface Summary {
   todayMs: number;
@@ -22,20 +21,30 @@ export interface Summary {
   week: { day: string; ms: number }[];
   /** Days in a row with some reading, up to today (or yesterday). */
   streak: number;
+  /** The longest run of days in a row with some reading, ever. */
+  longest: number;
   totalMs: number;
   /** Characters a minute, from the reader's own sessions. */
   pace: number;
+  /** Time read on each day, by YYYY-MM-DD. */
+  byDay: ReadonlyMap<string, number>;
+  /** Time read in each document, most first. */
+  byDoc: { docId: string; ms: number; days: number }[];
 }
 
 /** Figures from stored sessions; pure, for the tests. */
 export function summarise(sessions: readonly ReadingSession[], now = Date.now()): Summary {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity
   const byDay = new Map<string, number>();
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const docs = new Map<string, { ms: number; days: number }>();
   let totalMs = 0;
   let paceMs = 0;
   let paceChars = 0;
   for (const s of sessions) {
     byDay.set(s.day, (byDay.get(s.day) ?? 0) + s.ms);
+    const doc = docs.get(s.docId) ?? { ms: 0, days: 0 };
+    docs.set(s.docId, { ms: doc.ms + s.ms, days: doc.days + 1 });
     totalMs += s.ms;
     if (s.chars > 0) {
       paceMs += s.ms;
@@ -58,27 +67,47 @@ export function summarise(sessions: readonly ReadingSession[], now = Date.now())
     todayMs: byDay.get(dayKey(now)) ?? 0,
     week,
     streak,
+    longest: longestRun([...byDay].filter(([, ms]) => ms > 0).map(([day]) => day)),
     totalMs,
     pace: Math.max(300, Math.min(6000, pace)),
+    byDay,
+    byDoc: [...docs].map(([docId, d]) => ({ docId, ...d })).sort((a, b) => b.ms - a.ms),
   };
 }
 
 class StatsState {
   /** Characters a minute; loaded at start and refreshed as sessions are saved. */
   pace = $state(DEFAULT_PACE);
+  /** Time read today, as saved; for the daily goal. */
+  todayMs = $state(0);
+  /** Called once when today's reading reaches the daily goal (main.ts shows a toast). */
+  onGoal: ((minutes: number) => void) | null = null;
 
   private docId: string | null = null;
   private last = 0;
   private pending = { ms: 0, chars: 0 };
+  private sessionTime = 0;
+
+  /** Time read since the document was opened, saved or not. */
+  get sessionMs(): number {
+    return this.sessionTime;
+  }
 
   async load(): Promise<void> {
-    this.pace = summarise(await db.sessions.toArray().catch(() => [])).pace;
+    const before = this.todayMs;
+    const summary = summarise(await db.sessions.toArray().catch(() => []));
+    this.pace = summary.pace;
+    this.todayMs = summary.todayMs;
+    // Only a crossing made while reading: not on start, and not when the goal is moved below today's time.
+    const goal = settings.value.dailyGoal;
+    if (goal && before > 0 && before < goal * 60_000 && summary.todayMs >= goal * 60_000) this.onGoal?.(goal);
   }
 
   begin(docId: string): void {
     void this.flush();
     this.docId = docId;
     this.last = performance.now();
+    this.sessionTime = 0;
   }
 
   /** The reader moved: count the time since the last move, if it wasn't a pause. */
@@ -88,6 +117,7 @@ class StatsState {
     const gap = now - this.last;
     if (gap < IDLE_MS) {
       this.pending.ms += gap;
+      this.sessionTime += gap;
       if (chars <= MAX_CHARS_PER_STEP) this.pending.chars += chars;
     }
     this.last = now;

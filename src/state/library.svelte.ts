@@ -234,3 +234,27 @@ export function parseTags(input: string): string[] {
     ),
   ];
 }
+
+/** The next volume of a document's series that is in the library and not finished, if there is one. */
+export function nextInSeries(items: readonly StoredDoc[], doc: StoredDoc): StoredDoc | undefined {
+  const series = doc.series?.trim().toLowerCase();
+  if (!series || doc.seriesIndex === null) return undefined;
+  return items
+    .filter((d) => d.id !== doc.id && !isFinished(d) && d.seriesIndex !== null && d.seriesIndex > doc.seriesIndex! && d.series?.trim().toLowerCase() === series)
+    .sort((a, b) => a.seriesIndex! - b.seriesIndex!)[0];
+}
+
+/** Within this long of finishing a volume, the library offers the next one. */
+export const UP_NEXT_DAYS = 60;
+
+/** What to read next when nothing is in progress: the next volume after the latest finished one. */
+export function upNext(items: readonly StoredDoc[], now = Date.now()): { after: StoredDoc; next: StoredDoc } | undefined {
+  const finished = items
+    .filter((d) => d.finishedAt !== null && now - d.finishedAt < UP_NEXT_DAYS * 86_400_000)
+    .sort((a, b) => b.finishedAt! - a.finishedAt!);
+  for (const after of finished) {
+    const next = nextInSeries(items, after);
+    if (next) return { after, next };
+  }
+  return undefined;
+}

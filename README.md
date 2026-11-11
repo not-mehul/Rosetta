@@ -70,7 +70,7 @@ npm run icons        # regenerate src/components/ui/icons.ts after using a new L
 
 ## Updates
 
-Renovate (`renovate.json`) groups dev tooling and the Capacitor plugins. pdf.js is pinned and every bump is reviewed by hand after `npm run test:pdf`, because its worker and assets are copied into the build. CI builds the web app, runs the unit and end-to-end tests, builds Android and iOS, and starts the Android build on an emulator to check it launches and opens a `rosetta://` link.
+Renovate (`renovate.json`) groups dev tooling and the Capacitor plugins. pdf.js is pinned and every bump is reviewed by hand after `npm run test:pdf`, because its worker and assets are copied into the build. CI runs one quick job on every pull request and push to main: `npm run check` (tokens, lint, colours, typecheck, unit tests) and the web build. The slow checks (Playwright end to end, the Android build with an emulator launch test, and the iOS simulator build) run when started by hand from the Actions tab with *Run workflow*. Run `npm run test:e2e` locally before a release.
 
 ## Licences
 

@@ -65,7 +65,8 @@
     max-width: min(calc(100% - 2 * var(--space-5) - 72px), 340px);
     min-height: 72px;
     padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2);
-    background: var(--sheet-bg);
+    /* The toast's surface, laid on the opaque sheet colour so nothing shows through. */
+    background: linear-gradient(var(--modal-bg), var(--modal-bg)), var(--sheet-bg);
     border: 1px solid var(--border);
     border-radius: var(--corner-lg);
     box-shadow: 0 12px 32px rgba(var(--shadow-rgb), calc(0.45 * var(--shadow-strength)));

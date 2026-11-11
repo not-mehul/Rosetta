@@ -56,6 +56,7 @@
 {#if doc}
   <Sheet title={t('edit.title')} {onclose}>
     <form
+      class="form-stack"
       id="editForm"
       onsubmit={(e) => {
         e.preventDefault();

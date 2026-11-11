@@ -135,7 +135,7 @@
       </button>
     {/if}
 
-    <div class="btn-row btn-row-start">
+    <div class="btn-grid">
       {#if doc.offloaded}
         <button type="button" class="btn btn-primary" id="restoreFile" onclick={() => void restoreFile(id)}><Icon name="download" />{t('details.addFileAgain')}</button>
       {:else}
@@ -152,7 +152,7 @@
       <button type="button" class="btn btn-secondary" id="toggleFinished" onclick={toggleFinished}><Icon name={doc.finishedAt ? 'rotate-ccw' : 'check'} />{doc.finishedAt ? t('details.markUnread') : t('details.markFinished')}</button>
       <button type="button" class="btn btn-secondary" id="editDetails" onclick={() => ui.open('edit')}><Icon name="pencil" />{t('details.edit')}</button>
     </div>
-    <div class="btn-row btn-row-start">
+    <div class="btn-grid">
       {#if highlights || bookmarks}<button type="button" class="btn btn-muted" onclick={() => void exportNotes()}><Icon name="file-down" />{t('details.exportNotes')}</button>{/if}
       {#if doc.location}<button type="button" class="btn btn-muted" onclick={() => void startOver()}><Icon name="rotate-ccw" />{t('details.startOver')}</button>{/if}
       {#if !doc.offloaded}<button type="button" class="btn btn-muted" onclick={() => void share()}><Icon name="share-2" />{t('details.shareFile')}</button>{/if}

@@ -57,3 +57,21 @@ describe('flow mode', () => {
     expect(fontName('Atkinson_Hyperlegible-Regular.woff2')).toBe('Atkinson Hyperlegible Regular');
   });
 });
+
+describe('audit fixes', () => {
+  it('keeps paragraphs apart in search excerpts', async () => {
+    const { excerpt } = await import('../../src/reader/offsets');
+    const { blockBreaks } = await import('../../src/reader/cadence');
+    const html = '<p>Every ship.</p><p>Paragraph one.</p>';
+    const text = 'Every ship.Paragraph one.';
+    const at = text.indexOf('Paragraph');
+    const e = excerpt(text, at, at + 9, 48, blockBreaks(html));
+    expect(e.before + e.match + e.after).toBe('Every ship. Paragraph one.');
+  });
+
+  it('gives large sizes in GB', async () => {
+    const { fileSize } = await import('../../src/lib/format');
+    expect(fileSize(3072 * 1024 * 1024)).toBe('3.0 GB');
+    expect(fileSize(5 * 1024 * 1024)).toBe('5.0 MB');
+  });
+});

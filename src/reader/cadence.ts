@@ -16,6 +16,23 @@ export interface Beat {
 const BLOCK = 'p, h1, h2, h3, h4, h5, h6, li, blockquote, dd, dt, figcaption, pre, td, th, caption, div, section, article, aside, header, footer, body';
 const HEADING = /^H[1-6]$/;
 
+/** Where each block after the first starts, as offsets into the section's text. */
+export function blockBreaks(html: string): number[] {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const walker = document.createTreeWalker(tpl.content, NodeFilter.SHOW_TEXT);
+  const out: number[] = [];
+  let at = 0;
+  let last: Element | null | undefined;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const block = n.parentElement?.closest(BLOCK) ?? null;
+    if (last !== undefined && block !== last && at > 0) out.push(at);
+    last = block;
+    at += n.nodeValue?.length ?? 0;
+  }
+  return out;
+}
+
 /** The beats of a section, from its HTML and its text (the HTML's textContent). */
 export function beats(html: string, text: string, lang?: string): Beat[] {
   const tpl = document.createElement('template');

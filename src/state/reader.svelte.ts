@@ -4,6 +4,7 @@
 import { cheer } from '../lib/delight';
 import { openDocument, PasswordError, type OpenDoc } from '../formats';
 import { FORMAT_LABEL } from '../formats/types';
+import { blockBreaks } from '../reader/cadence';
 import { excerpt } from '../reader/offsets';
 import { chapterAt, chapterTicks, FAR_CHARS, flowProgress, globalOffset, pageProgress, START, type Location } from '../reader/progress';
 import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
@@ -519,11 +520,17 @@ class ReaderState {
     };
   }
 
+  /** Where paragraphs meet in each section, so excerpts don't run them together. */
+  private breaks = new WeakMap<object, number[]>();
+
   async excerptFor(hit: Hit) {
     const c = this.content;
     if (!c) return { before: '', match: '', after: '' };
-    const text = c.kind === 'flow' ? c.sections[hit.section]!.text : await c.pageText(hit.section);
-    return excerpt(text, hit.start, hit.end);
+    if (c.kind !== 'flow') return excerpt(await c.pageText(hit.section), hit.start, hit.end);
+    const section = c.sections[hit.section]!;
+    let breaks = this.breaks.get(section);
+    if (!breaks) this.breaks.set(section, (breaks = blockBreaks(section.html)));
+    return excerpt(section.text, hit.start, hit.end, 48, breaks);
   }
 
   get formatLabel(): string {

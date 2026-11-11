@@ -392,6 +392,16 @@ const fr: Messages = {
   'type.hapticsHint': 'Une légère vibration quand vous ajoutez un signet ou un surlignage.',
   'type.voice': 'Voix',
   'type.systemVoice': 'Voix du système',
+
+  'egg.found': 'Œuf de Pâques trouvé : {found} sur {total}.',
+  'egg.konami': 'Grec, latin, et retour au bercail. Une pierre, plusieurs écritures.',
+  'egg.title': 'Toutes les étagères dépoussiérées.',
+  'egg.answer': 'La réponse, au moins. La question est encore à l’étude.',
+  'egg.stone': 'Neuf écritures, un mot. Champollion serait ravi.',
+  'idle.label': 'Une pierre à lire',
+  'idle.turn': 'Tourner la pierre',
+  'idle.hint': 'Un mot, neuf écritures. Touchez la pierre.',
+  'about.eggs': 'Œufs de Pâques : {found} sur {total} trouvés',
 };
 
 export default fr;

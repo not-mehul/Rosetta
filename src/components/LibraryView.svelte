@@ -15,7 +15,8 @@
   import DocCard from './DocCard.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
-  import { TabRail, ThemeToggle } from 'dusk-dawn';
+  import { TabRail, ThemeToggle, konami, play, secretTaps } from 'dusk-dawn';
+  import { hatch } from '../lib/delight';
 
   let filter = $state('');
   const v = $derived(settings.value);
@@ -82,13 +83,41 @@
     all: collection ? t('library.emptyCollection') : t('library.noMatch'),
     finished: t('library.emptyFinished'),
   });
+
+  // Easter eggs (style.md §11.3). The Konami code reads the title's word off
+  // the stone in Greek and Latin before coming home; seven taps on the title
+  // dust the shelves; and the filter knows the answer.
+  let script = $state<string | null>(null);
+  let scriptWord = $state<HTMLElement>();
+  $effect(() =>
+    konami(() => {
+      const words = ['ἀνάγνωσις', 'lectio', null];
+      words.forEach((word, i) =>
+        setTimeout(() => {
+          script = word;
+          play(scriptWord, 'flip');
+        }, i * 900),
+      );
+      hatch('konami', t('egg.konami'));
+    }),
+  );
+  function dust() {
+    for (const [i, el] of [...document.querySelectorAll('.doc-list > li')].slice(0, 24).entries()) setTimeout(() => play(el, 'jelly'), 50 * i);
+    hatch('title', t('egg.title'));
+  }
+  let answered = false;
+  $effect(() => {
+    const asked = filter.trim() === '42';
+    if (asked && !answered) hatch('answer', t('egg.answer'));
+    answered = asked;
+  });
 </script>
 
 <div class="container">
   <header class="site-header">
     <div class="site-title">
       <p class="eyebrow">{t('library.eyebrow')}</p>
-      <h1 class="t-page-title">{t('library.titleBefore')}<em>{t('library.titleEm')}</em>{t('library.titleAfter')}</h1>
+      <h1 class="t-page-title" use:secretTaps={{ count: 7, onunlock: dust }}>{t('library.titleBefore')}<em class="script-word" bind:this={scriptWord}>{script ?? t('library.titleEm')}</em>{t('library.titleAfter')}</h1>
       <p class="t-tagline">{t('library.tagline')}</p>
     </div>
     <div class="header-tools">
@@ -165,7 +194,7 @@
 
       <div id="shelf" role="tabpanel" aria-labelledby="shelf-{v.shelf}">
         {#if docs.length}
-          <ul class="doc-list" aria-label={t('library.documents')}>
+          <ul class="doc-list dd-stagger" aria-label={t('library.documents')}>
             {#each docs as doc (doc.id)}
               <li><DocCard {doc} /></li>
             {/each}

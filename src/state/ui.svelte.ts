@@ -2,7 +2,7 @@ import { t } from '../i18n/index.svelte';
 // Transient UI state: the open sheet, the toast, confirm requests and
 // the overlay stack that Android's back button unwinds.
 
-export type ToastKind = 'success' | 'error' | 'info';
+export type ToastKind = 'success' | 'error' | 'info' | 'celebrate';
 
 export interface ToastAction {
   label: string;

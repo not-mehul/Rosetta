@@ -234,3 +234,40 @@ test('a long book opens and turns within budget', async ({ page }) => {
   const turns = Date.now() - t0;
   expect(turns, `ten turns in ${turns} ms`).toBeLessThan(3000);
 });
+
+test('hides easter eggs, counts them once, and lists the count in Settings', async ({ page }) => {
+  await expect(page.locator('#addFirst')).toBeVisible();
+  for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) {
+    await page.keyboard.press(key);
+  }
+  await expect(page.locator('.toast[data-kind="celebrate"]')).toContainText('One stone, many scripts. Easter egg found: 1 of 4.');
+  await expect(page.locator('.script-word')).toHaveText('ἀνάγνωσις');
+
+  for (let i = 0; i < 7; i++) await page.locator('.t-page-title').click();
+  await expect(page.locator('.toast[data-kind="celebrate"]')).toHaveText('Every shelf dusted. Easter egg found: 2 of 4.');
+
+  await page.click('#openSettings');
+  await expect(page.locator('#eggCount')).toHaveText('Easter eggs: 2 of 4 found');
+});
+
+test('left alone, the library offers a stone that reads one word in nine scripts', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  await expect(page.locator('#addFirst')).toBeVisible();
+  await page.clock.runFor(41_000);
+  const dock = page.getByTestId('idle-dock');
+  await expect(dock).toBeVisible();
+  await expect(dock.locator('.idle-line')).toHaveText('One word, nine scripts. Tap the stone.');
+  expect((await new AxeBuilder({ page }).include('[data-testid="idle-dock"]').analyze()).violations).toEqual([]);
+
+  const stone = dock.getByRole('button', { name: 'Turn the stone' });
+  await stone.click();
+  await expect(dock.locator('.word')).toHaveText('Διάβασε');
+  await expect(dock.locator('.language')).toHaveText('Greek');
+  for (let i = 1; i < 9; i++) await stone.click();
+  await expect(dock.locator('.word')).toHaveText('读');
+  await expect(page.locator('.toast[data-kind="celebrate"]')).toHaveText('Nine scripts, one word. Champollion would be pleased. Easter egg found: 1 of 4.');
+
+  await page.keyboard.press('Escape');
+  await expect(dock).toHaveCount(0);
+});

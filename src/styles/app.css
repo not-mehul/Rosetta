@@ -746,6 +746,19 @@ ol {
 .reader-bar .btn-icon.amber {
   color: var(--accent-amber);
 }
+/* A bookmark drops in like a ribbon between the pages, and shows itself the
+   same way when a turn lands on a marked page. */
+@media (prefers-reduced-motion: no-preference) {
+  #toggleBookmark.amber svg {
+    transform-origin: 50% 0;
+    animation: ribbon-drop var(--spring-spatial-fast-dur) var(--spring-spatial-fast);
+  }
+}
+@keyframes ribbon-drop {
+  from {
+    transform: translateY(-5px) scaleY(0.6);
+  }
+}
 .reader-foot {
   bottom: 0;
   display: flex;
@@ -785,6 +798,10 @@ body:has(.reader-foot) {
   padding: calc(5rem + var(--inset-top)) calc(1.25rem + var(--inset-right)) calc(6rem + var(--inset-bottom)) calc(1.25rem + var(--inset-left));
 }
 .reader-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
   text-align: center;
   padding-top: 20dvh;
 }
@@ -1241,7 +1258,7 @@ mark.hl-flash {
 mark.tts {
   background: rgba(var(--accent-sage-rgb), 0.28);
   color: inherit;
-  border-radius: 2px;
+  border-radius: var(--corner-xs);
   box-shadow: 0 0 0 2px rgba(var(--accent-sage-rgb), 0.28);
 }
 .speech-bar {
@@ -1455,7 +1472,7 @@ mark.tts {
 }
 .bar-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--corner-full);
   background: var(--chart-track);
   overflow: hidden;
 }
@@ -1482,4 +1499,9 @@ mark.tts {
   .fixed-page.slide-prev {
     animation: none;
   }
+}
+
+/* The title word that reads off the stone (an easter egg): flips in place. */
+.script-word {
+  display: inline-block;
 }

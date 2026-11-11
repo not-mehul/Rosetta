@@ -4,7 +4,9 @@
   import { settings } from './state/settings.svelte';
   import { ui } from './state/ui.svelte';
   import { addFiles } from './state/intake';
+  import IdleStone from './components/IdleStone.svelte';
   import LibraryView from './components/LibraryView.svelte';
+  import IdleDock from './components/ui/IdleDock.svelte';
   import ReaderView from './components/reader/ReaderView.svelte';
   import CatalogSheet from './components/sheets/CatalogSheet.svelte';
   import ContentsSheet from './components/sheets/ContentsSheet.svelte';
@@ -85,6 +87,8 @@
     <SearchSheet onclose={close} />
   {/if}
 {/if}
+
+<IdleDock label={t('idle.label')} disabled={!!reader.doc || !!ui.overlay}><IdleStone /></IdleDock>
 
 <ConfirmModal />
 <PromptModal />

@@ -397,6 +397,10 @@ const de: Messages = {
   'egg.konami': 'Griechisch, Latein und wieder zurück. Ein Stein, viele Schriften.',
   'egg.title': 'Alle Regale abgestaubt.',
   'egg.answer': 'Immerhin die Antwort. An der Frage wird noch gearbeitet.',
+  'egg.stone': 'Neun Schriften, ein Wort. Champollion wäre zufrieden.',
+  'idle.label': 'Ein Stein zum Lesen',
+  'idle.turn': 'Den Stein drehen',
+  'idle.hint': 'Ein Wort, neun Schriften. Tippe auf den Stein.',
   'about.eggs': 'Ostereier: {found} von {total} gefunden',
 };
 

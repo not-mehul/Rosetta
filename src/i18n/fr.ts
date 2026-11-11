@@ -397,6 +397,10 @@ const fr: Messages = {
   'egg.konami': 'Grec, latin, et retour au bercail. Une pierre, plusieurs écritures.',
   'egg.title': 'Toutes les étagères dépoussiérées.',
   'egg.answer': 'La réponse, au moins. La question est encore à l’étude.',
+  'egg.stone': 'Neuf écritures, un mot. Champollion serait ravi.',
+  'idle.label': 'Une pierre à lire',
+  'idle.turn': 'Tourner la pierre',
+  'idle.hint': 'Un mot, neuf écritures. Touchez la pierre.',
   'about.eggs': 'Œufs de Pâques : {found} sur {total} trouvés',
 };
 

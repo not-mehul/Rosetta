@@ -746,6 +746,19 @@ ol {
 .reader-bar .btn-icon.amber {
   color: var(--accent-amber);
 }
+/* A bookmark drops in like a ribbon between the pages, and shows itself the
+   same way when a turn lands on a marked page. */
+@media (prefers-reduced-motion: no-preference) {
+  #toggleBookmark.amber svg {
+    transform-origin: 50% 0;
+    animation: ribbon-drop var(--spring-spatial-fast-dur) var(--spring-spatial-fast);
+  }
+}
+@keyframes ribbon-drop {
+  from {
+    transform: translateY(-5px) scaleY(0.6);
+  }
+}
 .reader-foot {
   bottom: 0;
   display: flex;

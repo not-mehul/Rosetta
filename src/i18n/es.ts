@@ -400,6 +400,10 @@ const es: Messages = {
   'egg.konami': 'Griego, latín y de vuelta a casa. Una piedra, muchas escrituras.',
   'egg.title': 'Todas las estanterías, sin polvo.',
   'egg.answer': 'Al menos, la respuesta. La pregunta sigue en preparación.',
+  'egg.stone': 'Nueve escrituras, una palabra. Champollion estaría contento.',
+  'idle.label': 'Una piedra para leer',
+  'idle.turn': 'Girar la piedra',
+  'idle.hint': 'Una palabra, nueve escrituras. Toca la piedra.',
   'about.eggs': 'Huevos de Pascua: {found} de {total} encontrados',
 };
 

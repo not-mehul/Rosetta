@@ -392,6 +392,12 @@ const de: Messages = {
   'type.hapticsHint': 'Ein leichtes Tippen beim Setzen von Lesezeichen und Markierungen.',
   'type.voice': 'Stimme',
   'type.systemVoice': 'Systemstimme',
+
+  'egg.found': 'Osterei gefunden: {found} von {total}.',
+  'egg.konami': 'Griechisch, Latein und wieder zurück. Ein Stein, viele Schriften.',
+  'egg.title': 'Alle Regale abgestaubt.',
+  'egg.answer': 'Immerhin die Antwort. An der Frage wird noch gearbeitet.',
+  'about.eggs': 'Ostereier: {found} von {total} gefunden',
 };
 
 export default de;

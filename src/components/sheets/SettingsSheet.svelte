@@ -1,5 +1,6 @@
 <script lang="ts">
   // Settings (style.md §8.17): appearance and reading, the library, your data, about.
+  import { EGGS, eggsFound } from '../../lib/delight';
   import { t } from '../../i18n/index.svelte';
   import { notesMarkdown } from '../../lib/export';
   import { fileBytes, pickFiles } from '../../lib/pick';
@@ -146,6 +147,7 @@
   <section class="settings-group">
     <h3 class="t-section-label">{t('settings.about')}</h3>
     <p class="t-body-small dim">{t('about.version', { version: __APP_VERSION__ })}</p>
+    <p class="t-body-small dim" id="eggCount">{t('about.eggs', { found: eggsFound(), total: EGGS.length })}</p>
     <p class="t-hint"><em>{t('about.privateTerm')}</em> {t('about.private')}</p>
   </section>
 </Sheet>

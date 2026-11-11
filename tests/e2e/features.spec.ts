@@ -234,3 +234,18 @@ test('a long book opens and turns within budget', async ({ page }) => {
   const turns = Date.now() - t0;
   expect(turns, `ten turns in ${turns} ms`).toBeLessThan(3000);
 });
+
+test('hides easter eggs, counts them once, and lists the count in Settings', async ({ page }) => {
+  await expect(page.locator('#addFirst')).toBeVisible();
+  for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) {
+    await page.keyboard.press(key);
+  }
+  await expect(page.locator('.toast[data-kind="celebrate"]')).toContainText('One stone, many scripts. Easter egg found: 1 of 3.');
+  await expect(page.locator('.script-word')).toHaveText('ἀνάγνωσις');
+
+  for (let i = 0; i < 7; i++) await page.locator('.t-page-title').click();
+  await expect(page.locator('.toast[data-kind="celebrate"]')).toHaveText('Every shelf dusted. Easter egg found: 2 of 3.');
+
+  await page.click('#openSettings');
+  await expect(page.locator('#eggCount')).toHaveText('Easter eggs: 2 of 3 found');
+});

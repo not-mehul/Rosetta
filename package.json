@@ -53,7 +53,7 @@
     "@playwright/test": "^1.64.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/node": "^26.6.6",
-    "dusk-dawn": "github:not-mehul/dusk-dawn#v1.0.0",
+    "dusk-dawn": "github:not-mehul/dusk-dawn#8e289e46501929c6bbc6e6949d81a48390002161",
     "eslint": "^10.14.0",
     "eslint-plugin-svelte": "^3.24.0",
     "fake-indexeddb": "^6.2.7",

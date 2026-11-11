@@ -395,6 +395,12 @@ const es: Messages = {
   'type.hapticsHint': 'Un toque suave al marcar o subrayar.',
   'type.voice': 'Voz',
   'type.systemVoice': 'Voz del sistema',
+
+  'egg.found': 'Huevo de Pascua encontrado: {found} de {total}.',
+  'egg.konami': 'Griego, latín y de vuelta a casa. Una piedra, muchas escrituras.',
+  'egg.title': 'Todas las estanterías, sin polvo.',
+  'egg.answer': 'Al menos, la respuesta. La pregunta sigue en preparación.',
+  'about.eggs': 'Huevos de Pascua: {found} de {total} encontrados',
 };
 
 export default es;

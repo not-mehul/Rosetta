@@ -392,6 +392,12 @@ const en = {
   'type.hapticsHint': 'A light tick when you bookmark or highlight.',
   'type.voice': 'Voice',
   'type.systemVoice': 'System voice',
+
+  'egg.found': 'Easter egg found: {found} of {total}.',
+  'egg.konami': 'Greek, Latin, and home again. One stone, many scripts.',
+  'egg.title': 'Every shelf dusted.',
+  'egg.answer': 'The answer, at least. The question is still being worked on.',
+  'about.eggs': 'Easter eggs: {found} of {total} found',
 };
 
 export default en;

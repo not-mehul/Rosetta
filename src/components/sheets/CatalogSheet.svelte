@@ -1,6 +1,7 @@
 <script lang="ts">
   // OPDS catalogs: Project Gutenberg, Standard Ebooks, or any catalog by its
   // address (a Calibre server, a library). Browse, search and download.
+  import { LoadingIndicator } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { downloadName, fetchBytes, fetchText, fillSearch, parseFeed, PRESETS, searchTemplate, type Catalog, type Feed, type FeedEntry, type FeedLink } from '../../lib/opds';
   import { addFiles } from '../../state/intake';
@@ -162,6 +163,14 @@
         <div class="btn-row"><button type="button" class="btn btn-muted" disabled={loading} onclick={() => void load(current.next!, false)}>{t('catalog.more')}</button></div>
       {/if}
     {/if}
-    {#if loading}<p class="t-hint" role="status">{t('catalog.loading')}</p>{/if}
+    {#if loading}<div class="catalog-loading"><LoadingIndicator label={t('catalog.loading')} size={40} /></div>{/if}
   {/if}
 </Sheet>
+
+<style>
+  .catalog-loading {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-5) 0;
+  }
+</style>

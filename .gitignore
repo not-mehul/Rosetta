@@ -8,5 +8,6 @@ scratch/
 
 # Signing material — never commit keystores or their passwords
 *.jks
+*.p12
 *.keystore
 keystore.properties

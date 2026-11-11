@@ -1,14 +1,16 @@
 // Settings and reading preferences, with their allowed values.
 
 export type ThemeSetting = 'system' | 'dark' | 'light';
-export type Typeface = 'serif' | 'sans';
+/** 'custom' is a font file the reader added (see platform/fonts.ts). */
+export type Typeface = 'serif' | 'sans' | 'custom';
 export type Spacing = 'compact' | 'normal' | 'loose';
 export type Measure = 'narrow' | 'medium' | 'wide';
 export type PageTone = 'original' | 'theme';
 export type LibrarySort = 'recent' | 'title' | 'author' | 'series';
 export type LibraryShelf = 'reading' | 'all' | 'finished';
 export type PdfFit = 'width' | 'page';
-export type ReadingMode = 'scroll' | 'paged';
+/** Flow shows one sentence at a time in the middle of the screen, revealed a letter at a time. */
+export type ReadingMode = 'scroll' | 'paged' | 'flow';
 export type PageTurn = 'curl' | 'slide' | 'none';
 export type LocaleSetting = 'system' | 'en' | 'es' | 'fr' | 'de';
 /** What the reader's footer shows on the left; a tap moves to the next. */
@@ -30,8 +32,14 @@ export interface Settings {
   pdfZoom: number;
   /** What "fitted" means for a PDF page: the column's width, or the whole page on screen. */
   pdfFit: PdfFit;
-  /** Flow documents scroll, or turn one screen at a time. */
+  /** Flow documents scroll, turn one screen at a time, or flow a sentence at a time. */
   readingMode: ReadingMode;
+  /** Flow mode: letters revealed a second. */
+  flowSpeed: number;
+  /** Visual anchors: the start of each word in bold, for the eye to land on. */
+  anchors: boolean;
+  /** The name of the reader's own font file, when one was added. */
+  customFont: string;
   /** How a page turns in paged mode. Reduce-motion always means none. */
   pageTurn: PageTurn;
   /** Volume keys turn pages (Android). */
@@ -80,6 +88,7 @@ export interface Settings {
 export const FONT_SIZES = { min: 14, max: 28, step: 1 } as const;
 export const PDF_ZOOM = { min: 0.5, max: 4 } as const;
 export const SPEECH_RATE = { min: 0.5, max: 2 } as const;
+export const FLOW_SPEED = { min: 10, max: 120, step: 5 } as const;
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
@@ -92,6 +101,9 @@ export const DEFAULT_SETTINGS: Settings = {
   pdfZoom: 1,
   pdfFit: 'width',
   readingMode: 'scroll',
+  flowSpeed: 40,
+  anchors: false,
+  customFont: '',
   pageTurn: 'curl',
   volumeKeys: true,
   keepAwake: false,
@@ -116,12 +128,12 @@ export const DEFAULT_SETTINGS: Settings = {
 
 const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   theme: ['system', 'dark', 'light'],
-  typeface: ['serif', 'sans'],
+  typeface: ['serif', 'sans', 'custom'],
   spacing: ['compact', 'normal', 'loose'],
   measure: ['narrow', 'medium', 'wide'],
   pageTone: ['original', 'theme'],
   pdfFit: ['width', 'page'],
-  readingMode: ['scroll', 'paged'],
+  readingMode: ['scroll', 'paged', 'flow'],
   pageTurn: ['curl', 'slide', 'none'],
   locale: ['system', 'en', 'es', 'fr', 'de'],
   sort: ['recent', 'title', 'author', 'series'],
@@ -137,6 +149,7 @@ const RANGES: Partial<Record<keyof Settings, readonly [number, number]>> = {
   dim: [0, 0.7],
   warmth: [0, 1],
   speechRate: [SPEECH_RATE.min, SPEECH_RATE.max],
+  flowSpeed: [FLOW_SPEED.min, FLOW_SPEED.max],
 };
 
 /** Stored settings over the defaults, dropping anything that doesn't fit. */

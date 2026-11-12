@@ -1,77 +1,107 @@
-# Rosetta
+<p align="center"><img src="public/favicon.svg" width="88" height="88" alt=""></p>
 
-A quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB2, comic archives, Markdown, HTML and plain-text documents. Add your files, read them in one calm typeface, and come back to the exact place you stopped. It runs in the browser and as an Android and iOS app, and everything stays on your device.
+<h1 align="center">Rosetta</h1>
 
-Rosetta uses **Editorial Dusk & Dawn**, the design system it shares with Waymark, BookShelf, Ledger and Colophon. Everything shared (tokens, Fraunces, the shared components and the colour checks) comes from one package, [`dusk-dawn`](https://github.com/not-mehul/dusk-dawn), whose `style.md` is the spec.
+<p align="center"><em>Books, papers and notes, read quietly in one place.</em></p>
 
-## What it does
+<p align="center">
+  Android&nbsp;·&nbsp;iOS&nbsp;·&nbsp;Web&nbsp;·&nbsp;<a href="https://github.com/not-mehul/Rosetta/releases/latest">Latest release</a>&nbsp;·&nbsp;MIT&nbsp;·&nbsp;Created by <strong>Mehul Sen</strong>
+</p>
 
-- **Library.** Documents as cards with their covers, a *Continue reading* panel, shelves for Reading, All and Finished, and **collections** a document can be on any number of. When nothing is in progress, *Up next* offers the next volume of a series just finished, and the end of a book and its details point to it too. Sort by recent, title, author or series; filter by title, author, series or `#tag`. *Edit details* fixes the title, author, series and volume, tags and cover. Add a whole folder at once where the browser allows it. Adding the same file twice keeps one copy.
-- **Formats.** EPUB 2 and 3 (contents, images, footnotes, language and reading direction, series from Calibre or EPUB 3 metadata, fixed-layout books page by page), PDF (pdf.js, with a selectable text layer, password prompts and fit-to-page), Word `.docx`, OpenDocument `.odt`, RTF, FictionBook `.fb2`, comic archives `.cbz`, Markdown with front matter, HTML and plain text. Publisher scripts never run; a book's own styles can be kept under the reader's theme (*Book's own styles*). EPUBs with DRM are refused with a plain explanation, since Rosetta can't open them.
-- **Reading.** Scroll, or turn pages one screen at a time with a **page curl**, a slide or no motion (reduce-motion always means none). Tap the edges, swipe, use the arrow keys or, on Android, the volume keys. **Flow** shows one sentence at a time in the middle of the screen, its letters appearing at the speed you set: a tap shows the rest, the next tap moves on. **Visual anchors** set the start of every word in bold, and **Yours** reads in a font file you add (TTF, OTF, WOFF or WOFF2). Footnotes open in place; pictures open full screen with pinch zoom. **Read aloud** speaks sentence by sentence with the sentence highlighted. A dim and warmth layer helps at night, and the screen can stay on. The footer's line is cut at each chapter, and a tap on its figure moves between the time left in the book, the time left in the chapter and which chapter this is. After a jump from the contents, search, a link or a note, **Back to** returns to the place you left (and then offers the way forward again). Leaving after a real sitting says how long it was and how far it went.
-- **Contents, bookmarks and highlights** in one sheet, with a page grid of thumbnails for PDFs. Highlights come in three colours with an optional note, export as Markdown, and can be shared as a quote card. *All notes* gathers every highlight from every document, searchable. *Look up* sends a selection to the system dictionary.
-- **Stats.** Time read today and this week, the streak and the longest one, pace, a **daily goal** (15, 30 or 60 minutes, shown beside *Continue reading* and noted once when it is met), a calendar of the last four months with each day's time, the documents that took the most time, and what was finished this year. A document's details show the time spent in it, and finishing one says how long it took.
-- **Catalogs.** Browse and download from OPDS catalogs (Project Gutenberg and Standard Ebooks are built in; add a Calibre server or a library's feed).
-- **Your data.** Export every note as Markdown; back up places, marks, details and collections as JSON, or save the whole library with its files as a zip. On a phone, a dated backup is written each week (the last five are kept). **Sync with a folder** merges places and marks with a file in a folder you choose (or `Documents/Rosetta/sync` on a phone, for iCloud Drive, Syncthing or Dropbox), last write wins, deletions included. *Storage* shows what each file takes and can offload a file while keeping its place and notes.
-- **Languages.** English, Spanish, French and German, following the system or chosen in Settings.
-- **The sibling apps.** A finished book can be logged in BookShelf (`bookshelf://log?…`, the same URL scheme on Android and iOS), and an EPUB can be opened in Colophon through the share sheet. Other apps can open a document with `rosetta://open?id=…` or `rosetta://open?title=…`. The scheme convention is the one all six apps share (`src/platform/links.ts`, style.md §14.1).
+---
 
-## Run it
+Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB2, comic archives, Markdown, HTML and plain-text documents. Add your files, read them in one calm typeface, and come back to the exact place you stopped. It runs in the browser and as an Android and iOS app, and everything stays on your device.
+
+<p align="center">
+  <img src="docs/screenshots/reader.webp" width="200" alt="Reading Moby-Dick: the first chapter in a serif typeface with the reader bar above">
+  <img src="docs/screenshots/flow.webp" width="200" alt="Flow mode: one sentence at a time in the middle of the screen">
+  <img src="docs/screenshots/type-and-theme.webp" width="200" alt="The Type and theme sheet: theme, reading mode, typeface, size, spacing and column">
+  <img src="docs/screenshots/library-dawn.webp" width="200" alt="The library in the light Dawn theme, with Continue reading and document cards">
+</p>
+
+## Features
+
+### Your library
+
+- **Shelves and collections.** Documents as cards with their covers, a *Continue reading* panel, shelves for Reading, All and Finished, and collections a document can be on any number of.
+- **Up next.** When nothing is in progress, Rosetta offers the next volume of a series you just finished.
+- **Find anything.** Sort by recent, title, author or series, and filter by title, author, series or `#tag`. *Edit details* fixes the title, author, series, tags and cover.
+- **Add in bulk.** Add a whole folder at once where the browser allows it. Adding the same file twice keeps one copy.
+- **Catalogs.** Browse and download from OPDS catalogs. Project Gutenberg and Standard Ebooks are built in, and you can add a Calibre server or a library's feed.
+
+### Every format
+
+EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading direction, and series from Calibre or EPUB 3 metadata), PDF (with selectable text, password prompts and fit-to-page), Word `.docx`, OpenDocument `.odt`, RTF, FictionBook `.fb2`, comic archives `.cbz`, Markdown with front matter, HTML and plain text. Publisher scripts never run, and a book's own styles can be kept under the reader's theme. EPUBs with DRM are refused with a plain explanation.
+
+### Reading
+
+- **Scroll or turn pages** with a page curl, a slide or no motion. Tap the edges, swipe, use the arrow keys or, on Android, the volume keys.
+- **Flow.** One sentence at a time in the middle of the screen, its letters appearing at the speed you set.
+- **Visual anchors** set the start of every word in bold, and **Yours** reads in a font file you add (TTF, OTF, WOFF or WOFF2).
+- **Read aloud**, sentence by sentence with the sentence highlighted.
+- **Footnotes open in place**, and pictures open full screen with pinch zoom.
+- **Night comfort.** A dim and warmth layer, and the screen can stay on.
+- **Always know where you are.** The footer shows the time left in the book or chapter, or which chapter this is. After a jump, *Back to* returns you to where you were.
+- **Contents, bookmarks and highlights** in one sheet, with page thumbnails for PDFs. Highlights come in three colours with an optional note, export as Markdown and share as a quote card. *All notes* gathers every highlight from every document, searchable. *Look up* sends a word to the system dictionary.
+
+### Reading habits
+
+- **Stats.** Time read today and this week, your streak and longest streak, pace, a calendar of the last four months, the documents that took the most time, and what you finished this year.
+- **A daily goal** of 15, 30 or 60 minutes, noted once when it is met.
+- **A little delight.** Confetti when you finish a book, an idle stone that says "read" in nine scripts, and four easter eggs, counted in Settings. All of it respects reduced motion.
+
+### Your data
+
+- **Export and back up.** Every note as Markdown, your places, marks, details and collections as JSON, or the whole library with its files as a zip. On a phone, a dated backup is written each week.
+- **Sync with a folder.** Places and marks merge with a file in a folder you choose, for iCloud Drive, Syncthing or Dropbox.
+- **Storage.** See what each file takes, and offload a file while keeping its place and notes.
+- **Four languages.** English, Spanish, French and German.
+- **The other apps.** Log a finished book in BookShelf, open an EPUB in Colophon, and let other apps open a document with `rosetta://open?title=…`.
+
+## Private by design
+
+Your documents never leave the device. Rosetta goes online only when you browse a catalog, and sync goes through a folder you choose, not a Rosetta server. There are no accounts.
+
+## Install
+
+- **Android:** download the signed APK from the [latest release](https://github.com/not-mehul/Rosetta/releases/latest) and open it on your phone.
+- **iOS:** build it from source with Xcode (see below).
+- **Web:** run `npm run build` and host `dist/` anywhere.
+
+## The Dusk & Dawn apps
+
+Rosetta is one of six apps by Mehul Sen that share one design system, [Editorial Dusk & Dawn](https://github.com/not-mehul/dusk-dawn), and a common link scheme, so they can hand things to each other.
+
+| App | What it is for |
+|---|---|
+| [Waymark](https://github.com/not-mehul/Waymark) | Your whole trip, offline: flights, stays, plans and costs on one timeline |
+| [BookShelf](https://github.com/not-mehul/BookShelf) | Books, films, shows and the lines worth keeping |
+| [Ledger](https://github.com/not-mehul/Ledger) | A record of cities, scored on what matters to you |
+| [Colophon](https://github.com/not-mehul/Colophon) | Inspect, fix and rebind EPUB editions |
+| [Rosetta](https://github.com/not-mehul/Rosetta) | A quiet library and reader for books, papers and notes |
+| [Mise](https://github.com/not-mehul/Mise) | Recipes from anywhere, cooked one step at a time |
+
+## Build from source
+
+Svelte 5 and TypeScript, built by Vite, with Dexie for storage and Capacitor 8 for Android and iOS. You need Node 22.12 or later.
 
 ```sh
 npm install
 npm run dev          # http://localhost:5173
 npm run check        # tokens, lint, literal colours, typecheck, unit tests
-npm run test:e2e     # builds, then Playwright at phone size (with axe accessibility checks and a performance budget)
-npm run test:pdf     # the PDF tests alone, for pdf.js upgrades
-```
-
-Svelte 5, TypeScript and Vite. The library lives in IndexedDB (Dexie). pdf.js and mammoth load only when a PDF or a Word file is opened, and each language other than English only when it is chosen. pdf.js's CMaps, standard fonts and decoders are copied into `public/pdfjs/` at build time, so PDFs open offline.
-
-## The apps
-
-Capacitor 8 wraps the same build for Android and iOS.
-
-```sh
 npm run android      # build, sync and open Android Studio
-npm run android:apk  # a debug APK
 npm run ios          # build, sync and open Xcode
-npm run assets       # redraw the app icon and splash screens
 ```
 
-- **Open with.** Android registers VIEW intents for EPUB, PDF, Word, OpenDocument, RTF, FB2, CBZ, Markdown, text and HTML; iOS declares the matching document types. Both arrive through `appUrlOpen` (`src/platform/intake.ts`), and the format is read from the bytes, since Android content URIs rarely carry a file name.
-- **Links.** Both platforms register the `rosetta` URL scheme and are allowed to ask whether each sibling app (`waymark`, `bookshelf`, `ledger`, `colophon`) is installed (`<queries>` on Android, `LSApplicationQueriesSchemes` on iOS).
-- **Volume keys** turn pages through a small Android plugin (`VolumeKeysPlugin.java`); iOS has no public API for them.
-- **System.** The back button closes the topmost sheet, then the reader, then the app. The system bars follow the theme, and the splash is Dusk's `--bg-grad-mid` behind the amber R.
-- Notes and backups are saved to `Documents/Rosetta/` (the app's folder in Files on iOS), or downloaded in a browser.
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) covers the native apps, the project layout, the design tokens and dependency updates. [RELEASING.md](RELEASING.md) covers signing and releases.
 
-## Layout
+## Credits
 
-| Path | What it is |
-|---|---|
-| `src/formats/` | Format detection, sanitising, and the readers for each format, with no UI |
-| `src/reader/` | Text offsets and highlight painting, search, progress, selection, pages, the page curl, footnotes and sentences |
-| `src/state/` | The library, the open document and its marks, settings, reading stats, read aloud, backup and sync, and UI state |
-| `src/components/` | The library, the reader views and the sheets; `ui/` holds Rosetta's own pieces (Sheet, Modal and the rest); TabRail, Toast and ThemeToggle come from `dusk-dawn` |
-| `src/platform/` | Native bridges: files in and out, theme and system bars, haptics, keep-awake, volume keys and hand-off to the other apps |
-| `src/i18n/` | The interface strings: `en.ts` is the reference, and `es.ts`, `fr.ts` and `de.ts` must have every key (a unit test checks the placeholders) |
-| `src/lib/` | Pickers, exports, quote cards, OPDS catalogs and the guide |
-| `src/styles/` | `app.css`, which imports `dusk-dawn/tokens.css` and `dusk-dawn/components.css` first |
-| `tests/` | Vitest unit tests, Playwright end-to-end tests, and the fixtures (`tests/fixtures/make-fixtures.mjs` rebuilds them) |
-| `android/`, `ios/` | The Capacitor projects |
+Rosetta is designed and built by **Mehul Sen** ([@not-mehul](https://github.com/not-mehul)).
 
-## Design tokens
+- Libraries: pdf.js (Apache 2.0), mammoth (BSD 2-Clause), marked and fflate (MIT), DOMPurify (Apache 2.0 or MPL 2.0), Dexie (Apache 2.0), Capacitor (MIT) and [Lucide](https://lucide.dev) icons (ISC).
+- Fonts and design: Fraunces (SIL Open Font License) through [dusk-dawn](https://github.com/not-mehul/dusk-dawn).
 
-Tokens, fonts and the shared components live in the [`dusk-dawn`](https://github.com/not-mehul/dusk-dawn) package, installed at a tag. To change the design, change the package, tag a release, and move the tag in `package.json` (`style.md` §18). `dusk-dawn check` (part of `npm run check`) tests contrast in both themes, and `dusk-dawn colours` (part of `npm run lint`) fails on any literal colour in `src/`.
+## Licence
 
-```sh
-npm run icons        # regenerate src/components/ui/icons.ts after using a new Lucide name
-```
-
-## Updates
-
-Renovate (`renovate.json`) groups dev tooling and the Capacitor plugins. pdf.js is pinned and every bump is reviewed by hand after `npm run test:pdf`, because its worker and assets are copied into the build. CI runs one quick job on every pull request and push to main: `npm run check` (tokens, lint, colours, typecheck, unit tests) and the web build. The slow checks (Playwright end to end, the Android build with an emulator launch test, and the iOS simulator build) run when started by hand from the Actions tab with *Run workflow*. Run `npm run test:e2e` locally before a release.
-
-## Licences
-
-Fraunces: SIL Open Font License (shipped in `dusk-dawn`). Lucide: ISC. pdf.js: Apache 2.0. mammoth: BSD 2-Clause. marked and fflate: MIT. DOMPurify: Apache 2.0 or MPL 2.0. Dexie: Apache 2.0. Capacitor and its plugins: MIT.
+[MIT](LICENSE) © 2026 Mehul Sen.

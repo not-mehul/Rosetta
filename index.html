@@ -13,6 +13,7 @@
         var mode = localStorage.getItem('rosetta.theme');
         var dark = mode === 'dark' || (mode !== 'light' && !matchMedia('(prefers-color-scheme: light)').matches);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        if (localStorage.getItem('rosetta.oled')) document.documentElement.dataset.oled = '';
       } catch (e) {}
     </script>
   </head>

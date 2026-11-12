@@ -391,6 +391,8 @@ const de: Messages = {
   'flow.count': '{at} von {count}',
   'flow.hint': 'Tippen zeigt den ganzen Satz, erneut tippen den nächsten.',
   'reader.openingLabel': 'Wird geöffnet',
+  'type.oled': 'Echtes Schwarz (OLED)',
+  'type.oledHint': 'Im Abend-Thema ist jeder Hintergrund reines Schwarz: tiefer bei Nacht und schonender für den Akku eines OLED-Bildschirms.',
   'type.theme': 'Thema',
   'type.system': 'System',
   'type.dusk': 'Abend',

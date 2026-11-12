@@ -96,15 +96,6 @@ export function polygon(points: Pt[]): string {
   return `polygon(${points.map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(', ')})`;
 }
 
-/** CSS matrix() reflecting an element (transform-origin 0 0) across the fold. */
-export function reflectionMatrix(mid: Pt, n: Pt): string {
-  const a = 1 - 2 * n.x * n.x;
-  const b = -2 * n.x * n.y;
-  const dd = 1 - 2 * n.y * n.y;
-  const k = 2 * dot(mid, n);
-  return `matrix(${a}, ${b}, ${b}, ${dd}, ${k * n.x}, ${k * n.y})`;
-}
-
 /**
  * A linear-gradient angle along `dir` for a W×H box, and where a point falls
  * on that gradient's line in pixels, so stops can be placed on the fold.

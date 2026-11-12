@@ -22,7 +22,7 @@ import './styles/app.css';
 
 async function start(): Promise<void> {
   await Promise.all([settings.load(), library.load(), stats.load()]).catch((err) => console.error('Loading saved data failed:', err));
-  applyTheme(settings.value.theme);
+  applyTheme(settings.value.theme, settings.value.oled);
   // The reader's own font, if they added one; a lost file falls back to serif.
   const font = await loadCustomFont();
   if (font !== settings.value.customFont || (!font && settings.value.typeface === 'custom')) {

@@ -55,6 +55,9 @@
     {/each}
   </div>
 </div>
+<div class="settings-list">
+  <Switch checked={v.oled} label={t('type.oled')} hint={t('type.oledHint')} onchange={(on) => set({ oled: on })} />
+</div>
 
 {#if show === 'both'}
   <label class="field">

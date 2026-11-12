@@ -1469,10 +1469,15 @@ mark.hl-flash {
   inset: 0;
   z-index: 3;
   pointer-events: none;
+  /* Its copies of the page never make the page beneath lay out again. */
+  contain: strict;
+}
+.curl.is-idle {
+  /* Kept laid out between turns (display: none would throw the layout away). */
+  visibility: hidden;
 }
 .curl > div,
-.curl-flap,
-.curl-mirror {
+.curl-flap {
   position: absolute;
   inset: 0;
 }
@@ -1482,10 +1487,6 @@ mark.hl-flash {
 }
 .curl-flap {
   overflow: hidden;
-}
-.curl-mirror {
-  transform-origin: 0 0;
-  opacity: 0.08;
 }
 .curl .reading {
   position: absolute;
@@ -2119,4 +2120,18 @@ mark.tts {
   opacity: 0.35;
   cursor: default;
   pointer-events: none;
+}
+
+/* OLED: Dusk on true black. Every surface behind the page goes to the
+   darkest token there is, the warm glows go, and lines and text stay as they
+   are, so contrast only rises. Dawn is untouched. */
+[data-theme='dark'][data-oled] {
+  --bg-grad-top: var(--scanner-bg);
+  --bg-grad-mid: var(--scanner-bg);
+  --bg-grad-bot: var(--scanner-bg);
+  --sheet-bg: var(--scanner-bg);
+  --modal-bg: var(--scanner-bg);
+}
+[data-theme='dark'][data-oled] .glow-layer {
+  display: none;
 }

@@ -6,7 +6,10 @@
   import { isNative } from '../../platform/native';
   import { reader } from '../../state/reader.svelte';
   import { settings } from '../../state/settings.svelte';
-  import { FONT_SIZES, type Settings } from '../../state/settings';
+  import { FLOW_SPEED, FONT_SIZES, type Settings } from '../../state/settings';
+  import { FONT_ACCEPT, removeCustomFont, saveCustomFont } from '../../platform/fonts';
+  import { pickFiles } from '../../lib/pick';
+  import { ui } from '../../state/ui.svelte';
   import { speech } from '../../state/speech.svelte';
   import Icon from '../ui/Icon.svelte';
   import Switch from '../ui/Switch.svelte';
@@ -19,6 +22,29 @@
   const hasBookStyles = $derived(show === 'both' || (reader.content?.kind === 'flow' && !!reader.content.css));
 
   onMount(() => void speech.loadVoices());
+
+  /** Picks a font file, keeps it, and reads in it. */
+  async function addFont() {
+    const [file] = await pickFiles(FONT_ACCEPT, false);
+    if (!file) return;
+    try {
+      const name = await saveCustomFont(file);
+      set({ customFont: name, typeface: 'custom' });
+      ui.notify(t('type.fontAdded', { name }), 'success');
+    } catch {
+      ui.notify(t('type.fontFailed'), 'error');
+    }
+  }
+
+  async function dropFont() {
+    await removeCustomFont();
+    set({ customFont: '', typeface: v.typeface === 'custom' ? 'serif' : v.typeface });
+  }
+
+  function chooseCustom() {
+    if (v.customFont) set({ typeface: 'custom' });
+    else void addFont();
+  }
 </script>
 
 <div class="field">
@@ -46,9 +72,34 @@
     <div class="segmented" role="radiogroup" aria-label={t('type.mode')}>
       <button type="button" role="radio" id="modeScroll" aria-checked={v.readingMode === 'scroll'} onclick={() => set({ readingMode: 'scroll' })}>{t('type.scroll')}</button>
       <button type="button" role="radio" id="modePaged" aria-checked={v.readingMode === 'paged'} onclick={() => set({ readingMode: 'paged' })}>{t('type.pages')}</button>
+      <button type="button" role="radio" id="modeFlow" aria-checked={v.readingMode === 'flow'} onclick={() => set({ readingMode: 'flow' })}>{t('type.flow')}</button>
     </div>
     {#if v.readingMode === 'paged'}<span class="field-hint">{t('type.pagesHint')}</span>{/if}
+    {#if v.readingMode === 'flow'}<span class="field-hint">{t('type.flowHint')}</span>{/if}
   </div>
+
+  {#if v.readingMode === 'flow' || show === 'both'}
+    <div class="field">
+      <span class="t-field-label" id="flowSpeedLabel">{t('type.flowSpeed')}</span>
+      <div class="size-row">
+        <button type="button" class="btn-icon" id="slower" aria-label={t('type.slower')} disabled={v.flowSpeed <= FLOW_SPEED.min} onclick={() => set({ flowSpeed: Math.max(FLOW_SPEED.min, v.flowSpeed - FLOW_SPEED.step) })}><Icon name="minus" /></button>
+        <input
+          class="slider"
+          type="range"
+          id="flowSpeed"
+          aria-labelledby="flowSpeedLabel"
+          min={FLOW_SPEED.min}
+          max={FLOW_SPEED.max}
+          step={FLOW_SPEED.step}
+          value={v.flowSpeed}
+          oninput={(e) => set({ flowSpeed: Number(e.currentTarget.value) })}
+        />
+        <button type="button" class="btn-icon" id="faster" aria-label={t('type.faster')} disabled={v.flowSpeed >= FLOW_SPEED.max} onclick={() => set({ flowSpeed: Math.min(FLOW_SPEED.max, v.flowSpeed + FLOW_SPEED.step) })}><Icon name="plus" /></button>
+        <span class="slider-value tabular" id="flowSpeedValue">{v.flowSpeed}</span>
+      </div>
+      <span class="field-hint">{t('type.flowSpeedHint')}</span>
+    </div>
+  {/if}
 
   {#if v.readingMode === 'paged' || show === 'both'}
     <div class="field">
@@ -67,7 +118,17 @@
     <div class="segmented" role="radiogroup" aria-label={t('type.typeface')}>
       <button type="button" role="radio" class="face-serif" aria-checked={v.typeface === 'serif'} onclick={() => set({ typeface: 'serif' })}>{t('type.serif')}</button>
       <button type="button" role="radio" class="face-sans" aria-checked={v.typeface === 'sans'} onclick={() => set({ typeface: 'sans' })}>{t('type.sans')}</button>
+      <button type="button" role="radio" class="face-custom" id="faceCustom" aria-checked={v.typeface === 'custom'} onclick={chooseCustom}>{t('type.yours')}</button>
     </div>
+    {#if v.customFont}
+      <div class="font-row">
+        <span class="font-name ellipsis">{v.customFont}</span>
+        <button type="button" class="btn btn-muted" id="changeFont" onclick={() => void addFont()}>{t('type.changeFont')}</button>
+        <button type="button" class="btn-icon" id="removeFont" aria-label={t('type.removeFont', { name: v.customFont })} onclick={() => void dropFont()}><Icon name="trash-2" /></button>
+      </div>
+    {:else}
+      <span class="field-hint">{t('type.yoursHint')}</span>
+    {/if}
   </div>
 
   <div class="field">
@@ -108,6 +169,7 @@
   </div>
 
   <div class="settings-list">
+    <Switch checked={v.anchors} label={t('type.anchors')} hint={t('type.anchorsHint')} onchange={(on) => set({ anchors: on })} />
     <Switch checked={v.justify} label={t('type.justify')} hint={t('type.justifyHint')} onchange={(on) => set({ justify: on })} />
     {#if hasBookStyles}
       <Switch checked={v.publisherStyles} label={t('type.bookStyles')} hint={t('type.bookStylesHint')} onchange={(on) => set({ publisherStyles: on })} />

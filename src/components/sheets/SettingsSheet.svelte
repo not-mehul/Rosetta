@@ -110,7 +110,7 @@
 
   <section class="settings-group">
     <h3 class="t-section-label">{t('settings.library')}</h3>
-    <div class="btn-row btn-row-start">
+    <div class="btn-grid">
       <button type="button" class="btn btn-secondary" id="openStorage" onclick={() => ui.open('storage')}>{t('storage.title')}</button>
       <button type="button" class="btn btn-secondary" onclick={() => ui.open('catalog')}>{t('catalog.title')}</button>
     </div>
@@ -119,7 +119,7 @@
   <section class="settings-group">
     <h3 class="t-section-label">{t('settings.data')}</h3>
     <p class="t-body-small dim">{t('data.intro')}</p>
-    <div class="btn-row btn-row-start">
+    <div class="btn-grid">
       <button type="button" class="btn btn-secondary" id="exportAll" onclick={() => void exportAllNotes()}>{t('data.exportNotes')}</button>
       <button type="button" class="btn btn-secondary" id="backUp" onclick={() => void backUp()}>{t('data.backUp')}</button>
       <button type="button" class="btn btn-secondary" id="archive" disabled={busy || !library.items.length} onclick={() => void archive()}>{t('data.archive')}</button>
@@ -134,12 +134,12 @@
       {/if}
     </div>
     {#if v.sync}
-      <div class="btn-row btn-row-start">
+      <div class="btn-grid">
         <button type="button" class="btn btn-muted" id="syncNow" disabled={busy} onclick={() => void runSync()}>{t('sync.now')}</button>
         {#if canPickSyncFolder}<button type="button" class="btn btn-muted" onclick={() => void chooseSyncFolder()}>{t('sync.choose')}</button>{/if}
       </div>
     {/if}
-    <div class="btn-row btn-row-start">
+    <div class="btn-grid">
       <button type="button" class="btn btn-danger" disabled={!library.items.length} onclick={() => void clearLibrary()}>{t('data.clear')}</button>
     </div>
   </section>

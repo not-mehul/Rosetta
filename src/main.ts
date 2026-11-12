@@ -7,6 +7,7 @@ import { mount } from 'svelte';
 import App from './App.svelte';
 import { setLocale, t } from './i18n/index.svelte';
 import { parseRosettaUrl, sendToBookShelf } from './platform/handoff';
+import { loadCustomFont } from './platform/fonts';
 import { listenForFiles } from './platform/intake';
 import { isNative } from './platform/native';
 import { applyTheme } from './platform/theme.svelte';
@@ -22,6 +23,11 @@ import './styles/app.css';
 async function start(): Promise<void> {
   await Promise.all([settings.load(), library.load(), stats.load()]).catch((err) => console.error('Loading saved data failed:', err));
   applyTheme(settings.value.theme);
+  // The reader's own font, if they added one; a lost file falls back to serif.
+  const font = await loadCustomFont();
+  if (font !== settings.value.customFont || (!font && settings.value.typeface === 'custom')) {
+    await settings.update({ customFont: font, ...(!font && settings.value.typeface === 'custom' ? { typeface: 'serif' as const } : {}) });
+  }
   await setLocale(settings.value.locale).catch(() => undefined);
   await syncNow().catch((err) => console.warn('Sync failed:', err));
 

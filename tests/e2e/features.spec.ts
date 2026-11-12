@@ -321,3 +321,50 @@ test('a daily goal and the reading calendar', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(page.locator('#goalToday')).toHaveText('0 of 30 min today');
 });
+
+test('flows a sentence at a time, with visual anchors and a font of your own', async ({ page }) => {
+  // A single file opens as it is added.
+  await add(page, ['lantern.epub']);
+  await expect(page.locator('.reading h1')).toHaveText('The stair');
+  await showBars(page);
+  await page.click('#openType');
+
+  // Visual anchors bold the start of each word and leave the text alone.
+  await page.getByRole('switch', { name: /Visual anchors/ }).click();
+  await expect(page.locator('.reading b.anchor').first()).toHaveText('T');
+  await expect(page.locator('.reading p').first()).toContainText('The keeper kept a log');
+
+  // Flow: one sentence, revealed letter by letter at the chosen speed.
+  await page.click('#modeFlow');
+  await expect(page.locator('#flowSpeed')).toBeVisible();
+  await page.locator('#flowSpeed').fill('10');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.flow-sentence')).toHaveCount(1);
+  await expect(page.locator('.flow-count')).toHaveText(/^1 of \d+/);
+  // The heading shows whole; the next sentence starts hidden and a tap shows the rest.
+  await page.mouse.click(300, 500);
+  await expect(page.locator('.flow-count')).toHaveText(/^2 of /);
+  await expect(page.locator('.flow-sentence .veiled').first()).toBeAttached();
+  await page.mouse.click(300, 500);
+  await expect(page.locator('.flow-sentence .veiled')).toHaveCount(0);
+  await expect(page.locator('.flow-sentence .visually-hidden')).toHaveText(/The keeper kept a log/);
+  await page.mouse.click(300, 500);
+  await expect(page.locator('.flow-count')).toHaveText(/^3 of /);
+  // The left edge goes back, shown whole.
+  await page.mouse.click(30, 500);
+  await expect(page.locator('.flow-count')).toHaveText(/^2 of /);
+  await expect(page.locator('.flow-sentence .veiled')).toHaveCount(0);
+
+  // The count under the sentence brings the bars back.
+  await page.click('#flowBars');
+  await expect(page.locator('.reader.chrome-hidden')).toHaveCount(0);
+
+  // A font file that isn't a font is turned away.
+  await page.click('#openType');
+  const dir = mkdtempSync(join(tmpdir(), 'font-'));
+  writeFileSync(join(dir, 'Broken.ttf'), 'not a font');
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#faceCustom')]);
+  await chooser.setFiles(join(dir, 'Broken.ttf'));
+  await expect(page.locator('#toast')).toContainText('isn’t a font');
+  await expect(page.locator('#faceCustom')).toHaveAttribute('aria-checked', 'false');
+});

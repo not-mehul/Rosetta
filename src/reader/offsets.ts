@@ -151,13 +151,24 @@ export function firstVisibleOffset(root: Element, top: number): number {
 }
 
 /** A short excerpt around [start, end) of `text`, with the match split out. */
-export function excerpt(text: string, start: number, end: number, around = 48): { before: string; match: string; after: string } {
+export function excerpt(text: string, start: number, end: number, around = 48, breaks: readonly number[] = []): { before: string; match: string; after: string } {
   const from = Math.max(0, start - around);
   const to = Math.min(text.length, end + around);
   const squash = (s: string) => s.replace(/\s+/g, ' ');
+  /** The text from a to b, with a space where one block (a paragraph, a heading) ends and the next begins. */
+  const cut = (a: number, b: number) => {
+    let out = '';
+    let at = a;
+    for (const k of breaks) {
+      if (k <= a || k > b) continue;
+      out += text.slice(at, k) + ' ';
+      at = k;
+    }
+    return out + text.slice(at, b);
+  };
   return {
-    before: (from > 0 ? '…' : '') + squash(text.slice(from, start)).trimStart(),
-    match: squash(text.slice(start, end)),
-    after: squash(text.slice(end, to)).trimEnd() + (to < text.length ? '…' : ''),
+    before: (from > 0 ? '…' : '') + squash(cut(from, start)).trimStart(),
+    match: squash(cut(start, end)),
+    after: squash(cut(end, to)).trimEnd() + (to < text.length ? '…' : ''),
   };
 }

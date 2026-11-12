@@ -2,7 +2,6 @@
   // The reader: a bar at the top (back, title, read aloud, search, contents,
   // bookmark, type), the page, and a footer with the place and progress. A
   // tap on the page, or scrolling on, hides the bars.
-  import { LoadingIndicator } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { captureVolumeKeys, keepAwake } from '../../platform/device';
   import { duration } from '../../lib/format';
@@ -18,8 +17,10 @@
   import FlowView from './FlowView.svelte';
   import ImageViewer from './ImageViewer.svelte';
   import MarkModal from './MarkModal.svelte';
+  import OpeningBook from './OpeningBook.svelte';
   import NoteSheet from './NoteSheet.svelte';
   import PdfView from './PdfView.svelte';
+  import SentenceView from './SentenceView.svelte';
   import SpeechBar from './SpeechBar.svelte';
 
   const doc = $derived(reader.doc!);
@@ -62,7 +63,9 @@
     const where = reader.whereIs(to.section, to.offset);
     return where && where !== doc.title ? t('reader.backTo', { where }) : t('reader.backToPlace');
   });
-  const paged = $derived(reader.content?.kind === 'flow' && (v.readingMode === 'paged' || !!reader.content.fixed));
+  /** Flow mode: a sentence at a time, for text (not comics or fixed layouts). */
+  const flowing = $derived(reader.content?.kind === 'flow' && v.readingMode === 'flow' && !reader.content.pictures && !reader.content.fixed);
+  const paged = $derived(reader.content?.kind === 'flow' && !flowing && (v.readingMode === 'paged' || !!reader.content.fixed));
   /** The highlight being edited in the modal. */
   let editing = $state<string | null>(null);
   let note = $state<{ html: string; go: () => void } | null>(null);
@@ -85,7 +88,7 @@
 
   let lastY = 0;
   function onscroll() {
-    if (paged) return;
+    if (paged || flowing) return;
     const y = scrollY;
     if (performance.now() - reader.jumpedAt < 600) {
       lastY = y;
@@ -100,7 +103,7 @@
 
 <svelte:window {onscroll} />
 
-<div class="reader" class:chrome-hidden={!reader.chrome} class:is-paged={paged} data-format={doc.format}>
+<div class="reader" class:chrome-hidden={!reader.chrome} class:is-paged={paged || flowing} class:is-flowing={flowing} data-format={doc.format}>
   <header class="reader-bar" aria-label={t('reader.label')}>
     <button type="button" class="btn-icon" id="closeReader" aria-label={t('reader.back')} onclick={() => reader.leave()}><Icon name="arrow-left" /></button>
     <div class="reader-bar-text">
@@ -138,12 +141,11 @@
 
   <main class="reader-page">
     {#if reader.loading || !reader.content}
-      <div class="reader-loading" role="status">
-        <LoadingIndicator label={t('reader.opening', { title: doc.title })} />
-        <p class="t-hint">{t('reader.opening', { title: doc.title })}</p>
-      </div>
+      <OpeningBook {doc} />
     {:else if reader.content.kind === 'flow' && reader.content.fixed}
       <FixedView content={reader.content} />
+    {:else if flowing && reader.content.kind === 'flow'}
+      <SentenceView content={reader.content} />
     {:else if reader.content.kind === 'flow'}
       <FlowView content={reader.content} onedit={(id) => (editing = id)} onnote={(html, go) => (note = { html, go })} onimage={(src, alt) => (image = { src, alt })} />
     {:else}

@@ -6,6 +6,7 @@
   // survives any change of type, width or mode.
   import { onMount, tick, untrack } from 'svelte';
   import type { FlowDoc } from '../../formats/types';
+  import { addAnchors } from '../../reader/anchors';
   import { Curl } from '../../reader/curl';
   import { isNoteRef, noteHtml } from '../../reader/notes';
   import { firstVisibleOffset, paint, rangeAt, unpaint, type Paint } from '../../reader/offsets';
@@ -177,11 +178,13 @@
   // A new section, or a change of mode: its HTML, its marks, and the jump that brought us here.
   $effect(() => {
     const html = section.html;
+    const anchors = v.anchors;
     void paged;
     if (!root) return;
     // The section is sanitised HTML that the marks then rewrite, so Svelte doesn't own it.
     // eslint-disable-next-line svelte/no-dom-manipulating
     root.innerHTML = html;
+    if (anchors) addAnchors(root);
     void tick().then(() => {
       untrack(() => {
         layout();
@@ -225,7 +228,7 @@
 
   // Type or size changes: keep the same words at the top.
   $effect(() => {
-    void [v.fontSize, v.typeface, v.spacing, v.measure, v.justify, publisher];
+    void [v.fontSize, v.typeface, v.customFont, v.anchors, v.spacing, v.measure, v.justify, publisher];
     const at = untrack(() => reader.location.offset);
     void tick().then(() =>
       requestAnimationFrame(() => {
@@ -554,6 +557,8 @@
     <article
       class="reading paged"
       class:sans={v.typeface === 'sans'}
+      class:custom={v.typeface === 'custom' && !!v.customFont}
+      class:anchored={v.anchors}
       class:justify={v.justify}
       class:publisher
       class:pictures={content.pictures}
@@ -572,6 +577,8 @@
   <article
     class="reading"
     class:sans={v.typeface === 'sans'}
+    class:custom={v.typeface === 'custom' && !!v.customFont}
+    class:anchored={v.anchors}
     class:justify={v.justify}
     class:publisher
     class:pictures={content.pictures}

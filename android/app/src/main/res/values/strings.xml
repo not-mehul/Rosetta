@@ -5,4 +5,11 @@
     <string name="package_name">io.github.notmehul.rosetta</string>
     <string name="custom_url_scheme">io.github.notmehul.rosetta</string>
     <string name="open_with_label">Open in Rosetta</string>
+    <string name="read_aloud_channel">Reading aloud</string>
+    <string name="read_aloud_play">Play</string>
+    <string name="read_aloud_pause">Pause</string>
+    <string name="read_aloud_next">Next sentence</string>
+    <string name="read_aloud_previous">Previous sentence</string>
+    <string name="widget_label">Continue reading</string>
+    <string name="widget_description">The book you are reading, and how far in.</string>
 </resources>

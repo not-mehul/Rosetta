@@ -13,7 +13,7 @@
 
   let { doc }: { doc: StoredDoc } = $props();
 
-  const ICON: Record<StoredDoc['format'], IconName> = { epub: 'book-open', pdf: 'file-text', docx: 'file-type', md: 'file-code', txt: 'file', html: 'globe', fb2: 'book-open', cbz: 'image', rtf: 'file-type', odt: 'file-type' };
+  const ICON: Record<StoredDoc['format'], IconName> = { epub: 'book-open', pdf: 'file-text', docx: 'file-type', md: 'file-code', txt: 'file', html: 'globe', fb2: 'book-open', cbz: 'image', rtf: 'file-type', odt: 'file-type', mobi: 'book-open' };
   const status = $derived(doc.finishedAt ? 'finished' : doc.openedAt ? 'reading' : 'new');
 
   function details() {

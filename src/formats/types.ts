@@ -2,7 +2,7 @@
 // text become a "flow" document: sections of sanitised HTML that reflow in
 // the reader's own typography. PDF stays as fixed pages.
 
-export type Format = 'epub' | 'pdf' | 'docx' | 'md' | 'txt' | 'html' | 'fb2' | 'cbz' | 'rtf' | 'odt';
+export type Format = 'epub' | 'pdf' | 'docx' | 'md' | 'txt' | 'html' | 'fb2' | 'cbz' | 'rtf' | 'odt' | 'mobi';
 
 export const FORMAT_LABEL: Record<Format, string> = {
   epub: 'EPUB',
@@ -15,6 +15,7 @@ export const FORMAT_LABEL: Record<Format, string> = {
   cbz: 'Comic',
   rtf: 'RTF',
   odt: 'OpenDocument',
+  mobi: 'Kindle',
 };
 
 /** What the library keeps about a file before it is opened. */

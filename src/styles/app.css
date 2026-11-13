@@ -1571,6 +1571,15 @@ mark.tts {
   min-width: 3ch;
   text-align: center;
 }
+.speech-sleep {
+  width: auto;
+  min-width: 44px;
+  gap: 2px;
+  padding: 0 var(--space-2);
+}
+.speech-sleep.amber {
+  color: var(--accent-amber);
+}
 .night-veil {
   position: fixed;
   inset: 0;
@@ -1985,13 +1994,14 @@ mark.tts {
 .settings-group > .segmented,
 .library-tools > .segmented {
   display: flex;
-  flex-wrap: nowrap;
+  /* With large text a segment that no longer fits moves to a second row. */
+  flex-wrap: wrap;
 }
 .field > .segmented button,
 .settings-group > .segmented button,
 .library-tools > .segmented button {
   flex: 1 1 0;
-  min-width: 0;
+  min-width: max-content;
   padding: 0 0.5rem;
   text-align: center;
   justify-content: center;
@@ -2066,8 +2076,16 @@ mark.tts {
     transform: translateY(6px);
   }
 }
+/* The count and its line sit still at the bottom centre, whatever the
+   sentence's length, so the sentence alone moves; they rise above the
+   footer while the bars are showing. */
 .flow-under {
-  width: min(16rem, 100%);
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--space-4) + var(--inset-bottom));
+  transform: translateX(-50%);
+  transition: bottom var(--dur-settle) var(--ease-settle);
+  width: min(16rem, calc(100% - 3rem));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2090,6 +2108,9 @@ mark.tts {
 }
 .flow-hint {
   margin: 0;
+}
+.reader:not(.chrome-hidden) .flow-under {
+  bottom: calc(4.5rem + var(--inset-bottom));
 }
 .flow-count {
   min-height: 44px;

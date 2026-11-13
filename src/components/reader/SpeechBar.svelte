@@ -6,6 +6,13 @@
   import Icon from '../ui/Icon.svelte';
 
   const rate = $derived(settings.value.speechRate);
+
+  // The sleep timer button steps through off, 15, 30, 45 and 60 minutes, and the end of the chapter.
+  const sleep = $derived(speech.sleep);
+  const sleepLabel = $derived(
+    !sleep ? t('speech.sleepOff') : sleep.choice === 'chapter' ? t('speech.sleepChapter') : t('speech.sleepMinutes', { minutes: sleep.choice }),
+  );
+  const sleepShort = $derived(!sleep ? '' : sleep.choice === 'chapter' ? t('speech.sleepChapterShort') : `${sleep.choice}′`);
 </script>
 
 <div class="speech-bar panel" role="toolbar" aria-label={t('speech.title')}>
@@ -20,5 +27,15 @@
   <button type="button" class="btn-icon" aria-label={t('speech.slower')} disabled={rate <= 0.5} onclick={() => void speech.setRate(rate - 0.1)}><Icon name="minus" /></button>
   <span class="t-data-small tabular speech-rate">{rate.toFixed(1)}×</span>
   <button type="button" class="btn-icon" aria-label={t('speech.faster')} disabled={rate >= 2} onclick={() => void speech.setRate(rate + 0.1)}><Icon name="plus" /></button>
+  <button
+    type="button"
+    class="btn-icon speech-sleep"
+    class:amber={!!sleep}
+    id="speechSleep"
+    aria-label="{t('speech.sleep')}: {sleepLabel}"
+    title={sleepLabel}
+    onclick={() => speech.setSleep(speech.nextSleep())}
+    ><Icon name="moon" />{#if sleepShort}<span class="t-data-small tabular" aria-hidden="true">{sleepShort}</span>{/if}</button
+  >
   <button type="button" class="btn-icon" id="speechStop" aria-label={t('speech.stop')} onclick={() => speech.stop()}><Icon name="x" /></button>
 </div>

@@ -2,6 +2,7 @@
 
 import { strFromU8, unzipSync } from 'fflate';
 import { isComicArchive } from './cbz';
+import { isMobi } from './mobi';
 import type { Format } from './types';
 
 const EXT: Record<string, Format> = {
@@ -21,11 +22,15 @@ const EXT: Record<string, Format> = {
   cbz: 'cbz',
   rtf: 'rtf',
   odt: 'odt',
+  mobi: 'mobi',
+  azw3: 'mobi',
+  azw: 'mobi',
+  prc: 'mobi',
 };
 
 /** The `accept` list for the file picker. */
 export const ACCEPT = [
-  '.epub,.pdf,.docx,.md,.markdown,.txt,.html,.htm,.xhtml,.fb2,.cbz,.rtf,.odt',
+  '.epub,.pdf,.docx,.md,.markdown,.txt,.html,.htm,.xhtml,.fb2,.cbz,.rtf,.odt,.mobi,.azw3,.azw,.prc',
   'application/epub+zip',
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -38,6 +43,8 @@ export const ACCEPT = [
   'application/rtf',
   'text/rtf',
   'application/vnd.oasis.opendocument.text',
+  'application/x-mobipocket-ebook',
+  'application/vnd.amazon.ebook',
 ].join(',');
 
 export function extension(name: string): string {
@@ -72,11 +79,12 @@ export function detectFormat(bytes: Uint8Array, name: string): Format | null {
     return null;
   }
   if (startsWith(bytes, '{\\rtf')) return 'rtf';
+  if (isMobi(bytes)) return 'mobi';
   if (!looksLikeText(bytes)) return null;
   const start = new TextDecoder().decode(bytes.subarray(0, 1024)).replace(/^\uFEFF/, '');
   if (/^\s*(<\?xml[^>]*>\s*)?<FictionBook\b/.test(start)) return 'fb2';
   const byName = EXT[extension(name)];
-  if (byName && !['epub', 'pdf', 'docx', 'fb2', 'cbz', 'rtf', 'odt'].includes(byName)) return byName;
+  if (byName && !['epub', 'pdf', 'docx', 'fb2', 'cbz', 'rtf', 'odt', 'mobi'].includes(byName)) return byName;
   // No useful extension (an Android content:// URI): look at the text itself.
   const head = new TextDecoder().decode(bytes.subarray(0, 4096)).trimStart().toLowerCase();
   if (head.startsWith('<!doctype html') || head.startsWith('<html')) return 'html';

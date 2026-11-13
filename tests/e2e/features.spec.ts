@@ -26,6 +26,29 @@ async function expectAccessible(page: Page, include?: string) {
   expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
 }
 
+/** With text at 200% (WCAG 1.4.4), nothing is cut off at the side: no visible element reaches past the window, unless it sits in something that scrolls sideways. */
+async function fits(page: Page, where: string) {
+  // Measure once things have slid into place.
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined))));
+  const over = await page.evaluate(() => {
+    const width = document.documentElement.clientWidth;
+    const scrolls = (el: Element | null): boolean => {
+      for (; el && el !== document.body; el = el.parentElement) {
+        const x = getComputedStyle(el).overflowX;
+        if ((x === 'auto' || x === 'scroll') && el.scrollWidth > el.clientWidth) return true;
+      }
+      return false;
+    };
+    return [...document.querySelectorAll('button, a, label, h1, h2, h3, p, span, input, select, summary')]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && r.right > width + 1 && r.left < width && !el.closest('.reading, .page-strip') && !scrolls(el.parentElement);
+      })
+      .map((el) => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}.${[...el.classList].join('.')} "${(el.textContent ?? '').trim().slice(0, 30)}"`);
+  });
+  expect(over, where).toEqual([]);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
@@ -201,6 +224,28 @@ test('library, reader and sheets pass an accessibility check', async ({ page }) 
   await expectAccessible(page, '.sheet');
 });
 
+test('the library, reader and sheets fit with text at 200%', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await add(page, ['lantern.epub', 'harbour.pdf']);
+  await expect(page.locator('.doc-card')).toHaveCount(2);
+  await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+  await fits(page, 'library');
+  for (const sheet of ['#openSettings']) {
+    await page.click(sheet);
+    await fits(page, sheet);
+    await page.keyboard.press('Escape');
+  }
+  await page.getByRole('button', { name: /^The Lantern Keeper/ }).click();
+  await expect(page.locator('.reading h1')).toHaveText('The stair');
+  await showBars(page);
+  await fits(page, 'reader');
+  for (const sheet of ['#openContents', '#openType']) {
+    await page.click(sheet);
+    await fits(page, sheet);
+    await page.keyboard.press('Escape');
+  }
+});
+
 test('a long book opens and turns within budget', async ({ page }) => {
   test.slow();
   // 40 chapters of 300 paragraphs: about 2.5 million characters.
@@ -349,14 +394,28 @@ test('flows a sentence at a time, with visual anchors and a font of your own', a
   await page.mouse.click(300, 500);
   await expect(page.locator('.flow-sentence .veiled')).toHaveCount(0);
   await expect(page.locator('.flow-sentence .visually-hidden')).toHaveText(/The keeper kept a log/);
+  // The count stays put at the bottom centre while sentences of any length come and go.
+  const where = async () => {
+    // Once the bars' slide has settled.
+    await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
+    const box = (await page.locator('.flow-count').boundingBox())!;
+    return { y: Math.round(box.y), centre: Math.round(box.x + box.width / 2) };
+  };
+  const before = await where();
   await page.mouse.click(300, 500);
   await expect(page.locator('.flow-count')).toHaveText(/^3 of /);
+  const after = await where();
+  expect(after.y).toBe(before.y);
+  expect(Math.abs(after.centre - before.centre)).toBeLessThanOrEqual(2);
+  const viewport = page.viewportSize()!;
+  expect(Math.abs(after.centre - viewport.width / 2)).toBeLessThanOrEqual(2);
+  expect(after.y).toBeGreaterThan(viewport.height * 0.8);
   // The left edge goes back, shown whole.
   await page.mouse.click(30, 500);
   await expect(page.locator('.flow-count')).toHaveText(/^2 of /);
   await expect(page.locator('.flow-sentence .veiled')).toHaveCount(0);
 
-  // The count under the sentence brings the bars back.
+  // The count brings the bars back.
   await page.click('#flowBars');
   await expect(page.locator('.reader.chrome-hidden')).toHaveCount(0);
 

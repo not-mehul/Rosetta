@@ -391,6 +391,8 @@ const en = {
   'flow.count': '{at} of {count}',
   'flow.hint': 'Tap to show it all, then again for the next sentence.',
   'reader.openingLabel': 'Opening',
+  'type.oled': 'True black (OLED)',
+  'type.oledHint': 'In Dusk, every background is pure black: deeper at night, and lighter on an OLED screen’s battery.',
   'type.theme': 'Theme',
   'type.system': 'System',
   'type.dusk': 'Dusk',

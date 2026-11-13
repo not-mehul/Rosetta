@@ -25,7 +25,7 @@
 
   let dropping = $state(false);
 
-  $effect(() => applyTheme(settings.value.theme));
+  $effect(() => applyTheme(settings.value.theme, settings.value.oled));
   $effect(() => void setLocale(settings.value.locale));
 
   function close() {

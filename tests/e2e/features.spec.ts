@@ -98,7 +98,8 @@ test('the page curl follows the finger and turns the page', async ({ page }) => 
   await expect(page.locator('.curl-flap')).toBeVisible();
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await expect(page.locator('.page-number')).toHaveText(/^Page 2 of/);
-  await expect(page.locator('.curl-flap')).toHaveCount(0);
+  // The curl is put away, ready for the next turn.
+  await expect(page.locator('.curl:not(.is-idle)')).toHaveCount(0);
 });
 
 test('footnotes open in place, and pictures open full screen', async ({ page }) => {
@@ -367,4 +368,19 @@ test('flows a sentence at a time, with visual anchors and a font of your own', a
   await chooser.setFiles(join(dir, 'Broken.ttf'));
   await expect(page.locator('#toast')).toContainText('isn’t a font');
   await expect(page.locator('#faceCustom')).toHaveAttribute('aria-checked', 'false');
+});
+
+test('OLED turns Dusk to true black, and stays on through a reload', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.click('#openSettings');
+  await page.getByRole('switch', { name: /True black/ }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-oled', '');
+  const black = () => page.evaluate(() => getComputedStyle(document.body).backgroundImage);
+  expect(await black()).toContain('rgb(0, 0, 0) 50%');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-oled', '');
+  // Dawn is left as it is.
+  await page.click('#openSettings');
+  await page.locator('.segmented button', { hasText: 'Dawn' }).first().click();
+  expect(await black()).not.toContain('rgb(0, 0, 0)');
 });

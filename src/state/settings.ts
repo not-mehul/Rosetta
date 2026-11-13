@@ -20,6 +20,8 @@ export const DAILY_GOALS = [0, 15, 30, 60] as const;
 
 export interface Settings {
   theme: ThemeSetting;
+  /** Dusk on true black, for OLED screens. */
+  oled: boolean;
   typeface: Typeface;
   /** Body size in px. */
   fontSize: number;
@@ -92,6 +94,7 @@ export const FLOW_SPEED = { min: 10, max: 120, step: 5 } as const;
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
+  oled: false,
   typeface: 'serif',
   fontSize: 18,
   spacing: 'normal',

@@ -80,6 +80,7 @@
 
   /** Sizes the columns to the pager. */
   function layout() {
+    dropCurl();
     if (!paged || !root || !pager) return;
     const w = pager.clientWidth;
     const h = pager.clientHeight;
@@ -98,6 +99,7 @@
     });
     pages = pageCount(root.scrollWidth + 2 * side, stride);
     text = new TextIndex(root);
+    warmCurl();
   }
 
   function place(p: number, animate = false) {
@@ -173,7 +175,20 @@
     paint(root, paints);
     // Painting splits text nodes; the index points at nodes.
     if (paged) text = new TextIndex(root);
+    // The curl's copy shows marks too.
+    dropCurl();
+    warmCurl();
   }
+
+  /** Runs `fn` when the browser is idle (after a short wait where it can't say). */
+  const idle = (fn: () => void): number => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 1200 }) : window.setTimeout(fn, 300));
+  const cancelIdle = (id: number) => (typeof cancelIdleCallback === 'function' ? cancelIdleCallback(id) : clearTimeout(id));
+
+  // Pages or the curl turned off: nothing to keep ready.
+  $effect(() => {
+    void [paged, turnStyle];
+    untrack(() => (paged && turnStyle === 'curl' ? warmCurl() : dropCurl()));
+  });
 
   // A new section, or a change of mode: its HTML, its marks, and the jump that brought us here.
   $effect(() => {
@@ -240,13 +255,48 @@
 
   // ─── Turning pages ─────────────────────────────────────────
 
-  /** A copy of the page on screen, for the curl. */
-  function snapshot(p: number): HTMLElement {
+  /** A copy of the whole section as laid out, for the curl; begin() moves it to a page. */
+  function snapshot(): HTMLElement {
     const copy = root!.cloneNode(true) as HTMLElement;
     for (const el of copy.querySelectorAll('[id]')) el.removeAttribute('id');
     copy.style.transition = 'none';
-    copy.style.transform = `translateX(${(rtl ? 1 : -1) * p * stride}px)`;
     return copy;
+  }
+
+  // The curl is made ahead of time, while nothing is moving, and reused for
+  // every turn until the page's layout or marks change.
+  let curl: Curl | null = null;
+  /** The curl in the middle of a turn, which a change waits for before throwing it away. */
+  let curling: Curl | null = null;
+  let warmTimer = 0;
+
+  function dropCurl() {
+    cancelIdle(warmTimer);
+    if (curl && curl !== curling) curl.destroy();
+    curl = null;
+  }
+
+  function warmCurl() {
+    cancelIdle(warmTimer);
+    if (!paged || turnStyle !== 'curl' || curl) return;
+    warmTimer = idle(() => {
+      if (paged && turnStyle === 'curl' && !curl && pager && root) curl = new Curl(pager, snapshot());
+    });
+  }
+
+  /** The curl, shown over page `p`. */
+  function curlOver(p: number, corner: 'top' | 'bottom'): Curl {
+    if (!curl) curl = new Curl(pager!, snapshot());
+    curling = curl;
+    return curl.begin((rtl ? 1 : -1) * p * stride, corner);
+  }
+
+  /** After a turn: keep the curl for the next one, unless the page changed under it. */
+  function release(c: Curl) {
+    if (curling === c) curling = null;
+    if (c === curl) c.end();
+    else c.destroy();
+    warmCurl();
   }
 
   const canTurn = (dir: 1 | -1) => (dir === 1 ? page < pages - 1 || index < content.sections.length - 1 : page > 0 || index > 0);
@@ -278,19 +328,19 @@
     getSelection()?.removeAllRanges();
     if (turnStyle === 'curl' && (dir === 1 || page > 0)) {
       turning = true;
-      const curl = dir === 1 ? new Curl(pager!, snapshot(page), 'bottom') : new Curl(pager!, snapshot(page - 1), 'bottom');
-      const w = curl.width;
-      const y = curl.corner;
+      const c = curlOver(dir === 1 ? page : page - 1, 'bottom');
+      const w = c.width;
+      const y = c.corner;
       if (dir === 1) {
-        curl.set({ x: w, y });
+        c.set({ x: w, y });
         await step(1);
-        await curl.animate({ x: -w, y }, 520, curl.height * 0.12);
+        await c.animate({ x: -w, y }, 520, c.height * 0.12);
       } else {
-        curl.set({ x: -w, y });
-        await curl.animate({ x: w, y }, 520, curl.height * 0.12);
+        c.set({ x: -w, y });
+        await c.animate({ x: w, y }, 520, c.height * 0.12);
         await step(-1);
       }
-      curl.destroy();
+      release(c);
       turning = false;
       return;
     }
@@ -327,7 +377,7 @@
       g.dir = dir;
       pager!.setPointerCapture(e.pointerId);
       if (turnStyle === 'curl' && (dir === 1 || page > 0)) {
-        g.curl = new Curl(pager!, snapshot(dir === 1 ? page : page - 1), g.y - r.top < r.height / 2 ? 'top' : 'bottom');
+        g.curl = curlOver(dir === 1 ? page : page - 1, g.y - r.top < r.height / 2 ? 'top' : 'bottom');
         if (dir === 1) {
           void step(1);
           g.curl.set({ x: g.curl.width, y: g.curl.corner });
@@ -359,18 +409,18 @@
     const commit = far && sameWay;
     if (g.curl) {
       turning = true;
-      const curl = g.curl;
-      const w = curl.width;
-      const flat = { x: w, y: curl.corner };
-      const over = { x: -w, y: curl.corner };
+      const c = g.curl;
+      const w = c.width;
+      const flat = { x: w, y: c.corner };
+      const over = { x: -w, y: c.corner };
       if (g.dir === 1) {
-        await curl.animate(commit ? over : flat, commit ? 320 : 260);
+        await c.animate(commit ? over : flat, commit ? 320 : 260);
         if (!commit) await step(-1);
       } else {
-        await curl.animate(commit ? flat : over, commit ? 320 : 260);
+        await c.animate(commit ? flat : over, commit ? 320 : 260);
         if (commit) await step(-1);
       }
-      curl.destroy();
+      release(c);
       turning = false;
       return;
     }
@@ -520,6 +570,8 @@
       removeEventListener('resize', onResize);
       if (reader.turner) reader.turner = null;
       cancelAnimationFrame(frame);
+      curling = null;
+      dropCurl();
       clearTimeout(flashTimer);
     };
   });

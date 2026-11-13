@@ -394,6 +394,8 @@ const es: Messages = {
   'flow.count': '{at} de {count}',
   'flow.hint': 'Toca para verla entera y otra vez para la siguiente frase.',
   'reader.openingLabel': 'Abriendo',
+  'type.oled': 'Negro puro (OLED)',
+  'type.oledHint': 'En Ocaso, todos los fondos son negro puro: más profundo de noche y más ligero para la batería de una pantalla OLED.',
   'type.theme': 'Tema',
   'type.system': 'Sistema',
   'type.dusk': 'Ocaso',

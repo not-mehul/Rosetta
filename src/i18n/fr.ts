@@ -391,6 +391,8 @@ const fr: Messages = {
   'flow.count': '{at} sur {count}',
   'flow.hint': 'Touchez pour tout afficher, puis encore pour la phrase suivante.',
   'reader.openingLabel': 'Ouverture',
+  'type.oled': 'Noir pur (OLED)',
+  'type.oledHint': 'En Crépuscule, tous les fonds sont d’un noir pur : plus profond la nuit, et plus léger pour la batterie d’un écran OLED.',
   'type.theme': 'Thème',
   'type.system': 'Système',
   'type.dusk': 'Crépuscule',

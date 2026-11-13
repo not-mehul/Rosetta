@@ -1,10 +1,17 @@
 // The page-curl turn. A copy of the page being turned sits on top of the
-// pager; the fold clips it, a reflected copy shows the back of the paper
-// (with the print showing faintly through), and gradients placed on the fold
+// pager; the fold clips it, the flap shows the plain back of the paper, and
+// gradients placed on the fold
 // line give the bend its light and its shadow on the page beneath. Every
 // colour comes from the theme tokens.
+//
+// Copying a page means laying out the whole section again, which is far too
+// slow to do as a turn starts. So a Curl is made ahead of time, hidden, and
+// reused: begin() shows it over any page of the same layout and end() hides it
+// again. Each frame then only moves clip paths and gradients; nothing is laid
+// out and nothing is filtered. (The print showing through the back of the
+// paper, a second mirrored copy, cost more frames on a phone than it was worth.)
 
-import { constrain, fold, gradientLine, polygon, reflectionMatrix, type Pt } from './curl-geometry';
+import { constrain, fold, gradientLine, polygon, type Pt } from './curl-geometry';
 
 const shadow = (a: number) => `rgba(var(--shadow-rgb), calc(${a.toFixed(3)} * var(--shadow-strength)))`;
 const cream = (a: number) => `rgba(var(--cream-rgb), ${a.toFixed(3)})`;
@@ -16,15 +23,15 @@ export class Curl {
   private shade: HTMLDivElement;
   private flapShadow: HTMLDivElement;
   private flap: HTMLDivElement;
-  private mirror: HTMLDivElement;
   private cornerY = 0;
   private f: Pt = { x: 0, y: 0 };
   private frame = 0;
 
+  private copy: HTMLElement;
+
   constructor(
     private host: HTMLElement,
     snapshot: HTMLElement,
-    corner: 'top' | 'bottom',
   ) {
     const el = (cls: string, parent: HTMLElement) => {
       const d = document.createElement('div');
@@ -34,16 +41,30 @@ export class Curl {
     };
     this.layer = el('curl', host);
     this.layer.setAttribute('aria-hidden', 'true');
+    this.layer.classList.add('is-idle');
     this.page = el('curl-page', this.layer);
     this.page.appendChild(snapshot);
     this.bend = el('curl-bend', this.layer);
     this.shade = el('curl-shade', this.layer);
     this.flapShadow = el('curl-flap-shadow', this.layer);
     this.flap = el('curl-flap', this.flapShadow);
-    this.mirror = el('curl-mirror', this.flap);
-    this.mirror.appendChild(snapshot.cloneNode(true));
-    this.cornerY = corner === 'top' ? 0 : host.clientHeight;
-    this.f = { x: host.clientWidth, y: this.cornerY };
+    this.copy = snapshot;
+  }
+
+  /** Shows the curl over the page whose copy sits at `offsetX`, held by its top or bottom corner. */
+  begin(offsetX: number, corner: 'top' | 'bottom'): this {
+    cancelAnimationFrame(this.frame);
+    this.copy.style.transform = `translateX(${offsetX}px)`;
+    this.cornerY = corner === 'top' ? 0 : this.host.clientHeight;
+    this.f = { x: this.host.clientWidth, y: this.cornerY };
+    this.layer.classList.remove('is-idle');
+    return this;
+  }
+
+  /** Hides the curl, ready for the next turn. */
+  end(): void {
+    cancelAnimationFrame(this.frame);
+    this.layer.classList.add('is-idle');
   }
 
   get width(): number {
@@ -84,8 +105,6 @@ export class Curl {
     this.flap.style.clipPath = polygon(g.flap);
     // The back of the paper: lit along the fold, shading toward the lifted edge.
     this.flap.style.background = `linear-gradient(${back.angle}deg, ${shadow(0.2 * depth)} ${atBack}px, ${cream(0.1)} ${atBack + reach * 0.25}px, ${cream(0.04)} ${atBack + reach * 0.7}px, ${shadow(0.12 * depth)} ${atBack + w}px), var(--sheet-bg)`;
-    this.flapShadow.style.filter = `drop-shadow(0 0 ${(6 + 14 * depth).toFixed(1)}px ${shadow(0.55 * depth)})`;
-    this.mirror.style.transform = reflectionMatrix(g.mid, g.normal);
   }
 
   /**

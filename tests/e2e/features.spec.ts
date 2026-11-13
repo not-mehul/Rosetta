@@ -195,14 +195,18 @@ test('all notes gather in one place and search', async ({ page }) => {
 
 test('the interface speaks Spanish, French and German', async ({ page }) => {
   await page.click('#openSettings');
-  await page.selectOption('#language', 'es');
+  await page.click('#language');
+  await page.click('.dd-option[data-value="es"]');
   await expect(page.locator('.sheet-title')).toHaveText('Ajustes');
-  await page.selectOption('#language', 'fr');
+  await page.click('#language');
+  await page.click('.dd-option[data-value="fr"]');
   await expect(page.locator('.sheet-title')).toHaveText('Réglages');
-  await page.selectOption('#language', 'de');
+  await page.click('#language');
+  await page.click('.dd-option[data-value="de"]');
   await expect(page.locator('.sheet-title')).toHaveText('Einstellungen');
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
-  await page.selectOption('#language', 'en');
+  await page.click('#language');
+  await page.click('.dd-option[data-value="en"]');
   await expect(page.locator('.sheet-title')).toHaveText('Settings');
 });
 

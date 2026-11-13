@@ -1,6 +1,7 @@
 <script lang="ts">
   // Type, theme and reading: shared by the reader's Aa sheet and Settings.
   import { onMount } from 'svelte';
+  import { Select } from 'dusk-dawn';
   import { LOCALE_NAMES, LOCALES, t } from '../../i18n/index.svelte';
   import { volumeKeysAvailable } from '../../platform/device';
   import { isNative } from '../../platform/native';
@@ -62,10 +63,12 @@
 {#if show === 'both'}
   <label class="field">
     <span class="t-field-label">{t('type.language')}</span>
-    <select class="input" id="language" value={v.locale} onchange={(e) => set({ locale: e.currentTarget.value as Settings['locale'] })}>
-      <option value="system">{t('type.system')}</option>
-      {#each LOCALES as l (l)}<option value={l}>{LOCALE_NAMES[l]}</option>{/each}
-    </select>
+    <Select
+      id="language"
+      value={v.locale}
+      options={[{ value: 'system' as Settings['locale'], label: t('type.system') }, ...LOCALES.map((l) => ({ value: l as Settings['locale'], label: LOCALE_NAMES[l] }))]}
+      onchange={(locale) => set({ locale })}
+    />
   </label>
 {/if}
 
@@ -231,9 +234,11 @@
 {#if speech.voices.length}
   <label class="field">
     <span class="t-field-label">{t('type.voice')}</span>
-    <select class="input" id="voice" value={v.voice} onchange={(e) => set({ voice: e.currentTarget.value })}>
-      <option value="">{t('type.systemVoice')}</option>
-      {#each speech.voices as voice (voice.index)}<option value={voice.name}>{voice.name} · {voice.lang}</option>{/each}
-    </select>
+    <Select
+      id="voice"
+      value={v.voice}
+      options={[{ value: '', label: t('type.systemVoice') }, ...speech.voices.map((voice) => ({ value: voice.name, label: `${voice.name} · ${voice.lang}` }))]}
+      onchange={(voice) => set({ voice })}
+    />
   </label>
 {/if}

@@ -42,6 +42,9 @@
                 <data android:mimeType="application/rtf" />
                 <data android:mimeType="text/rtf" />
                 <data android:mimeType="application/vnd.oasis.opendocument.text" />
+                <data android:mimeType="application/x-mobipocket-ebook" />
+                <data android:mimeType="application/vnd.amazon.ebook" />
+                <data android:mimeType="application/vnd.amazon.mobi8-ebook" />
             </intent-filter>
             <!-- rosetta://open?id=… from BookShelf and the other sibling apps (src/platform/handoff.ts). -->
             <intent-filter>
@@ -52,6 +55,25 @@
             </intent-filter>
 
         </activity>
+
+        <!-- Read aloud with the screen off: lock-screen and headphone controls. -->
+        <!-- The Continue Reading widget (ReadingWidget.java), fed by the app. -->
+        <receiver
+            android:name=".ReadingWidget"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/reading_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".ReadAloudService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -67,6 +89,10 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Reading aloud with the screen off (ReadAloudService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Lets the app ask whether a sibling app is installed before handing
          off to it (style.md §14.1). -->
@@ -90,6 +116,10 @@
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="mise" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="nookling" />
         </intent>
     </queries>
 </manifest>

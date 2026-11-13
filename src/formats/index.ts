@@ -4,6 +4,7 @@
 import { cbzInfo, openCbz } from './cbz';
 import { epubInfo, openEpub } from './epub';
 import { fb2Info, openFb2 } from './fb2';
+import { mobiInfo, openMobi } from './mobi';
 import { htmlInfo, markdownInfo, openHtml, openMarkdown, openText } from './flow';
 import { detectFormat, titleFromName } from './sniff';
 import { FormatError, PasswordError, type DocInfo, type Format, type OpenDoc } from './types';
@@ -38,6 +39,11 @@ export async function readInfo(bytes: Uint8Array, name: string, password?: strin
         ...rest,
         cover: coverBytes ? await thumbnail(coverBytes, coverType) : null,
       };
+      break;
+    }
+    case 'mobi': {
+      const { coverBytes, coverType, ...rest } = mobiInfo(bytes);
+      info = { ...rest, cover: coverBytes ? await thumbnail(coverBytes, coverType) : null };
       break;
     }
     case 'fb2':
@@ -95,6 +101,8 @@ export async function openDocument(bytes: Uint8Array, format: Format, password?:
       return openHtml(bytes);
     case 'txt':
       return openText(bytes);
+    case 'mobi':
+      return openMobi(bytes);
   }
 }
 

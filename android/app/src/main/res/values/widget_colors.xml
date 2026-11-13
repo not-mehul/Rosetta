@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget in Dawn colours (the dusk-dawn tokens); values-night has Dusk. -->
+<resources>
+    <color name="widget_bg">#F3ECE0</color>
+    <color name="widget_border">#CDBFA6</color>
+    <color name="widget_heading">#211D17</color>
+    <color name="widget_dim">#6A6257</color>
+    <color name="widget_accent">#815C2D</color>
+</resources>

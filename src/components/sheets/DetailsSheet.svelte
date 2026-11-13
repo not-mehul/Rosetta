@@ -4,7 +4,7 @@
   import { t } from '../../i18n/index.svelte';
   import { notesMarkdown, slug } from '../../lib/export';
   import { fileSize, relativeDay } from '../../lib/format';
-  import { openInColophon, sendToBookShelf } from '../../platform/handoff';
+  import { openInColophon, sendToBookShelf, sendToNookling, canOpen } from '../../platform/handoff';
   import { saveFile, shareFile, shareText } from '../../platform/output';
   import { restoreFile } from '../../state/intake';
   import { duration } from '../../lib/format';
@@ -68,6 +68,17 @@
       await shareText(doc.title, `${doc.title}${doc.author ? ` — ${doc.author}` : ''}`);
       ui.notify(t('details.noBookShelf'), 'info');
     }
+  }
+
+  // Nookling keeps a shelf of finished books; offered once the book is finished, when Nookling is here.
+  let nookling = $state(false);
+  $effect(() => {
+    void canOpen('nookling').then((v) => (nookling = v));
+  });
+
+  async function toNookling() {
+    if (!doc) return;
+    if (!(await sendToNookling(doc))) ui.notify(t('details.noNookling'), 'info');
   }
 
   async function colophon() {
@@ -157,6 +168,7 @@
       {#if doc.location}<button type="button" class="btn btn-muted" onclick={() => void startOver()}><Icon name="rotate-ccw" />{t('details.startOver')}</button>{/if}
       {#if !doc.offloaded}<button type="button" class="btn btn-muted" onclick={() => void share()}><Icon name="share-2" />{t('details.shareFile')}</button>{/if}
       <button type="button" class="btn btn-muted" id="sendBookShelf" onclick={() => void bookShelf()}><Icon name="library" />{t('details.toBookShelf')}</button>
+      {#if nookling && doc.finishedAt}<button type="button" class="btn btn-muted" id="sendNookling" onclick={() => void toNookling()}><Icon name="library" />{t('details.toNookling')}</button>{/if}
       {#if doc.format === 'epub' && !doc.offloaded}<button type="button" class="btn btn-muted" id="openColophon" onclick={() => void colophon()}><Icon name="file-code" />{t('details.toColophon')}</button>{/if}
       {#if !doc.offloaded}<button type="button" class="btn btn-muted" id="offloadDoc" onclick={() => void offload()}><Icon name="hard-drive" />{t('details.offload')}</button>{/if}
       <button type="button" class="btn btn-danger" id="removeDoc" onclick={() => void remove()}><Icon name="trash-2" />{t('action.remove')}</button>

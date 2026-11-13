@@ -3,7 +3,7 @@
   // appearing one after another at the reader's speed. A tap shows the rest of
   // the sentence at once; the next tap clears it and starts the next one. A tap
   // on the left edge, or the left arrow, goes back a sentence; a tap along the
-  // top, or on the count under the sentence, shows and hides the bars.
+  // top, or on the count at the bottom of the screen, shows and hides the bars.
   import { onMount, untrack } from 'svelte';
   import type { FlowDoc } from '../../formats/types';
   import { t } from '../../i18n/index.svelte';
@@ -193,14 +193,15 @@
     {/if}
   </div>
   <div class="flow-under">
-    <div class="flow-progress" aria-hidden="true"><span style:transform="scaleX({list.length > 1 ? at / (list.length - 1) : 1})"></span></div>
-    <button type="button" class="t-data-small tabular flow-count" id="flowBars" aria-expanded={reader.chrome} onclick={() => (reader.chrome = !reader.chrome)}
-      >{t('flow.count', { at: Math.min(at + 1, list.length), count: list.length })}<span class="visually-hidden">. {t('flow.bars')}</span></button
-    >
+    <!-- Hints sit above the bar, so the bar and count never move when one comes or goes. -->
     {#if fresh}
       <p class="t-hint flow-hint">{t('flow.hint')}</p>
     {:else if atEnd && full}
       <p class="t-hint flow-hint">{t('reader.theEnd')}</p>
     {/if}
+    <div class="flow-progress" aria-hidden="true"><span style:transform="scaleX({list.length > 1 ? at / (list.length - 1) : 1})"></span></div>
+    <button type="button" class="t-data-small tabular flow-count" id="flowBars" aria-expanded={reader.chrome} onclick={() => (reader.chrome = !reader.chrome)}
+      >{t('flow.count', { at: Math.min(at + 1, list.length), count: list.length })}<span class="visually-hidden">. {t('flow.bars')}</span></button
+    >
   </div>
 </div>

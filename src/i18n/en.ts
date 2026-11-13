@@ -10,7 +10,7 @@ const en = {
   'action.save': 'Save',
   'action.undo': 'Undo',
 
-  'about.version': 'Rosetta {version}. Reads EPUB, PDF, Word, OpenDocument, RTF, FB2, comic archives, Markdown, HTML and plain text.',
+  'about.version': 'Rosetta {version}. Reads EPUB, PDF, Word, OpenDocument, RTF, FB2, Kindle (MOBI, AZW3), comic archives, Markdown, HTML and plain text.',
   'about.privateTerm': 'Private.',
   'about.private':
     'Nothing you add leaves this device unless you open a catalog, sync to a folder you chose, or share it. Fraunces is under the SIL Open Font License; pdf.js, mammoth, marked, DOMPurify, Dexie and fflate under their own open licences.',
@@ -109,6 +109,8 @@ const en = {
   'details.shareFile': 'Share file',
   'details.toBookShelf': 'Log in BookShelf',
   'details.noBookShelf': 'BookShelf isn’t installed here, so the title went to the share sheet instead.',
+  'details.toNookling': 'Tell Nookling',
+  'details.noNookling': 'Nookling isn’t installed here.',
   'details.toColophon': 'Open in Colophon',
   'details.offload': 'Offload',
   'details.offloadTitle': 'Offload the file?',
@@ -138,6 +140,9 @@ const en = {
   'error.unknown': 'Rosetta reads EPUB, PDF, Word, OpenDocument, RTF, FB2, comic archives (CBZ), Markdown, HTML and plain text.',
   'error.fb2Xml': 'This FB2 file is damaged: its XML can’t be read.',
   'error.fb2Empty': 'This FB2 file has no text.',
+  'error.mobiDrm': 'This book is locked with DRM, so Rosetta can’t open it. DRM-free MOBI and AZW3 files open as usual.',
+  'error.mobiEmpty': 'This Kindle book has no text.',
+  'mobi.part': 'Part {number}',
   'error.cbzZip': 'This comic archive is damaged: it is not a readable zip.',
   'error.cbzEmpty': 'This comic archive has no pages.',
   'error.epubZip': 'This EPUB is damaged: it is not a readable zip archive.',
@@ -158,6 +163,11 @@ const en = {
 
   'handoff.finished': 'Finished. Log it in BookShelf?',
   'handoff.logIt': 'Log it',
+  'handoff.finishedNookling': 'Tell Nookling you finished it?',
+  'handoff.tellNookling': 'Tell Nookling',
+  'widget.continue': 'Continue reading',
+  'widget.percent': '{percent}% read',
+  'widget.empty': 'Nothing to continue. Open a book in Rosetta.',
 
   'image.title': 'Picture',
 
@@ -319,6 +329,12 @@ const en = {
   'speech.forward': 'Next sentence',
   'speech.slower': 'Slower',
   'speech.faster': 'Faster',
+  'speech.sleep': 'Sleep timer',
+  'speech.sleepOff': 'off',
+  'speech.sleepMinutes': 'stops in {minutes} minutes',
+  'speech.sleepChapter': 'stops at the end of the chapter',
+  'speech.sleepChapterShort': 'ch.',
+  'speech.slept': 'Reading aloud paused by the sleep timer.',
 
   'stats.title': 'Reading',
   'stats.leftUnder': 'Under a minute left',

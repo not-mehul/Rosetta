@@ -4,6 +4,8 @@
 //
 //   bookshelf://log?title=…&author=…&finished=YYYY-MM-DD&progress=0.42
 //     logs a book in BookShelf (sent when a book is finished, or on request).
+//   nookling://read?title=…&author=…
+//     tells Nookling a book was finished; it asks before shelving it.
 //   rosetta://open?id=<fingerprint>   or   rosetta://open?title=…
 //     opens a document in Rosetta, from BookShelf or anywhere else.
 //
@@ -35,6 +37,31 @@ export async function sendToBookShelf(e: BookShelfEntry): Promise<boolean> {
     const { value } = await AppLauncher.canOpenUrl({ url: 'bookshelf://' });
     if (!value) return false;
     await AppLauncher.openUrl({ url });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function nooklingReadUrl(e: Pick<BookShelfEntry, 'title' | 'author'>): string {
+  return buildLink('nookling', 'read', { title: e.title, author: e.author }, 'rosetta');
+}
+
+/** Whether a sibling app is installed to take a link. Always false on the web. */
+export async function canOpen(app: 'bookshelf' | 'nookling'): Promise<boolean> {
+  if (!isNative) return false;
+  try {
+    return (await AppLauncher.canOpenUrl({ url: `${app}://` })).value;
+  } catch {
+    return false;
+  }
+}
+
+/** Tells Nookling a book was finished. False when Nookling isn't there to hear it. */
+export async function sendToNookling(e: Pick<BookShelfEntry, 'title' | 'author'>): Promise<boolean> {
+  if (!(await canOpen('nookling'))) return false;
+  try {
+    await AppLauncher.openUrl({ url: nooklingReadUrl(e) });
     return true;
   } catch {
     return false;

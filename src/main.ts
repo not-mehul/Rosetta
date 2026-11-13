@@ -6,7 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { mount } from 'svelte';
 import App from './App.svelte';
 import { setLocale, t } from './i18n/index.svelte';
-import { parseRosettaUrl, sendToBookShelf } from './platform/handoff';
+import { canOpen, parseRosettaUrl, sendToBookShelf, sendToNookling } from './platform/handoff';
 import { loadCustomFont } from './platform/fonts';
 import { listenForFiles } from './platform/intake';
 import { isNative } from './platform/native';
@@ -18,6 +18,7 @@ import { settings } from './state/settings.svelte';
 import { stats } from './state/stats.svelte';
 import { autoBackup, syncNow } from './state/sync';
 import { ui } from './state/ui.svelte';
+import { followForWidget } from './state/widget.svelte';
 import './styles/app.css';
 
 async function start(): Promise<void> {
@@ -37,11 +38,23 @@ async function start(): Promise<void> {
   const last = settings.value.lastDocId;
   if (last && library.get(last)) await reader.open(last);
 
-  // A finished book can go to BookShelf.
-  reader.onFinished = (doc) => {
+  // A finished book can go to BookShelf, and then to Nookling, each offered once.
+  reader.onFinished = async (doc) => {
     if (!isNative) return;
-    ui.notify(t('handoff.finished'), 'success', { label: t('handoff.logIt'), run: () => void sendToBookShelf(doc) });
+    const [bookShelf, nookling] = await Promise.all([canOpen('bookshelf'), canOpen('nookling')]);
+    let offered = false;
+    const offerNookling = () => {
+      if (offered || !nookling) return;
+      offered = true;
+      ui.notify(t('handoff.finishedNookling'), 'success', { label: t('handoff.tellNookling'), run: () => void sendToNookling(doc) });
+    };
+    if (bookShelf) {
+      ui.notify(t('handoff.finished'), 'success', { label: t('handoff.logIt'), run: () => void sendToBookShelf(doc).then(offerNookling), dismissed: offerNookling });
+    } else offerNookling();
   };
+
+  // The Continue Reading widget follows the library: the book last opened and not finished.
+  followForWidget();
 
   // Today's goal, met while reading: said once, quietly.
   stats.onGoal = (minutes) => {

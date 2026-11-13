@@ -10,7 +10,7 @@
 
 ---
 
-Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB2, comic archives, Markdown, HTML and plain-text documents. Add your files, read them in one calm typeface, and come back to the exact place you stopped. It runs in the browser and as an Android and iOS app, and everything stays on your device.
+Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB2, DRM-free Kindle books, comic archives, Markdown, HTML and plain-text documents. Add your files, read them in one calm typeface, and come back to the exact place you stopped. It runs in the browser and as an Android and iOS app, and everything stays on your device.
 
 <p align="center">
   <img src="docs/screenshots/reader.webp" width="200" alt="Reading Moby-Dick: the first chapter in a serif typeface with the reader bar above">
@@ -23,7 +23,7 @@ Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB
 
 ### Your library
 
-- **Shelves and collections.** Documents as cards with their covers, a *Continue reading* panel, shelves for Reading, All and Finished, and collections a document can be on any number of.
+- **Shelves and collections.** Documents as cards with their covers, a *Continue reading* panel (and an Android home-screen widget that opens the book at your place), shelves for Reading, All and Finished, and collections a document can be on any number of.
 - **Up next.** When nothing is in progress, Rosetta offers the next volume of a series you just finished.
 - **Find anything.** Sort by recent, title, author or series, and filter by title, author, series or `#tag`. *Edit details* fixes the title, author, series, tags and cover.
 - **Add in bulk.** Add a whole folder at once where the browser allows it. Adding the same file twice keeps one copy.
@@ -31,14 +31,14 @@ Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB
 
 ### Every format
 
-EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading direction, and series from Calibre or EPUB 3 metadata), PDF (with selectable text, password prompts and fit-to-page), Word `.docx`, OpenDocument `.odt`, RTF, FictionBook `.fb2`, comic archives `.cbz`, Markdown with front matter, HTML and plain text. Publisher scripts never run, and a book's own styles can be kept under the reader's theme. EPUBs with DRM are refused with a plain explanation.
+EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading direction, and series from Calibre or EPUB 3 metadata), PDF (with selectable text, password prompts and fit-to-page), Word `.docx`, OpenDocument `.odt`, RTF, FictionBook `.fb2`, DRM-free Kindle books (`.mobi`, `.azw3`, `.azw`, `.prc`), comic archives `.cbz`, Markdown with front matter, HTML and plain text. Publisher scripts never run, and a book's own styles can be kept under the reader's theme. Books with DRM are refused with a plain explanation.
 
 ### Reading
 
 - **Scroll or turn pages** with a page curl, a slide or no motion. Tap the edges, swipe, use the arrow keys or, on Android, the volume keys.
-- **Flow.** One sentence at a time in the middle of the screen, its letters appearing at the speed you set.
+- **Flow.** One sentence at a time in the middle of the screen, its letters appearing at the speed you set. The sentence count and bar stay put at the bottom centre.
 - **Visual anchors** set the start of every word in bold, and **Yours** reads in a font file you add (TTF, OTF, WOFF or WOFF2).
-- **Read aloud**, sentence by sentence with the sentence highlighted.
+- **Read aloud**, sentence by sentence with the sentence highlighted. On Android it keeps reading with the screen off, with controls on the lock screen, pauses when headphones are unplugged, and a sleep timer stops it after 15 to 60 minutes or at the end of the chapter.
 - **Footnotes open in place**, and pictures open full screen with pinch zoom.
 - **Night comfort.** A dim and warmth layer, and the screen can stay on.
 - **Always know where you are.** The footer shows the time left in the book or chapter, or which chapter this is. After a jump, *Back to* returns you to where you were.
@@ -56,7 +56,7 @@ EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading dire
 - **Sync with a folder.** Places and marks merge with a file in a folder you choose, for iCloud Drive, Syncthing or Dropbox.
 - **Storage.** See what each file takes, and offload a file while keeping its place and notes.
 - **Four languages.** English, Spanish, French and German.
-- **The other apps.** Log a finished book in BookShelf, open an EPUB in Colophon, and let other apps open a document with `rosetta://open?title=…`.
+- **The other apps.** Log a finished book in BookShelf, tell Nookling you finished it, open an EPUB in Colophon, and let other apps open a document with `rosetta://open?title=…`.
 
 ## Private by design
 

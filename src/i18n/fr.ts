@@ -9,7 +9,7 @@ const fr: Messages = {
   'action.save': 'Enregistrer',
   'action.undo': 'Annuler l’action',
 
-  'about.version': 'Rosetta {version}. Lit l’EPUB, le PDF, Word, OpenDocument, RTF, FB2, les BD, Markdown, HTML et le texte brut.',
+  'about.version': 'Rosetta {version}. Lit l’EPUB, le PDF, Word, OpenDocument, RTF, FB2, Kindle (MOBI, AZW3), les BD, Markdown, HTML et le texte brut.',
   'about.privateTerm': 'Privé.',
   'about.private':
     'Rien de ce que vous ajoutez ne quitte cet appareil, sauf si vous ouvrez un catalogue, synchronisez avec un dossier choisi ou partagez. Fraunces est sous licence SIL Open Font License ; pdf.js, mammoth, marked, DOMPurify, Dexie et fflate sous leurs propres licences libres.',
@@ -108,6 +108,8 @@ const fr: Messages = {
   'details.shareFile': 'Partager le fichier',
   'details.toBookShelf': 'Noter dans BookShelf',
   'details.noBookShelf': 'BookShelf n’est pas installé ici ; le titre est donc passé par le menu de partage.',
+  'details.toNookling': 'Le dire à Nookling',
+  'details.noNookling': 'Nookling n’est pas installé ici.',
   'details.toColophon': 'Ouvrir dans Colophon',
   'details.offload': 'Libérer',
   'details.offloadTitle': 'Libérer le fichier ?',
@@ -137,6 +139,9 @@ const fr: Messages = {
   'error.unknown': 'Rosetta lit l’EPUB, le PDF, Word, OpenDocument, RTF, FB2, les BD (CBZ), Markdown, HTML et le texte brut.',
   'error.fb2Xml': 'Ce fichier FB2 est endommagé : son XML est illisible.',
   'error.fb2Empty': 'Ce fichier FB2 ne contient pas de texte.',
+  'error.mobiDrm': 'Ce livre est verrouillé par des DRM : Rosetta ne peut pas l’ouvrir. Les fichiers MOBI et AZW3 sans DRM s’ouvrent normalement.',
+  'error.mobiEmpty': 'Ce livre Kindle ne contient pas de texte.',
+  'mobi.part': 'Partie {number}',
   'error.cbzZip': 'Cette BD est endommagée : ce n’est pas un zip lisible.',
   'error.cbzEmpty': 'Cette BD n’a pas de pages.',
   'error.epubZip': 'Cet EPUB est endommagé : ce n’est pas une archive zip lisible.',
@@ -157,6 +162,11 @@ const fr: Messages = {
 
   'handoff.finished': 'Terminé. Le noter dans BookShelf ?',
   'handoff.logIt': 'Noter',
+  'handoff.finishedNookling': 'Dire à Nookling que vous l’avez fini ?',
+  'handoff.tellNookling': 'Le dire',
+  'widget.continue': 'Reprendre la lecture',
+  'widget.percent': '{percent} % lu',
+  'widget.empty': 'Rien à reprendre. Ouvrez un livre dans Rosetta.',
 
   'image.title': 'Image',
 
@@ -318,6 +328,12 @@ const fr: Messages = {
   'speech.forward': 'Phrase suivante',
   'speech.slower': 'Plus lent',
   'speech.faster': 'Plus rapide',
+  'speech.sleep': 'Minuteur',
+  'speech.sleepOff': 'désactivé',
+  'speech.sleepMinutes': 's’arrête dans {minutes} minutes',
+  'speech.sleepChapter': 's’arrête à la fin du chapitre',
+  'speech.sleepChapterShort': 'ch.',
+  'speech.slept': 'Lecture à voix haute mise en pause par le minuteur.',
 
   'stats.title': 'Lecture',
   'stats.leftUnder': 'Moins d’une minute restante',

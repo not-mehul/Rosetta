@@ -9,13 +9,16 @@ import com.getcapacitor.PluginHandle;
  * Capacitor shell for Rosetta. Documents opened with Rosetta arrive as VIEW
  * intents (AndroidManifest.xml), which the App plugin passes to the page as
  * appUrlOpen (src/platform/intake.ts). Volume keys turn pages while the
- * reader asks for them (VolumeKeysPlugin, src/platform/device.ts).
+ * reader asks for them (VolumeKeysPlugin, src/platform/device.ts). Reading
+ * aloud carries on with the screen off (ReadAloudPlugin, ReadAloudService).
  */
 public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(VolumeKeysPlugin.class);
+        registerPlugin(ReadAloudPlugin.class);
+        registerPlugin(ReadingWidgetPlugin.class);
         super.onCreate(savedInstanceState);
     }
 

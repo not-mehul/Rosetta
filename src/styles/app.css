@@ -661,50 +661,10 @@ ol {
   align-items: center;
   gap: var(--space-2);
 }
-.slider {
+/* Sliders are dusk-dawn's .range (style.md §8.6); here they share the row
+   with the step buttons and the value. */
+.size-row .range {
   flex: 1;
-  min-width: 0;
-  height: 44px;
-  margin: 0;
-  background: none;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-}
-.slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: var(--radius);
-  background: var(--chart-track);
-}
-.slider::-moz-range-track {
-  height: 4px;
-  border-radius: var(--radius);
-  background: var(--chart-track);
-}
-.slider::-moz-range-progress {
-  height: 4px;
-  background: var(--accent-amber);
-}
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  margin-top: -6px;
-  border-radius: var(--radius);
-  background: var(--accent-bright);
-  box-shadow: 0 0 0 1px var(--on-accent);
-}
-.slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border: 0;
-  border-radius: var(--radius);
-  background: var(--accent-bright);
-  box-shadow: 0 0 0 1px var(--on-accent);
-}
-.slider:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
 }
 .slider-value {
   min-width: 2ch;

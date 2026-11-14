@@ -1,28 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":semanticCommitsDisabled"],
-  "schedule": ["before 6am on monday"],
+  "extends": ["github>not-mehul/dusk-dawn//renovate/apps"],
   "packageRules": [
     {
-      "description": "Dev tooling: grouped, and merged once CI passes.",
-      "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "dev tooling",
-      "automerge": true
-    },
-    {
-      "description": "Capacitor core and plugins move together.",
-      "matchPackageNames": ["@capacitor/**", "@capacitor-community/**"],
-      "groupName": "Capacitor"
-    },
-    {
-      "description": "pdf.js is pinned: its worker, cmaps and fonts are copied into the build, and its API changes between minors. Every bump is reviewed by hand after npm run test:pdf.",
+      "description": "pdf.js is pinned: its worker, cmaps and fonts are copied into the build, and its API changes between minors. Every bump is its own pull request, reviewed by hand after npm run test:pdf.",
       "matchPackageNames": ["pdfjs-dist"],
       "rangeStrategy": "pin",
-      "automerge": false,
       "groupName": null,
+      "groupSlug": null,
       "labels": ["pdf.js"],
-      "prBodyNotes": ["Before merging: run `npm run test:pdf`, then open a scanned PDF, a password PDF and a PDF with an outline on a phone."]
+      "prBodyNotes": [
+        "Before merging: run `npm run test:pdf`, then open a scanned PDF, a password PDF and a PDF with an outline on a phone."
+      ]
     }
   ]
 }

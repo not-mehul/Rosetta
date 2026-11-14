@@ -90,7 +90,7 @@
       <div class="size-row">
         <button type="button" class="btn-icon" id="slower" aria-label={t('type.slower')} disabled={v.flowSpeed <= FLOW_SPEED.min} onclick={() => set({ flowSpeed: Math.max(FLOW_SPEED.min, v.flowSpeed - FLOW_SPEED.step) })}><Icon name="minus" /></button>
         <input
-          class="slider"
+          class="range"
           type="range"
           id="flowSpeed"
           aria-labelledby="flowSpeedLabel"
@@ -142,7 +142,7 @@
     <div class="size-row">
       <button type="button" class="btn-icon" id="smaller" aria-label={t('type.smaller')} disabled={v.fontSize <= FONT_SIZES.min} onclick={() => size(-1)}><Icon name="minus" /></button>
       <input
-        class="slider"
+        class="range"
         type="range"
         aria-labelledby="sizeLabel"
         min={FONT_SIZES.min}
@@ -208,14 +208,14 @@
 <div class="field">
   <span class="t-field-label" id="dimLabel">{t('type.dim')}</span>
   <div class="size-row">
-    <input class="slider" type="range" id="dim" aria-labelledby="dimLabel" min="0" max="0.7" step="0.05" value={v.dim} oninput={(e) => set({ dim: Number(e.currentTarget.value) })} />
+    <input class="range" type="range" id="dim" aria-labelledby="dimLabel" min="0" max="0.7" step="0.05" value={v.dim} oninput={(e) => set({ dim: Number(e.currentTarget.value) })} />
     <span class="slider-value tabular">{Math.round((v.dim / 0.7) * 100)}%</span>
   </div>
 </div>
 <div class="field">
   <span class="t-field-label" id="warmthLabel">{t('type.warmth')}</span>
   <div class="size-row">
-    <input class="slider" type="range" id="warmth" aria-labelledby="warmthLabel" min="0" max="1" step="0.05" value={v.warmth} oninput={(e) => set({ warmth: Number(e.currentTarget.value) })} />
+    <input class="range" type="range" id="warmth" aria-labelledby="warmthLabel" min="0" max="1" step="0.05" value={v.warmth} oninput={(e) => set({ warmth: Number(e.currentTarget.value) })} />
     <span class="slider-value tabular">{Math.round(v.warmth * 100)}%</span>
   </div>
   <span class="field-hint">{t('type.nightHint')}</span>

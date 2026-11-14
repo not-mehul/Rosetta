@@ -1,6 +1,6 @@
 {
   "name": "rosetta",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "private": true,
   "description": "Rosetta — a quiet library and reader for EPUB, PDF, Word, Markdown and plain-text documents.",
   "type": "module",

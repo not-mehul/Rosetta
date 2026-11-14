@@ -1,11 +1,11 @@
 name: CI
 
 # Every pull request, and every push to main, runs one quick job: tokens, lint,
-# colours, typecheck, unit tests and the web build. That is what most changes
-# need. The slow checks (Playwright end to end, the Android build and emulator
-# smoke test, the iOS simulator build) run only when started by hand from the
-# Actions tab ("Run workflow", with "full" ticked). A release tag still builds
-# and signs the APK in release.yml.
+# colours, typecheck, unit tests, then a production build and the Playwright
+# tests against it, the same as the other apps. The slow checks (the Android
+# build and emulator smoke test, the iOS simulator build) run only when started
+# by hand from the Actions tab ("Run workflow", with "full" ticked). A release
+# tag still builds and signs the APK in release.yml.
 on:
   pull_request:
   push:
@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       full:
-        description: Also run end to end, Android and iOS
+        description: Also build the apps (Android with an emulator smoke test, and iOS)
         type: boolean
         default: true
 
@@ -23,31 +23,19 @@ concurrency:
 
 jobs:
   web:
-    name: Check and build
+    name: Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run check
-      - run: npm run build
-
-  e2e:
-    name: End-to-end (Playwright)
-    if: github.event_name == 'workflow_dispatch' && inputs.full
-    runs-on: ubuntu-latest
-    needs: web
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # Builds the app, then runs the end-to-end tests against it.
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -66,7 +54,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - uses: actions/setup-java@v6
         with:
@@ -77,7 +65,7 @@ jobs:
       - run: npm run sync
       - name: Assemble, lint
         working-directory: android
-        run: ./gradlew assembleDebug lintDebug
+        run: ./gradlew assembleDebug assembleRelease lintDebug
       - uses: actions/upload-artifact@v7
         with:
           name: rosetta-debug-apk
@@ -87,13 +75,18 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # API 36: the API 37 emulator image aborts in system_server, a guest
+      # graphics driver bug (see Mise's ci.yml). Move to 37 once it is fixed.
       - name: Install, launch, and check the app stays up
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 36
           arch: x86_64
           target: google_apis
           disable-animations: true
+          pre-emulator-launch-script: adb start-server
+          emulator-boot-timeout: 420
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back none
           script: |
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -W -n io.github.notmehul.rosetta/.MainActivity
@@ -113,7 +106,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run build && npx cap sync ios

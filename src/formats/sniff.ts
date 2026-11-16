@@ -3,6 +3,7 @@
 import { strFromU8, unzipSync } from 'fflate';
 import { isComicArchive } from './cbz';
 import { isMobi } from './mobi';
+import { decodeText, isUtf8, looksLikeText } from './text';
 import type { Format } from './types';
 
 const EXT: Record<string, Format> = {
@@ -47,6 +48,9 @@ export const ACCEPT = [
   'application/vnd.amazon.ebook',
 ].join(',');
 
+/** Whether a file's name is one Rosetta reads, for picking files out of a folder. */
+export const isReadableName = (name: string) => extension(name) in EXT;
+
 export function extension(name: string): string {
   return /\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase() ?? '';
 }
@@ -55,8 +59,7 @@ const startsWith = (bytes: Uint8Array, ascii: string) => [...ascii].every((c, i)
 
 /** Null when the file is none of the formats Rosetta reads. */
 export function detectFormat(bytes: Uint8Array, name: string): Format | null {
-  // PDF may have junk before the header; the spec allows it within 1 KB.
-  if (startsWith(bytes, '%PDF') || new TextDecoder('latin1').decode(bytes.subarray(0, 1024)).includes('%PDF-')) return 'pdf';
+  if (startsWith(bytes, '%PDF')) return 'pdf';
   if (startsWith(bytes, 'PK\u0003\u0004')) {
     const all: string[] = [];
     let found: Record<string, Uint8Array>;
@@ -80,39 +83,20 @@ export function detectFormat(bytes: Uint8Array, name: string): Format | null {
   }
   if (startsWith(bytes, '{\\rtf')) return 'rtf';
   if (isMobi(bytes)) return 'mobi';
+  // A PDF may have junk before its header (the spec allows 1 KB of it). A text
+  // file that only mentions "%PDF-" isn't one: a real PDF's first lines aren't
+  // clean text, or it says it's a PDF.
+  if (new TextDecoder('latin1').decode(bytes.subarray(0, 1024)).includes('%PDF-') && (extension(name) === 'pdf' || !isUtf8(bytes.subarray(0, 4096), bytes.length <= 4096))) return 'pdf';
   if (!looksLikeText(bytes)) return null;
-  const start = new TextDecoder().decode(bytes.subarray(0, 1024)).replace(/^\uFEFF/, '');
+  const start = decodeText(bytes.subarray(0, 1024));
   if (/^\s*(<\?xml[^>]*>\s*)?<FictionBook\b/.test(start)) return 'fb2';
   const byName = EXT[extension(name)];
   if (byName && !['epub', 'pdf', 'docx', 'fb2', 'cbz', 'rtf', 'odt', 'mobi'].includes(byName)) return byName;
   // No useful extension (an Android content:// URI): look at the text itself.
-  const head = new TextDecoder().decode(bytes.subarray(0, 4096)).trimStart().toLowerCase();
+  const head = decodeText(bytes.subarray(0, 4096)).trimStart().toLowerCase();
   if (head.startsWith('<!doctype html') || head.startsWith('<html')) return 'html';
   if (/^(#{1,6} |---\n)/m.test(head) || /\[[^\]]+\]\([^)]+\)/.test(head)) return 'md';
   return 'txt';
-}
-
-/** No NUL bytes and valid UTF-8 in the first 4 KB. */
-function looksLikeText(bytes: Uint8Array): boolean {
-  const head = bytes.subarray(0, 4096);
-  if (head.includes(0)) return false;
-  try {
-    new TextDecoder('utf-8', { fatal: true }).decode(head.length === bytes.length ? head : trimPartial(head));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Drops a multi-byte character cut off at the end of a slice. */
-function trimPartial(bytes: Uint8Array): Uint8Array {
-  const end = bytes.length;
-  for (let i = 1; i <= 3 && end - i >= 0; i++) {
-    const b = bytes[end - i]!;
-    if ((b & 0xc0) === 0xc0) return bytes.subarray(0, end - i);
-    if ((b & 0x80) === 0) break;
-  }
-  return bytes;
 }
 
 /** A readable title from a file name: "the_art-of.reading.md" → "The art of reading". */

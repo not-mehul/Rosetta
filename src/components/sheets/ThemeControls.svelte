@@ -1,9 +1,9 @@
 <script lang="ts">
   // The theme (System, Dusk, Dawn) and true black: in Settings, and in the
   // reader's Light tab, where it matters at night.
+  import { Switch } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { settings } from '../../state/settings.svelte';
-  import Switch from '../ui/Switch.svelte';
 
   const v = $derived(settings.value);
 </script>

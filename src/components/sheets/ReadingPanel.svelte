@@ -8,7 +8,7 @@
   //   Light  theme, true black, dim and warmth
   //   Listen read aloud, its voice and speed
   import { onMount } from 'svelte';
-  import { Select, TabRail } from 'dusk-dawn';
+  import { Select, Switch, TabRail } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { pickFiles } from '../../lib/pick';
   import { volumeKeysAvailable } from '../../platform/device';
@@ -20,7 +20,6 @@
   import { ui, type PanelTab } from '../../state/ui.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
-  import Switch from '../ui/Switch.svelte';
   import ThemeControls from './ThemeControls.svelte';
 
   let { onclose }: { onclose: () => void } = $props();

@@ -12,8 +12,7 @@
   import { autoBackup, canPickSyncFolder, chooseSyncFolder, currentBackup, makeArchive, restoreArchive, restoreBackup, syncNow, type MergeResult } from '../../state/sync';
   import { ui } from '../../state/ui.svelte';
   import Sheet from '../ui/Sheet.svelte';
-  import Switch from '../ui/Switch.svelte';
-  import { Select, WavyProgress } from 'dusk-dawn';
+  import { Select, Switch, WavyProgress } from 'dusk-dawn';
   import { LOCALE_NAMES, LOCALES } from '../../i18n/index.svelte';
   import type { Settings } from '../../state/settings';
   import ThemeControls from './ThemeControls.svelte';

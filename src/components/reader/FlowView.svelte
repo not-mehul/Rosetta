@@ -108,7 +108,7 @@
     page = Math.max(0, Math.min(pages - 1, p));
     tx = (rtl ? 1 : -1) * page * stride;
     if (!root) return;
-    root.style.transition = animate ? 'transform var(--dur-settle) var(--ease-settle)' : 'none';
+    root.style.transition = animate ? 'transform var(--spring-spatial-calm-dur) var(--spring-spatial-calm)' : 'none';
     root.style.transform = `translateX(${tx}px)`;
   }
 

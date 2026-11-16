@@ -3,13 +3,10 @@
 
 import { marked } from 'marked';
 import { clean, headingToc } from './sanitize';
+import { decodeText } from './text';
 import type { DocInfo, FlowDoc } from './types';
 
-export const decodeText = (bytes: Uint8Array) =>
-  new TextDecoder()
-    .decode(bytes)
-    .replace(/^\uFEFF/, '')
-    .replace(/\r\n?/g, '\n');
+export { decodeText };
 
 /** YAML front matter: the fields Rosetta uses, and the body without it. */
 export function frontMatter(source: string): {

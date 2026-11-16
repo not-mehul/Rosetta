@@ -2,7 +2,8 @@
 // highlights. The views render from here and report the location back.
 
 import { cheer } from '../lib/delight';
-import { openDocument, PasswordError, type OpenDoc } from '../formats';
+import { openDocument, PasswordError, readInfo, type OpenDoc } from '../formats';
+import { titleFromName } from '../formats/sniff';
 import { FORMAT_LABEL } from '../formats/types';
 import { blockBreaks } from '../reader/cadence';
 import { excerpt } from '../reader/offsets';
@@ -216,7 +217,10 @@ class ReaderState {
     for (;;) {
       try {
         const content = await openDocument(bytes, doc.format, password);
-        if (password && password !== doc.password) void library.update(doc.id, { password }, { touch: false });
+        if (password && password !== doc.password) {
+          void library.update(doc.id, { password }, { touch: false });
+          if (!doc.cover) void this.fillLockedDetails(doc, bytes, password);
+        }
         return content;
       } catch (err) {
         if (!(err instanceof PasswordError)) throw err;
@@ -231,6 +235,20 @@ class ReaderState {
         password = answer;
       }
     }
+  }
+
+  /** A locked PDF was added with its file name and no cover; once it opens, its own title and first page fill them in. */
+  private async fillLockedDetails(doc: StoredDoc, bytes: Uint8Array, password: string): Promise<void> {
+    const info = await readInfo(bytes, doc.fileName, password).catch(() => null);
+    if (!info) return;
+    const patch: Partial<StoredDoc> = {};
+    if (info.cover) patch.cover = info.cover;
+    // Only over what was guessed, never over a title or author the reader typed.
+    if (info.title && doc.title === titleFromName(doc.fileName)) patch.title = info.title;
+    if (info.author && !doc.author) patch.author = info.author;
+    if (!Object.keys(patch).length) return;
+    await library.update(doc.id, patch, { touch: false });
+    if (this.doc?.id === doc.id) this.doc = { ...this.doc, ...patch };
   }
 
   /** Keeps a PDF's page text in the database, so later searches don't read every page again. */

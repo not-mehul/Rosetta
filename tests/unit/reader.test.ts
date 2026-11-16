@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { excerpt, firstVisibleOffset, paint, rangeAt, selectionOffsets, textOffset, unpaint } from '../../src/reader/offsets';
-import { flowLocationAt, flowProgress, pageProgress, timeLeft } from '../../src/reader/progress';
+import { endInView, flowLocationAt, flowProgress, pageProgress, PDF_END, timeLeft } from '../../src/reader/progress';
 import { search } from '../../src/reader/search';
 
 function section(html: string): HTMLElement {
@@ -82,5 +82,17 @@ describe('progress', () => {
     expect(timeLeft(100)).toBe('Under a minute left');
     expect(timeLeft(6 * 250 * 30)).toBe('30 min left');
     expect(timeLeft(6 * 250 * 90)).toBe('1 h 30 min left');
+  });
+});
+
+describe('the end in view', () => {
+  it('is the last section’s last words for flow, and the flag for PDF', () => {
+    expect(endInView('flow', [100, 50], 2, { section: 1, offset: 10 }, 50)).toBe(true);
+    expect(endInView('flow', [100, 50], 2, { section: 1, offset: 10 }, 49)).toBe(false);
+    expect(endInView('flow', [100, 50], 2, { section: 0, offset: 90 }, 100)).toBe(false);
+    // A last section of pictures only has no text to reach.
+    expect(endInView('flow', [100, 0], 2, { section: 1, offset: 0 }, 0)).toBe(true);
+    expect(endInView('pdf', [], 3, { section: 1, offset: 7000 }, PDF_END)).toBe(true);
+    expect(endInView('pdf', [], 3, { section: 2, offset: 0 }, 0)).toBe(false);
   });
 });

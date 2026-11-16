@@ -270,7 +270,7 @@ const es: Messages = {
   'reader.contents': 'Índice, marcadores y subrayados',
   'reader.addBookmark': 'Marcar este lugar',
   'reader.removeBookmark': 'Quitar marcador',
-  'reader.type': 'Letra y tema',
+  'reader.type': 'Lectura',
   'reader.opening': 'Abriendo {title}…',
   'reader.read': 'Leído',
   'reader.page': 'Página {page}',
@@ -328,7 +328,7 @@ const es: Messages = {
   'selection.failed': 'No se pudo subrayar.',
 
   'settings.title': 'Ajustes',
-  'settings.appearance': 'Aspecto y lectura',
+  'settings.appearance': 'Apariencia',
   'settings.library': 'Biblioteca',
   'settings.data': 'Tus datos',
   'settings.about': 'Acerca de',
@@ -515,6 +515,14 @@ const es: Messages = {
   'arrange.list': 'Lista',
   'arrange.in': 'En',
   'arrange.showEverything': 'Mostrar todo',
+  'panel.label': 'Controles de lectura',
+  'panel.text': 'Texto',
+  'panel.page': 'Página',
+  'panel.light': 'Luz',
+  'panel.listen': 'Escuchar',
+  'panel.rate': 'Velocidad',
+  'panel.listenHint': 'Lee desde lo alto de la página, frase a frase, y sigue con la pantalla apagada.',
+  'settings.readingWhere': 'Los ajustes de letra, página y lectura en voz alta están en cada libro, en Aa, donde se ve cómo cambian la página.',
 };
 
 export default es;

@@ -271,7 +271,7 @@ const en = {
   'reader.contents': 'Contents, bookmarks and highlights',
   'reader.addBookmark': 'Bookmark this place',
   'reader.removeBookmark': 'Remove bookmark',
-  'reader.type': 'Type and theme',
+  'reader.type': 'Reading',
   'reader.opening': 'Opening {title}…',
   'reader.read': 'Read',
   'reader.page': 'Page {page}',
@@ -326,7 +326,7 @@ const en = {
   'selection.failed': 'Couldn’t highlight that.',
 
   'settings.title': 'Settings',
-  'settings.appearance': 'Appearance and reading',
+  'settings.appearance': 'Appearance',
   'settings.library': 'Library',
   'settings.data': 'Your data',
   'settings.about': 'About',
@@ -512,6 +512,14 @@ const en = {
   'arrange.list': 'List',
   'arrange.in': 'In',
   'arrange.showEverything': 'Show everything',
+  'panel.label': 'Reading controls',
+  'panel.text': 'Text',
+  'panel.page': 'Page',
+  'panel.light': 'Light',
+  'panel.listen': 'Listen',
+  'panel.rate': 'Speed',
+  'panel.listenHint': 'Reads from the top of the page, a sentence at a time, and carries on with the screen off.',
+  'settings.readingWhere': 'Type, page and read-aloud settings are in a book, under Aa, where you can see them change the page.',
 };
 
 export default en;

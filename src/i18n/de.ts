@@ -270,7 +270,7 @@ const de: Messages = {
   'reader.contents': 'Inhalt, Lesezeichen und Markierungen',
   'reader.addBookmark': 'Diese Stelle merken',
   'reader.removeBookmark': 'Lesezeichen entfernen',
-  'reader.type': 'Schrift und Thema',
+  'reader.type': 'Lesen',
   'reader.opening': '{title} wird geöffnet …',
   'reader.read': 'Gelesen',
   'reader.page': 'Seite {page}',
@@ -325,7 +325,7 @@ const de: Messages = {
   'selection.failed': 'Das konnte nicht markiert werden.',
 
   'settings.title': 'Einstellungen',
-  'settings.appearance': 'Darstellung und Lesen',
+  'settings.appearance': 'Darstellung',
   'settings.library': 'Bibliothek',
   'settings.data': 'Deine Daten',
   'settings.about': 'Über',
@@ -512,6 +512,14 @@ const de: Messages = {
   'arrange.list': 'Liste',
   'arrange.in': 'In',
   'arrange.showEverything': 'Alles zeigen',
+  'panel.label': 'Lese-Einstellungen',
+  'panel.text': 'Text',
+  'panel.page': 'Seite',
+  'panel.light': 'Licht',
+  'panel.listen': 'Hören',
+  'panel.rate': 'Tempo',
+  'panel.listenHint': 'Liest ab dem oberen Seitenrand, Satz für Satz, und liest bei ausgeschaltetem Bildschirm weiter.',
+  'settings.readingWhere': 'Schrift-, Seiten- und Vorlese-Einstellungen findest du im Buch unter Aa, wo du siehst, wie sie die Seite ändern.',
 };
 
 export default de;

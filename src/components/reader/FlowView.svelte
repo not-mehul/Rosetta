@@ -84,7 +84,9 @@
     if (!paged || !root || !pager) return;
     const w = pager.clientWidth;
     const h = pager.clientHeight;
-    const measure = parseFloat(MEASURE_VALUE[v.measure]) * v.fontSize;
+    // The text is sized in rem, so it follows the phone's text size; the column follows with it.
+    const rootScale = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
+    const measure = parseFloat(MEASURE_VALUE[v.measure]) * v.fontSize * rootScale;
     pageW = Math.floor(Math.min(w - 2 * SIDE, measure));
     side = Math.floor((w - pageW) / 2);
     stride = w;
@@ -618,7 +620,7 @@
       class:pictures={content.pictures}
       lang={content.lang}
       dir={content.dir}
-      style:--read-size="{v.fontSize}px"
+      style:--read-size="{v.fontSize / 16}rem"
       style:--read-leading={SPACING_VALUE[v.spacing]}
       style:--read-measure={MEASURE_VALUE[v.measure]}
       bind:this={root}
@@ -638,7 +640,7 @@
     class:pictures={content.pictures}
     lang={content.lang}
     dir={content.dir}
-    style:--read-size="{v.fontSize}px"
+    style:--read-size="{v.fontSize / 16}rem"
     style:--read-leading={SPACING_VALUE[v.spacing]}
     style:--read-measure={MEASURE_VALUE[v.measure]}
     bind:this={root}

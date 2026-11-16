@@ -26,6 +26,13 @@
   const doc = $derived(reader.doc!);
   const v = $derived(settings.value);
   const where = $derived(reader.content ? reader.whereIs(reader.location.section, reader.location.offset) : '');
+  /** The bar's title: the chapter a reader would name (a PDF's from its outline), or nothing, and then the book's own title. */
+  const chapter = $derived.by(() => {
+    const c = reader.content;
+    if (!c) return '';
+    if (c.kind === 'pdf') return c.toc.filter((e) => e.section <= reader.location.section).at(-1)?.label ?? '';
+    return where;
+  });
   const progress = $derived(reader.progress);
   /** The figures the footer can show for this document; a tap on it moves to the next. */
   const shows = $derived.by<FooterShows[]>(() => {
@@ -106,21 +113,16 @@
 <div class="reader" class:chrome-hidden={!reader.chrome} class:is-paged={paged || flowing} class:is-flowing={flowing} data-format={doc.format}>
   <header class="reader-bar" aria-label={t('reader.label')}>
     <button type="button" class="btn-icon" id="closeReader" aria-label={t('reader.back')} onclick={() => reader.leave()}><Icon name="arrow-left" /></button>
+    <!-- The chapter is the title, the book its eyebrow; a document without chapters shows its own title. Read aloud starts from Aa → Listen. -->
     <div class="reader-bar-text">
-      <h1 class="reader-title ellipsis">{doc.title}</h1>
-      {#if where && where !== doc.title}<p class="t-data-small dim ellipsis">{where}</p>{/if}
+      {#if chapter && chapter !== doc.title}
+        <p class="reader-book ellipsis">{doc.title}</p>
+        <h1 class="reader-title ellipsis">{chapter}</h1>
+      {:else}
+        <h1 class="reader-title ellipsis">{doc.title}</h1>
+      {/if}
     </div>
     <div class="reader-bar-actions">
-      <button
-        type="button"
-        class="btn-icon"
-        id="readAloud"
-        class:amber={speech.active}
-        aria-label={speech.active ? t('speech.stop') : t('speech.start')}
-        aria-pressed={speech.active}
-        disabled={!reader.content || !!(reader.content.kind === 'flow' && (reader.content.pictures || reader.content.fixed))}
-        onclick={() => (speech.active ? speech.stop() : void speech.start())}><Icon name="volume-2" /></button
-      >
       <button type="button" class="btn-icon" id="openSearch" aria-label={t('reader.search')} disabled={!reader.content} onclick={() => ui.open('search')}><Icon name="search" /></button>
       <button type="button" class="btn-icon" id="openContents" aria-label={t('reader.contents')} disabled={!reader.content} onclick={() => ui.open('contents')}><Icon name="list" /></button>
       <button

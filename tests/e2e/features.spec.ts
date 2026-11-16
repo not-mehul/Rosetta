@@ -79,6 +79,7 @@ test('pages turn by tap, key and swipe, and the place survives a reload', async 
   await expect(page.locator('.reading h1')).toHaveText('The stair');
   await showBars(page);
   await page.click('#openType');
+  await page.click('#panel-page');
   await page.click('#modePaged');
   await page.click('#turn-none');
   await page.keyboard.press('Escape');
@@ -108,6 +109,7 @@ test('the page curl follows the finger and turns the page', async ({ page }) => 
   await add(page, ['lantern.epub']);
   await showBars(page);
   await page.click('#openType');
+  await page.click('#panel-page');
   await page.click('#modePaged');
   await page.click('#turn-curl');
   await page.keyboard.press('Escape');
@@ -281,6 +283,7 @@ test('a long book opens and turns within budget', async ({ page }) => {
 
   await showBars(page);
   await page.click('#openType');
+  await page.click('#panel-page');
   await page.click('#modePaged');
   await page.click('#turn-none');
   await page.keyboard.press('Escape');
@@ -391,7 +394,8 @@ test('flows a sentence at a time, with visual anchors and a font of your own', a
   await expect(page.locator('.reading b.anchor').first()).toHaveText('T');
   await expect(page.locator('.reading p').first()).toContainText('The keeper kept a log');
 
-  // Flow: one sentence, revealed letter by letter at the chosen speed.
+  // Flow: one sentence, revealed letter by letter at the chosen speed (Aa → Page).
+  await page.click('#panel-page');
   await page.click('#modeFlow');
   await expect(page.locator('#flowSpeed')).toBeVisible();
   await page.locator('#flowSpeed').fill('10');
@@ -430,8 +434,10 @@ test('flows a sentence at a time, with visual anchors and a font of your own', a
   await page.click('#flowBars');
   await expect(page.locator('.reader.chrome-hidden')).toHaveCount(0);
 
-  // A font file that isn't a font is turned away.
+  // A font file that isn't a font is turned away. (The panel reopens on Page, where it was left.)
   await page.click('#openType');
+  await expect(page.locator('#panel-page')).toHaveAttribute('aria-selected', 'true');
+  await page.click('#panel-text');
   const dir = mkdtempSync(join(tmpdir(), 'font-'));
   writeFileSync(join(dir, 'Broken.ttf'), 'not a font');
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#faceCustom')]);

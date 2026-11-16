@@ -13,7 +13,10 @@
   import { ui } from '../../state/ui.svelte';
   import Sheet from '../ui/Sheet.svelte';
   import Switch from '../ui/Switch.svelte';
-  import ReadingControls from './ReadingControls.svelte';
+  import { Select } from 'dusk-dawn';
+  import { LOCALE_NAMES, LOCALES } from '../../i18n/index.svelte';
+  import type { Settings } from '../../state/settings';
+  import ThemeControls from './ThemeControls.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
   const v = $derived(settings.value);
@@ -107,14 +110,29 @@
 <Sheet title={t('settings.title')} {onclose}>
   <section class="settings-group">
     <h3 class="t-section-label">{t('settings.appearance')}</h3>
-    <ReadingControls />
+    <ThemeControls />
+    <label class="field">
+      <span class="t-field-label">{t('type.language')}</span>
+      <Select
+        id="language"
+        value={v.locale}
+        options={[{ value: 'system' as Settings['locale'], label: t('type.system') }, ...LOCALES.map((l) => ({ value: l as Settings['locale'], label: LOCALE_NAMES[l] }))]}
+        onchange={(locale) => void settings.update({ locale })}
+      />
+    </label>
+    {#if isNative}
+      <div class="settings-list">
+        <Switch checked={v.haptics} label={t('type.haptics')} hint={t('type.hapticsHint')} onchange={(on) => void settings.update({ haptics: on })} />
+      </div>
+    {/if}
+    <!-- Type, page and read-aloud settings live in a book, under Aa, where you can see them work. -->
+    <p class="field-hint">{t('settings.readingWhere')}</p>
   </section>
 
   <section class="settings-group">
     <h3 class="t-section-label">{t('settings.library')}</h3>
     <div class="btn-grid">
       <button type="button" class="btn btn-secondary" id="openStorage" onclick={() => ui.open('storage')}>{t('storage.title')}</button>
-      <button type="button" class="btn btn-secondary" onclick={() => ui.go('catalogs')}>{t('catalog.title')}</button>
     </div>
   </section>
 

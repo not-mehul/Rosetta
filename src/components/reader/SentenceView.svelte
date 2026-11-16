@@ -180,7 +180,7 @@
           class:still={reduceMotion}
           lang={content.lang}
           dir={content.dir}
-          style:--read-size="{v.fontSize}px"
+          style:--read-size="{v.fontSize / 16}rem"
           aria-live="polite"
         >
           <span class="visually-hidden">{beat.text}</span><span aria-hidden="true"

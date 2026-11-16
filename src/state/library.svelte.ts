@@ -1,9 +1,9 @@
 // The library: every document added, with its cover, place and progress.
 
 import { FormatError, readInfo } from '../formats';
-import { t } from '../i18n/index.svelte';
 import { db, hashBytes, toBytes, withDefaults, type Collection, type Mark, type StoredDoc } from './db';
 import type { LibraryShelf, LibrarySort } from './settings';
+import { t } from '../i18n/index.svelte';
 
 export type AddResult = { doc: StoredDoc; added: boolean } | { error: string; name: string };
 

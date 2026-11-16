@@ -4,6 +4,7 @@ import { FormatError, PasswordError, readInfo, type DocInfo } from '../formats';
 import { titleFromName } from '../formats/sniff';
 import { db, hashBytes, toBytes, withDefaults, type Collection, type Mark, type StoredDoc } from './db';
 import type { LibraryShelf, LibrarySort } from './settings';
+import { t } from '../i18n/index.svelte';
 
 export type AddResult = { doc: StoredDoc; added: boolean } | { error: string; name: string };
 
@@ -82,7 +83,7 @@ class LibraryState {
     } catch (err) {
       return {
         name: fileName,
-        error: err instanceof FormatError ? err.message : `Couldn’t read ${fileName} (${err instanceof Error ? err.message : String(err)}).`,
+        error: err instanceof FormatError ? err.message : t('error.couldntRead', { name: fileName, reason: err instanceof Error ? err.message : String(err) }),
       };
     } finally {
       this.adding--;

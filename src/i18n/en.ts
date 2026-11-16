@@ -81,6 +81,7 @@ const en = {
   'data.noHighlights': 'There are no highlights to export yet.',
   'data.backupSaved': 'Backup saved to {where}.',
   'data.archiveSaved': 'Library saved to {where}.',
+  'data.archiveFailed': 'The library couldn’t be saved ({reason}). Check there’s room on the device and try again.',
   'data.restored': 'Restored {marks} marks on {docs} documents; added {added} files.',
   'data.missing': {
     one: '{count} isn’t in this library; add its file and restore again.',
@@ -164,9 +165,12 @@ const en = {
   'error.noSyncFolder': 'No sync folder chosen.',
   'error.cardDraw': 'The card couldn’t be drawn.',
   'error.speechDone': 'Finished reading aloud.',
+  'speech.stopped': 'Reading aloud stopped ({reason}). Try again, or choose another voice in Type and theme.',
   'error.fileMissing': 'the file is missing from the library',
   'error.docx': 'This Word document couldn’t be read ({reason}).',
   'error.pdf': 'This PDF couldn’t be read ({reason}).',
+  'error.couldntRead': 'Couldn’t read {name} ({reason}). It may be damaged, or in a format Rosetta doesn’t read.',
+  'error.pdfLocked': 'This PDF is protected by a password.',
 
   'handoff.finished': 'Finished. Log it in BookShelf?',
   'handoff.logIt': 'Log it',
@@ -189,8 +193,8 @@ const en = {
   'intake.knownOne': 'That one is already in the library.',
   'intake.knownMany': 'Those are already in the library.',
   'intake.unreadable': {
-    one: '{count} file couldn’t be read.',
-    other: '{count} files couldn’t be read.',
+    one: '{count} file couldn’t be read: {names}.',
+    other: '{count} files couldn’t be read: {names}.',
   },
   'intake.differentFile': 'That is a different file from the one offloaded. Pick the same file to bring it back.',
   'intake.openFailed': 'Couldn’t open that file ({reason}).',

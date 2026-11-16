@@ -80,6 +80,7 @@ const fr: Messages = {
   'data.noHighlights': 'Il n’y a pas encore de surlignages à exporter.',
   'data.backupSaved': 'Sauvegarde enregistrée dans {where}.',
   'data.archiveSaved': 'Bibliothèque enregistrée dans {where}.',
+  'data.archiveFailed': 'La bibliothèque n’a pas pu être enregistrée ({reason}). Vérifiez l’espace disponible et réessayez.',
   'data.restored': '{marks} marques restaurées sur {docs} documents ; {added} fichiers ajoutés.',
   'data.missing': {
     one: '{count} n’est pas dans cette bibliothèque ; ajoutez son fichier et restaurez à nouveau.',
@@ -163,9 +164,12 @@ const fr: Messages = {
   'error.noSyncFolder': 'Aucun dossier de synchronisation choisi.',
   'error.cardDraw': 'La carte n’a pas pu être dessinée.',
   'error.speechDone': 'Lecture à voix haute terminée.',
+  'speech.stopped': 'La lecture à voix haute s’est arrêtée ({reason}). Réessayez, ou choisissez une autre voix dans Texte et thème.',
   'error.fileMissing': 'le fichier manque dans la bibliothèque',
   'error.docx': 'Ce document Word est illisible ({reason}).',
   'error.pdf': 'Ce PDF est illisible ({reason}).',
+  'error.couldntRead': 'Impossible de lire {name} ({reason}). Il est peut-être endommagé, ou dans un format que Rosetta ne lit pas.',
+  'error.pdfLocked': 'Ce PDF est protégé par un mot de passe.',
 
   'handoff.finished': 'Terminé. Le noter dans BookShelf ?',
   'handoff.logIt': 'Noter',
@@ -188,8 +192,8 @@ const fr: Messages = {
   'intake.knownOne': 'Celui-ci est déjà dans la bibliothèque.',
   'intake.knownMany': 'Ceux-ci sont déjà dans la bibliothèque.',
   'intake.unreadable': {
-    one: '{count} fichier n’a pas pu être lu.',
-    other: '{count} fichiers n’ont pas pu être lus.',
+    one: '{count} fichier n’a pas pu être lu : {names}.',
+    other: '{count} fichiers n’ont pas pu être lus : {names}.',
   },
   'intake.differentFile': 'Ce n’est pas le fichier qui a été libéré. Choisissez le même fichier pour le récupérer.',
   'intake.openFailed': 'Impossible d’ouvrir ce fichier ({reason}).',

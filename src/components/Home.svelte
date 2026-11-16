@@ -7,6 +7,7 @@
   import { t, type MessageKey } from '../i18n/index.svelte';
   import { hatch } from '../lib/delight';
   import { shown, toggledTheme } from '../platform/theme.svelte';
+  import { library } from '../state/library.svelte';
   import { settings } from '../state/settings.svelte';
   import { ui, type Section } from '../state/ui.svelte';
   import LibraryView from './LibraryView.svelte';
@@ -69,7 +70,8 @@
       <h1 class="t-page-title" use:secretTaps={{ count: 7, onunlock: dust }}>
         {t(head.before)}<em class="script-word" bind:this={scriptWord}>{ui.section === 'library' ? (script ?? t(head.em)) : t(head.em)}</em>{t(head.after)}
       </h1>
-      <p class="t-tagline">{t(head.tagline)}</p>
+      <!-- The library's tagline says what Rosetta is; once there are books, the books say it. -->
+      {#if ui.section !== 'library' || !library.items.length}<p class="t-tagline">{t(head.tagline)}</p>{/if}
     </div>
     <div class="header-tools">
       <button type="button" class="btn-icon" id="openSettings" aria-label={t('settings.title')} onclick={() => ui.open('settings')}><Icon name="settings" /></button>

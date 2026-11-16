@@ -8,6 +8,8 @@ export type Measure = 'narrow' | 'medium' | 'wide';
 export type PageTone = 'original' | 'theme';
 export type LibrarySort = 'recent' | 'title' | 'author' | 'series';
 export type LibraryShelf = 'reading' | 'all' | 'finished';
+/** The library as a grid of covers, or as a list of rows. */
+export type LibraryLayout = 'grid' | 'list';
 export type PdfFit = 'width' | 'page';
 /** Flow shows one sentence at a time in the middle of the screen, revealed a letter at a time. */
 export type ReadingMode = 'scroll' | 'paged' | 'flow';
@@ -79,6 +81,7 @@ export interface Settings {
   lastAutoBackup: number;
   sort: LibrarySort;
   shelf: LibraryShelf;
+  layout: LibraryLayout;
   /** Time left in the book, time left in the chapter, or which chapter. */
   footerShows: FooterShows;
   /** Minutes of reading a day to aim for; 0 is no goal. */
@@ -124,6 +127,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastAutoBackup: 0,
   sort: 'recent',
   shelf: 'all',
+  layout: 'grid',
   footerShows: 'book',
   dailyGoal: 0,
   lastDocId: null,
@@ -141,6 +145,7 @@ const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   locale: ['system', 'en', 'es', 'fr', 'de'],
   sort: ['recent', 'title', 'author', 'series'],
   shelf: ['reading', 'all', 'finished'],
+  layout: ['grid', 'list'],
   footerShows: ['book', 'chapter', 'place'],
   dailyGoal: DAILY_GOALS,
 };

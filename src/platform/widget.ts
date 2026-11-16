@@ -7,6 +7,7 @@ import { registerPlugin } from "@capacitor/core";
 import type { StoredDoc } from "../state/db";
 import { isReading } from "../state/library.svelte";
 import { bytesToBase64 } from "../lib/base64";
+import { drawCover } from "../lib/cover";
 import { platform } from "./native";
 
 export interface WidgetBook {
@@ -44,6 +45,8 @@ export function bookToContinue(items: readonly StoredDoc[]): StoredDoc | null {
 
 let last = "";
 let lastCover = "";
+/** Whether the widget holds a cover for the book it shows (a drawn one can fail). */
+let coverSent = false;
 
 /** Sends the widget its book (or nothing to continue), when that has changed. */
 export function updateWidget(
@@ -62,19 +65,26 @@ export function updateWidget(
   if (key === last) return;
   last = key;
   // The cover goes only when the book or its cover changes; the widget keeps the last one it was given.
-  const coverKey = doc?.cover ? `${doc.id}|${doc.cover.length}` : "";
-  const cover =
-    doc?.cover && coverKey !== lastCover ? bytesToBase64(doc.cover) : undefined;
+  // A book without one gets the cover the library draws for it (lib/cover.ts).
+  const coverKey = doc
+    ? `${doc.id}|${doc.cover?.length ?? `drawn:${doc.title}|${doc.author}`}`
+    : "";
+  const fresh = !!doc && coverKey !== lastCover;
   lastCover = coverKey;
-  void Widget.update({
-    id: doc?.id ?? "",
-    title: doc?.title ?? "",
-    author: doc?.author ?? "",
-    percent,
-    eyebrow: words.eyebrow,
-    progress: words.progress(percent),
-    empty: words.empty,
-    hasCover: Boolean(doc?.cover),
-    ...(cover ? { cover } : {}),
-  }).catch((err: unknown) => console.warn("Widget update failed", err));
+  void (async () => {
+    const bytes = fresh && doc ? (doc.cover ?? (await drawCover(doc))) : null;
+    if (fresh) coverSent = !!bytes;
+    if (!doc) coverSent = false;
+    await Widget.update({
+      id: doc?.id ?? "",
+      title: doc?.title ?? "",
+      author: doc?.author ?? "",
+      percent,
+      eyebrow: words.eyebrow,
+      progress: words.progress(percent),
+      empty: words.empty,
+      hasCover: coverSent,
+      ...(bytes ? { cover: bytesToBase64(bytes) } : {}),
+    });
+  })().catch((err: unknown) => console.warn("Widget update failed", err));
 }

@@ -505,6 +505,13 @@ const en = {
   'catalog.titleBefore': 'Open ',
   'catalog.titleEm': 'shelves',
   'catalog.titleAfter': '',
+  'arrange.title': 'Arrange the library',
+  'arrange.open': 'Arrange the library',
+  'arrange.layout': 'Show as',
+  'arrange.grid': 'Covers',
+  'arrange.list': 'List',
+  'arrange.in': 'In',
+  'arrange.showEverything': 'Show everything',
 };
 
 export default en;

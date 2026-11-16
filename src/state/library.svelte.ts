@@ -124,6 +124,7 @@ class LibraryState {
       id: crypto.randomUUID(),
       name: trimmed,
       createdAt: Date.now(),
+      updatedAt: Date.now(),
     };
     await db.collections.put(c);
     this.collections = [...this.collections, c].sort((a, b) => a.name.localeCompare(b.name));
@@ -131,13 +132,18 @@ class LibraryState {
   }
 
   async renameCollection(id: string, name: string): Promise<void> {
-    await db.collections.update(id, { name: name.trim() });
-    this.collections = this.collections.map((c) => (c.id === id ? { ...c, name: name.trim() } : c)).sort((a, b) => a.name.localeCompare(b.name));
+    const patch = { name: name.trim(), updatedAt: Date.now() };
+    await db.collections.update(id, patch);
+    this.collections = this.collections.map((c) => (c.id === id ? { ...c, ...patch } : c)).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /** Deletes a collection; its documents stay in the library. */
   async deleteCollection(id: string): Promise<void> {
-    await db.collections.delete(id);
+    // The tombstone tells sync to delete it on the other devices too.
+    await db.transaction('rw', db.collections, db.tombstones, async () => {
+      await db.collections.delete(id);
+      await db.tombstones.put({ id, deletedAt: Date.now() });
+    });
     this.collections = this.collections.filter((c) => c.id !== id);
     for (const d of this.items.filter((x) => x.collections.includes(id)))
       await this.update(d.id, {
@@ -165,10 +171,11 @@ class LibraryState {
     });
     this.items = this.items.filter((d) => d.id !== id);
     return async () => {
-      if (!doc || !blob) return;
+      // An offloaded document has no file to put back, but its details and marks come back all the same.
+      if (!doc) return;
       await db.transaction('rw', db.docs, db.bytes, db.marks, async () => {
         await db.docs.put(doc);
-        await db.bytes.put(blob);
+        if (blob) await db.bytes.put(blob);
         await db.marks.bulkPut(marks);
       });
       await this.load();

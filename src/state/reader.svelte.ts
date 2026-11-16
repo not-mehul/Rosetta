@@ -7,7 +7,7 @@ import { titleFromName } from '../formats/sniff';
 import { FORMAT_LABEL } from '../formats/types';
 import { blockBreaks } from '../reader/cadence';
 import { excerpt } from '../reader/offsets';
-import { chapterAt, chapterTicks, endInView, FAR_CHARS, flowProgress, globalOffset, pageProgress, START, type Location } from '../reader/progress';
+import { chapterAt, chapterTicks, endInView, FAR_CHARS, flowProgress, globalOffset, pageProgress, percent, START, type Location } from '../reader/progress';
 import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
 import { t } from '../i18n/index.svelte';
 import { duration } from '../lib/format';
@@ -54,6 +54,8 @@ class ReaderState {
   onFinished: ((doc: StoredDoc) => void) | null = null;
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
+  /** The place moved since it was last saved; only then is it written (and stamped for sync). */
+  private dirty = false;
   private jumpKey = 0;
   private lengths: number[] = [];
   /** Where a remembered jump landed; reading on a few screens from it lets the way back go. */
@@ -219,12 +221,14 @@ class ReaderState {
       this.visibleEnd = 0;
       this.openedAt = at;
       this.moved = false;
+      this.dirty = false;
       this.section = content.kind === 'flow' ? at.section : 0;
       this.jump = { to: at, key: ++this.jumpKey };
       this.jumpedAt = performance.now();
       this.chrome = true;
       stats.begin(id);
-      void library.update(id, { openedAt: Date.now() });
+      // Opening isn't a change to the place: sync must not let it win over a newer place from another device.
+      void library.update(id, { openedAt: Date.now() }, { touch: false });
       void settings.update({ lastDocId: id });
     } catch (err) {
       this.doc = null;
@@ -238,6 +242,24 @@ class ReaderState {
     } finally {
       this.loading = false;
     }
+  }
+
+  /**
+   * Sync brought the open document a newer place from another device. Before
+   * any reading here it moves there; after, it offers to.
+   */
+  followRemote(id: string, patch: Partial<StoredDoc>): void {
+    const to = patch.location;
+    if (this.doc?.id !== id || !this.content) return;
+    this.doc = { ...this.doc, ...patch };
+    if (!to || to.section >= this.sectionCount || (to.section === this.location.section && to.offset === this.location.offset)) return;
+    if (!this.moved) {
+      this.goTo(to);
+      // Arriving where the other device already saved isn't a new place to write.
+      this.dirty = false;
+      return;
+    }
+    ui.notify(t('sync.elsewhere', { percent: percent(patch.progress ?? 0) }), 'info', { label: t('sync.goThere'), run: () => this.goTo(to, undefined, undefined, true) });
   }
 
   /** Opens a document at a mark: the notes view and sync use it. */
@@ -351,6 +373,7 @@ class ReaderState {
     const section = Math.max(0, Math.min(this.sectionCount - 1, to.section));
     if (this.content.kind === 'flow') this.section = section;
     this.location = { section, offset: to.offset };
+    this.dirty = true;
     // Until the view reports what the jump put on screen.
     this.visibleEnd = 0;
     this.jump = {
@@ -388,6 +411,7 @@ class ReaderState {
   /** Called by the views as the reader scrolls or turns. */
   report(location: Location, visibleEnd: number): void {
     const before = this.globalChar(this.location);
+    if (location.section !== this.location.section || location.offset !== this.location.offset) this.dirty = true;
     this.location = location;
     this.visibleEnd = visibleEnd;
     if (this.finishDeclined && this.wellBeforeEnd()) this.finishDeclined = false;
@@ -422,11 +446,14 @@ class ReaderState {
     const doc = this.doc;
     if (!doc || !this.content) return;
     const progress = this.progress;
+    const justFinished = progress >= 0.999 && doc.finishedAt === null && !this.finishDeclined && this.moved;
+    // Leaving or pausing without reading writes nothing, so it can't overwrite a newer place from sync.
+    if (!this.dirty && !justFinished) return;
+    this.dirty = false;
     const patch: Partial<StoredDoc> = {
       location: $state.snapshot(this.location),
       progress,
     };
-    const justFinished = progress >= 0.999 && doc.finishedAt === null && !this.finishDeclined && this.moved;
     if (justFinished) patch.finishedAt = Date.now();
     void library.update(doc.id, patch);
     this.doc = { ...doc, ...patch };

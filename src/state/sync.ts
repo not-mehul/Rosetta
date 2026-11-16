@@ -19,6 +19,7 @@ import { db, toBytes, type Collection, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
 import { settings } from './settings.svelte';
 import { t } from '../i18n/index.svelte';
+import { ui } from './ui.svelte';
 
 export const WEEK = 7 * 86_400_000;
 export const KEEP_BACKUPS = 5;
@@ -44,13 +45,17 @@ export interface MergeResult {
   docs: { id: string; patch: Partial<StoredDoc> }[];
   putMarks: Mark[];
   deleteMarks: string[];
+  /** New and renamed collections. */
   collections: Collection[];
+  /** Collections deleted on the other side. */
+  deleteCollections: string[];
   deleted: { id: string; deletedAt: number }[];
   /** Documents the other side has and this one doesn't, to say so. */
   missing: number;
 }
 
 const markTime = (m: Mark) => m.updatedAt ?? m.createdAt;
+const collectionTime = (c: Collection) => c.updatedAt ?? c.createdAt;
 
 /**
  * Merges a backup or sync file into this library. Last write wins: per
@@ -63,6 +68,7 @@ export function merge(local: Local, remote: Backup): MergeResult {
     putMarks: [],
     deleteMarks: [],
     collections: [],
+    deleteCollections: [],
     deleted: [],
     missing: 0,
   };
@@ -110,11 +116,27 @@ export function merge(local: Local, remote: Backup): MergeResult {
     const have = localMarks.get(id);
     if (have && at >= markTime(have)) out.deleteMarks.push(id);
   }
+  // Collections: last rename wins, and a deletion wins over an older rename.
   const byId = new Map(local.collections.map((c) => [c.id, c]));
-  for (const c of remote.collections ?? []) if (!byId.has(c.id)) out.collections.push(c);
+  for (const c of remote.collections ?? []) {
+    const gone = deleted.get(c.id);
+    if (gone !== undefined && gone >= collectionTime(c)) continue;
+    const have = byId.get(c.id);
+    if (!have || (collectionTime(c) > collectionTime(have) && c.name !== have.name)) out.collections.push(c);
+  }
+  for (const c of local.collections) {
+    const gone = deleted.get(c.id);
+    if (gone !== undefined && gone >= collectionTime(c)) out.deleteCollections.push(c.id);
+  }
   out.deleted = [...deleted].map(([id, deletedAt]) => ({ id, deletedAt }));
   return out;
 }
+
+/** Told after every merge, so the open document can follow a newer place (main.ts sets it). */
+let onMerged: ((result: MergeResult) => void) | null = null;
+export const whenMerged = (fn: (result: MergeResult) => void) => {
+  onMerged = fn;
+};
 
 /** Applies a merge to the database and the library on screen. */
 export async function applyMerge(result: MergeResult): Promise<void> {
@@ -123,9 +145,16 @@ export async function applyMerge(result: MergeResult): Promise<void> {
     if (result.putMarks.length) await db.marks.bulkPut(result.putMarks);
     if (result.deleteMarks.length) await db.marks.bulkDelete(result.deleteMarks);
     if (result.collections.length) await db.collections.bulkPut(result.collections);
+    if (result.deleteCollections.length) await db.collections.bulkDelete(result.deleteCollections);
     await db.tombstones.bulkPut(result.deleted);
   });
-  if (result.collections.length) await library.load();
+  if (result.deleteCollections.length) {
+    // Documents let go of a collection deleted elsewhere, as they do when it's deleted here.
+    const gone = new Set(result.deleteCollections);
+    for (const d of library.items.filter((x) => x.collections.some((c) => gone.has(c)))) await library.update(d.id, { collections: d.collections.filter((c) => !gone.has(c)) }, { touch: false });
+  }
+  if (result.collections.length || result.deleteCollections.length) await library.load();
+  onMerged?.(result);
 }
 
 export async function restoreBackup(text: string): Promise<MergeResult> {
@@ -225,6 +254,8 @@ export async function restoreArchive(bytes: Uint8Array): Promise<{ added: number
             title: meta.title,
             author: meta.author,
             ...(cover ? { cover } : {}),
+            // Older than anything in the backup, so the merge below restores its place, progress and details.
+            updatedAt: 0,
           }
         : {},
     );
@@ -323,6 +354,27 @@ async function writeSync(text: string): Promise<void> {
 
 let syncing: Promise<MergeResult | null> | null = null;
 
+/** The backup to write, with what the other side had on documents this device doesn't, so it isn't lost. */
+export function syncFile(mine: Backup, theirs: Backup | null): Backup {
+  if (!theirs) return mine;
+  const here = new Set(mine.docs.map((d) => d.id));
+  return { ...mine, docs: [...mine.docs, ...theirs.docs.filter((d) => !here.has(d.id))] };
+}
+
+/** Keeps a copy of a sync file that couldn't be read, beside it, before it is written over. */
+async function keepUnreadable(text: string): Promise<string> {
+  const name = `rosetta-sync.unreadable-${new Date().toISOString().slice(0, 10)}.json`;
+  if (isNative) {
+    await Filesystem.writeFile({ path: `${FOLDER}/sync/${name}`, directory: Directory.Documents, recursive: true, data: bytesToBase64(strToU8(text)) });
+  } else {
+    const dir = await folderHandle();
+    const w = await dir?.getFileHandle(name, { create: true }).then((f) => f.createWritable());
+    await w?.write(text);
+    await w?.close();
+  }
+  return name;
+}
+
 /** Reads the sync file, merges it in, and writes the merged state back. */
 export function syncNow(): Promise<MergeResult | null> {
   if (!settings.value.sync) return Promise.resolve(null);
@@ -330,23 +382,31 @@ export function syncNow(): Promise<MergeResult | null> {
     try {
       const text = await readSync();
       let result: MergeResult | null = null;
+      let remote: Backup | null = null;
       if (text) {
         try {
-          result = merge(
-            {
-              docs: library.items,
-              marks: await db.marks.toArray(),
-              collections: library.collections,
-              deleted: await db.tombstones.toArray(),
-            },
-            parseBackup(text),
-          );
-          await applyMerge(result);
+          remote = parseBackup(text);
         } catch (err) {
-          console.warn('The sync file couldn’t be read; it will be rewritten:', err);
+          // A half-synced file, a conflict copy or a newer format: keep it, so nothing from the other device is lost.
+          console.warn('The sync file couldn’t be read:', err);
+          const kept = await keepUnreadable(text).catch(() => null);
+          ui.notify(kept ? t('sync.unreadable', { name: kept }) : t('sync.unreadableLost'), 'error');
+          if (!kept) return null;
         }
       }
-      await writeSync(JSON.stringify(await currentBackup()));
+      if (remote) {
+        result = merge(
+          {
+            docs: library.items,
+            marks: await db.marks.toArray(),
+            collections: library.collections,
+            deleted: await db.tombstones.toArray(),
+          },
+          remote,
+        );
+        await applyMerge(result);
+      }
+      await writeSync(JSON.stringify(syncFile(await currentBackup(), remote)));
       return result;
     } finally {
       syncing = null;

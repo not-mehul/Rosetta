@@ -28,3 +28,17 @@ describe('figures', () => {
     expect(summarise([{ id: `${day}|d`, day, docId: 'd', ms: 12 * 60_000, chars: 20000 }]).paceMeasured).toBe(true);
   });
 });
+
+describe('search excerpts', () => {
+  it('open and close on whole words', async () => {
+    const { excerpt } = await import('../../src/reader/offsets');
+    const text = `${'Paragraph about the green cloth ledger. '.repeat(6)}The keeper climbed the stair each evening and counted the ships that passed.`;
+    const at = text.indexOf('keeper');
+    const e = excerpt(text, at, at + 6);
+    expect(e.before).toMatch(/^…\S/);
+    expect(e.before.slice(1, 2)).toMatch(/\S/);
+    const firstWord = e.before.slice(1).split(/\s/)[0]!;
+    expect(text).toContain(` ${firstWord}`);
+    expect(e.after).toMatch(/\S…$/);
+  });
+});

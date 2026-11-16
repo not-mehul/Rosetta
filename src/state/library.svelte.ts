@@ -14,6 +14,8 @@ class LibraryState {
   loaded = $state(false);
   /** Files being read for the library right now. */
   adding = $state(0);
+  /** Several files on their way in: how many, and how many are in. Null for one at a time. */
+  batch = $state<{ done: number; total: number } | null>(null);
 
   async load(): Promise<void> {
     const [docs, collections] = await Promise.all([db.docs.toArray(), db.collections.toArray()]);

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { countUp } from 'dusk-dawn';
   // The Stats section: today against the day's goal, the streak, the week, a
   // calendar of the last few months, what took the most time, and what's
   // finished. Figures only, in the stat-tile and bar-list patterns
@@ -67,8 +68,8 @@
       <div class="stat-tile"><span class="stat-value" id="statToday">{duration(summary.todayMs)}</span><span class="t-field-label">{t('stats.today')}</span></div>
       <div class="stat-tile"><span class="stat-value" id="statStreak">{t('stats.days', { count: summary.streak })}</span><span class="t-field-label">{t('stats.streak')}</span></div>
       <div class="stat-tile"><span class="stat-value" id="statLongest">{t('stats.days', { count: Math.max(summary.longest, summary.streak) })}</span><span class="t-field-label">{t('stats.longest')}</span></div>
-      <div class="stat-tile"><span class="stat-value">{finishedThisYear.length}</span><span class="t-field-label">{t('stats.finishedYear', { year })}</span></div>
-      <div class="stat-tile"><span class="stat-value">{summary.paceMeasured ? Math.round(summary.pace / 6) : '—'}</span><span class="t-field-label">{t('stats.pace')}</span></div>
+      <div class="stat-tile"><span class="stat-value tabular" use:countUp={{ value: finishedThisYear.length }}>{finishedThisYear.length}</span><span class="t-field-label">{t('stats.finishedYear', { year })}</span></div>
+      <div class="stat-tile">{#if summary.paceMeasured}<span class="stat-value tabular" use:countUp={{ value: Math.round(summary.pace / 6) }}>{Math.round(summary.pace / 6)}</span>{:else}<span class="stat-value">—</span>{/if}<span class="t-field-label">{t('stats.pace')}</span></div>
       <div class="stat-tile"><span class="stat-value">{duration(summary.totalMs)}</span><span class="t-field-label">{t('stats.allTime')}</span></div>
     </div>
 

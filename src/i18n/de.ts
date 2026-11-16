@@ -521,6 +521,8 @@ const de: Messages = {
   'panel.listenHint': 'Liest ab dem oberen Seitenrand, Satz für Satz, und liest bei ausgeschaltetem Bildschirm weiter.',
   'settings.readingWhere': 'Schrift-, Seiten- und Vorlese-Einstellungen findest du im Buch unter Aa, wo du siehst, wie sie die Seite ändern.',
   'details.title': 'Details',
+  'library.addingOf': '{done} von {total} hinzugefügt',
+  'data.working': 'Die Bibliothek wird bearbeitet',
 };
 
 export default de;

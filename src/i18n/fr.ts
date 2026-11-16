@@ -521,6 +521,8 @@ const fr: Messages = {
   'panel.listenHint': 'Lit depuis le haut de la page, une phrase à la fois, et continue écran éteint.',
   'settings.readingWhere': 'Les réglages de texte, de page et de lecture à voix haute sont dans chaque livre, sous Aa, là où l’on voit la page changer.',
   'details.title': 'Détails',
+  'library.addingOf': 'Ajout de {done} sur {total}',
+  'data.working': 'Travail sur la bibliothèque',
 };
 
 export default fr;

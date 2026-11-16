@@ -22,17 +22,24 @@ export async function addFiles(files: (File | IncomingFile)[], { openSingle = fa
   const errors: string[] = [];
   const failed: string[] = [];
   let last: string | null = null;
-  for (const f of files) {
-    const bytes = f instanceof Blob ? await fileBytes(f) : typeof f.bytes === 'function' ? await f.bytes() : f.bytes;
-    const result = await library.add(bytes, f.name);
-    if ('error' in result) {
-      errors.push(result.error);
-      failed.push(f.name);
-      continue;
+  // Several files show their progress as they come in (LibraryView's wavy bar).
+  if (files.length > 1) library.batch = { done: 0, total: files.length };
+  try {
+    for (const f of files) {
+      const bytes = f instanceof Blob ? await fileBytes(f) : typeof f.bytes === 'function' ? await f.bytes() : f.bytes;
+      const result = await library.add(bytes, f.name);
+      if (library.batch) library.batch = { ...library.batch, done: library.batch.done + 1 };
+      if ('error' in result) {
+        errors.push(result.error);
+        failed.push(f.name);
+        continue;
+      }
+      last = result.doc.id;
+      if (result.added) added++;
+      else known++;
     }
-    last = result.doc.id;
-    if (result.added) added++;
-    else known++;
+  } finally {
+    library.batch = null;
   }
   if (openSingle && files.length === 1 && last) {
     await reader.open(last);

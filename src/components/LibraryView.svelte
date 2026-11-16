@@ -19,7 +19,7 @@
   import Cover from './ui/Cover.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
-  import { TabRail } from 'dusk-dawn';
+  import { TabRail, WavyProgress } from 'dusk-dawn';
   import { tick } from 'svelte';
   import { hatch } from '../lib/delight';
 
@@ -215,6 +215,12 @@
   <ArrangeSheet {collection} {filter} onfilter={(f) => (filter = f)} onnewcollection={() => void newCollection()} onclose={() => (arranging = false)} />
 {/if}
 
-{#if library.adding}
+{#if library.batch}
+  <!-- Several files coming in: the wavy bar fills as each lands (style.md §8.21). -->
+  <div class="adding adding-batch" role="status">
+    <span class="t-data-small tabular">{t('library.addingOf', { done: library.batch.done, total: library.batch.total })}</span>
+    <WavyProgress value={library.batch.done / library.batch.total} label={t('library.addingOf', { done: library.batch.done, total: library.batch.total })} />
+  </div>
+{:else if library.adding}
   <p class="adding t-data-small" role="status">{t('library.adding', { count: library.adding })}</p>
 {/if}

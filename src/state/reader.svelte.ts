@@ -6,7 +6,7 @@ import { openDocument, PasswordError, type OpenDoc } from '../formats';
 import { FORMAT_LABEL } from '../formats/types';
 import { blockBreaks } from '../reader/cadence';
 import { excerpt } from '../reader/offsets';
-import { chapterAt, chapterTicks, FAR_CHARS, flowProgress, globalOffset, pageProgress, START, type Location } from '../reader/progress';
+import { chapterAt, chapterTicks, endInView, FAR_CHARS, flowProgress, globalOffset, pageProgress, START, type Location } from '../reader/progress';
 import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
 import { t } from '../i18n/index.svelte';
 import { duration } from '../lib/format';
@@ -27,6 +27,8 @@ export interface Jump {
 }
 
 const SAVE_MS = 800;
+/** After "not finished", going back below this lets reaching the end finish the document again. */
+const REOPEN_BELOW = 0.99;
 
 class ReaderState {
   doc = $state.raw<StoredDoc | null>(null);
@@ -58,6 +60,15 @@ class ReaderState {
   /** Progress when the document was opened, for the note on leaving. */
   private openedProgress = 0;
   private starts: Location[] | null = null;
+  /**
+   * The reader said this document isn't finished (Undo on "Finished", or
+   * marked unfinished while at the end): don't finish it again until they
+   * have gone back from the end and come to it again.
+   */
+  private finishDeclined = false;
+  /** Where the document opened; reaching the end only finishes it once the reader has moved from there. */
+  private openedAt: Location | null = null;
+  private moved = false;
 
   get isPdf(): boolean {
     return this.content?.kind === 'pdf';
@@ -71,7 +82,14 @@ class ReaderState {
   get progress(): number {
     const c = this.content;
     if (!c) return 0;
+    if (this.atEnd) return 1;
     return c.kind === 'pdf' ? pageProgress(c.pageCount, this.location) : flowProgress(this.lengths, this.location);
+  }
+
+  /** The last words (or the bottom of a PDF's last page) are on screen. */
+  get atEnd(): boolean {
+    const c = this.content;
+    return !!c && endInView(c.kind, this.lengths, this.sectionCount, this.location, this.visibleEnd);
   }
 
   /** Characters after the reader's place, for the time left. */
@@ -181,8 +199,12 @@ class ReaderState {
       this.content = content;
       this.marks = marks;
       this.openedProgress = doc.progress;
+      this.finishDeclined = doc.finishedAt === null && doc.progress >= REOPEN_BELOW;
       const at = doc.location && doc.location.section < this.sectionCount ? doc.location : START;
       this.location = at;
+      this.visibleEnd = 0;
+      this.openedAt = at;
+      this.moved = false;
       this.section = content.kind === 'flow' ? at.section : 0;
       this.jump = { to: at, key: ++this.jumpKey };
       this.jumpedAt = performance.now();
@@ -298,6 +320,8 @@ class ReaderState {
     const section = Math.max(0, Math.min(this.sectionCount - 1, to.section));
     if (this.content.kind === 'flow') this.section = section;
     this.location = { section, offset: to.offset };
+    // Until the view reports what the jump put on screen.
+    this.visibleEnd = 0;
     this.jump = {
       to: { section, offset: to.offset },
       flash,
@@ -335,6 +359,9 @@ class ReaderState {
     const before = this.globalChar(this.location);
     this.location = location;
     this.visibleEnd = visibleEnd;
+    if (this.finishDeclined && this.progress < REOPEN_BELOW) this.finishDeclined = false;
+    // A note that fits on one screen isn't finished by being opened.
+    if (!this.moved && this.openedAt && (location.section !== this.openedAt.section || location.offset !== this.openedAt.offset)) this.moved = true;
     if (this.doc) stats.activity(this.doc.id, Math.abs(this.globalChar(location) - before));
     if (this.returnTo) {
       // The scroll a jump causes settles where it lands; reading on from there lets the way back go.
@@ -368,7 +395,7 @@ class ReaderState {
       location: $state.snapshot(this.location),
       progress,
     };
-    const justFinished = progress >= 0.999 && doc.finishedAt === null;
+    const justFinished = progress >= 0.999 && doc.finishedAt === null && !this.finishDeclined && this.moved;
     if (justFinished) patch.finishedAt = Date.now();
     void library.update(doc.id, patch);
     this.doc = { ...doc, ...patch };
@@ -392,7 +419,10 @@ class ReaderState {
     ui.notify(message, 'success', {
       label: t('action.undo'),
       run: () => {
-        if (this.doc?.id === doc.id) this.doc = { ...this.doc, finishedAt: null };
+        if (this.doc?.id === doc.id) {
+          this.doc = { ...this.doc, finishedAt: null };
+          this.finishDeclined = true;
+        }
         void library.update(doc.id, { finishedAt: null });
       },
       // Once the Undo has passed, the finished book can go on to BookShelf.

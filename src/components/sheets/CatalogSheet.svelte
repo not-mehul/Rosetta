@@ -3,7 +3,7 @@
   // address (a Calibre server, a library). Browse, search and download.
   import { LoadingIndicator } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
-  import { downloadName, fetchBytes, fetchText, fillSearch, parseFeed, PRESETS, searchTemplate, type Catalog, type Feed, type FeedEntry, type FeedLink } from '../../lib/opds';
+  import { CatalogAuthError, catalogFrom, downloadName, fetchBytes, fetchText, fillSearch, parseFeed, PRESETS, searchTemplate, type Catalog, type Feed, type FeedEntry, type FeedLink } from '../../lib/opds';
   import { addFiles } from '../../state/intake';
   import { settings } from '../../state/settings.svelte';
   import { ui } from '../../state/ui.svelte';
@@ -22,7 +22,7 @@
   let downloading = $state<string | null>(null);
   const current = $derived(stack.at(-1)?.feed ?? null);
 
-  async function load(url: string, push = true) {
+  async function load(url: string, push = true, retried = false) {
     if (!catalog) return;
     loading = true;
     error = '';
@@ -37,10 +37,29 @@
         }
       }
     } catch (err) {
+      // A private catalog (a Calibre server with accounts) asks for its sign-in only when it needs it.
+      if (err instanceof CatalogAuthError && !retried && (await signIn())) {
+        loading = false;
+        return load(url, push, true);
+      }
       error = t('catalog.failed', { reason: err instanceof Error ? err.message : String(err) });
     } finally {
       loading = false;
     }
+  }
+
+  /** Asks for the catalog's user name, then its password, and keeps them with it. False when cancelled. */
+  async function signIn(): Promise<boolean> {
+    const c = catalog;
+    if (!c || PRESETS.some((p) => p.id === c.id)) return false;
+    const user = await ui.prompt({ title: t('catalog.signIn', { name: c.name }), message: t('catalog.signInNeeded'), label: t('catalog.user'), action: t('catalog.next'), value: c.user ?? '' });
+    if (!user?.trim()) return false;
+    const password = await ui.prompt({ title: t('catalog.signIn', { name: c.name }), message: '', label: t('catalog.password'), action: t('catalog.signInAction'), secret: true });
+    if (password === null) return false;
+    const signed = { ...c, user: user.trim(), password };
+    await settings.update({ catalogs: settings.value.catalogs.map((x) => (x.id === c.id ? signed : x)) });
+    catalog = signed;
+    return true;
   }
 
   function openCatalog(c: Catalog) {
@@ -76,21 +95,27 @@
   async function addCatalog() {
     const url = await ui.prompt({ title: t('catalog.add'), message: t('catalog.addHint'), label: t('catalog.address'), action: t('catalog.addAction') });
     if (!url?.trim()) return;
-    let name: string;
-    try {
-      name = new URL(url.trim()).hostname;
-    } catch {
+    const added = catalogFrom(url);
+    if (!added) {
       ui.notify(t('catalog.badAddress'), 'error');
       return;
     }
-    await settings.update({ catalogs: [...settings.value.catalogs, { id: crypto.randomUUID(), name, url: url.trim() }] });
+    await settings.update({ catalogs: [...settings.value.catalogs, { id: crypto.randomUUID(), ...added }] });
   }
 
   async function removeCatalog(id: string) {
     await settings.update({ catalogs: settings.value.catalogs.filter((c) => c.id !== id) });
   }
 
-  const label = (l: FeedLink) => (/epub/.test(l.type) ? 'EPUB' : /pdf/.test(l.type) ? 'PDF' : /fb2|fiction/.test(l.type) ? 'FB2' : /cbz|comic/.test(l.type) ? 'CBZ' : /html/.test(l.type) ? 'HTML' : t('catalog.text'));
+  const label = (l: FeedLink) =>
+    /epub/.test(l.type) ? 'EPUB' : /pdf/.test(l.type) ? 'PDF' : /fb2|fiction/.test(l.type) ? 'FB2' : /cbz|comic/.test(l.type) ? 'CBZ' : /mobi|amazon/.test(l.type) ? 'Kindle' : /html/.test(l.type) ? 'HTML' : t('catalog.text');
+
+  // Inside a catalog, Android's Back (and Escape) goes up one feed before it closes the sheet.
+  const inside = $derived(!!catalog);
+  $effect(() => {
+    if (!inside) return;
+    return ui.pushOverlay(back);
+  });
 </script>
 
 <Sheet title={catalog ? (current?.title || catalog.name) : t('catalog.title')} {onclose} wide>

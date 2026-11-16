@@ -260,5 +260,13 @@
 		<string>mise</string>
 		<string>nookling</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Rosetta reaches a catalog on your home network, such as a Calibre server, when you open it.</string>
+	<!-- Catalogs on the home network (a Calibre server at http://192.168.…:8080) are plain http; the internet stays https only. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

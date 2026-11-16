@@ -7,6 +7,7 @@ import { clean } from './sanitize';
 import { scopeCss } from './styles';
 import { FormatError, type DocInfo, type FixedPage, type FlowDoc, type Section, type TocEntry } from './types';
 import { t } from '../i18n/index.svelte';
+import { safeDecode } from '../lib/uri';
 
 /** The scope a book's CSS is placed under in the reading column (app.css turns it on). */
 export const PUBLISHER_SCOPE = '.reading.publisher';
@@ -48,7 +49,7 @@ export const dirname = (path: string) => (path.includes('/') ? path.slice(0, pat
 
 /** Resolves `href` against the folder `base` ("OEBPS/text/"), dropping any fragment. */
 export function resolvePath(base: string, href: string): string {
-  const clean = decodeURIComponent(href.split('#')[0]!.split('?')[0]!);
+  const clean = safeDecode(href.split('#')[0]!.split('?')[0]!);
   const parts = (clean.startsWith('/') ? clean.slice(1) : base + clean).split('/');
   const out: string[] = [];
   for (const p of parts) {
@@ -268,7 +269,7 @@ export function openEpub(bytes: Uint8Array): FlowDoc {
         const at = index.get(target);
         if (at === undefined) return null;
         const frag = href.includes('#') ? href.slice(href.indexOf('#') + 1) : '';
-        return frag ? `${at}#r-${decodeURIComponent(frag)}` : String(at);
+        return frag ? `${at}#r-${safeDecode(frag)}` : String(at);
       },
     });
     if (pkg.fixed) {
@@ -321,7 +322,7 @@ export function openEpub(bytes: Uint8Array): FlowDoc {
 function tocTarget(base: string, href: string, index: Map<string, number>): Pick<TocEntry, 'section' | 'anchor'> | null {
   const section = index.get(resolvePath(base, href));
   if (section === undefined) return null;
-  const frag = href.includes('#') ? decodeURIComponent(href.slice(href.indexOf('#') + 1)) : '';
+  const frag = href.includes('#') ? safeDecode(href.slice(href.indexOf('#') + 1)) : '';
   return { section, anchor: frag ? `r-${frag}` : undefined };
 }
 

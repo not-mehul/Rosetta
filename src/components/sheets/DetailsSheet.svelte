@@ -1,5 +1,7 @@
 <script lang="ts">
-  // A document's details: what it is, how far through, and what to do with it.
+  // A document's details: the cover and how far through at the top, one
+  // button to read it (and one to mark it finished), the facts, then
+  // everything else as rows; Remove alone at the bottom (style.md §7.2, §8.17).
   import { FORMAT_LABEL } from '../../formats/types';
   import { t } from '../../i18n/index.svelte';
   import { notesMarkdown, slug } from '../../lib/export';
@@ -13,7 +15,7 @@
   import { reader } from '../../state/reader.svelte';
   import { ui } from '../../state/ui.svelte';
   import type { Mark } from '../../state/db';
-  import BlobImg from '../ui/BlobImg.svelte';
+  import Cover from '../ui/Cover.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
 
@@ -105,31 +107,41 @@
 </script>
 
 {#if doc}
-  <Sheet title={doc.title} {onclose}>
-    <div class="details">
-      <div class="details-cover" aria-hidden="true">
-        {#if doc.cover}<BlobImg bytes={doc.cover} alt="" />{:else}<Icon name="book-open" />{/if}
+  <Sheet title={t('details.title')} {onclose}>
+    <div class="details-head">
+      <div class="details-cover" aria-hidden="true"><Cover {doc} /></div>
+      <div class="details-name">
+        <h3 class="details-title">{doc.title}</h3>
+        {#if doc.author}<p class="details-author">{doc.author}</p>{/if}
+        {#if doc.series}<p class="t-data-small dim">{doc.series}{doc.seriesIndex !== null ? ` · ${doc.seriesIndex}` : ''}</p>{/if}
+        <p class="t-data-small details-state">
+          {#if doc.finishedAt}<span class="sage">{t('details.finishedOn', { when: relativeDay(doc.finishedAt) })}</span>
+          {:else if doc.openedAt}<span class="amber tabular">{Math.floor(doc.progress * 100)}%</span> <span class="dim">· {relativeDay(doc.openedAt)}</span>
+          {:else}<span class="dim">{t('details.notOpened')}</span>{/if}
+        </p>
+        {#if doc.openedAt && !doc.finishedAt}
+          <span class="meter" aria-hidden="true"><span class="meter-fill" style:transform="scaleX({doc.progress})"></span></span>
+        {/if}
       </div>
-      <dl class="details-facts">
-        {#if doc.author}<div><dt class="t-field-label">{t('edit.author')}</dt><dd>{doc.author}</dd></div>{/if}
-        {#if doc.series}<div><dt class="t-field-label">{t('edit.series')}</dt><dd>{doc.series}{doc.seriesIndex !== null ? ` · ${doc.seriesIndex}` : ''}</dd></div>{/if}
-        <div><dt class="t-field-label">{t('details.format')}</dt><dd class="t-data">{FORMAT_LABEL[doc.format]} · {doc.offloaded ? t('details.offloadedShort') : fileSize(doc.size)}</dd></div>
-        <div><dt class="t-field-label">{t('details.added')}</dt><dd class="t-data">{relativeDay(doc.addedAt)}</dd></div>
-        <div>
-          <dt class="t-field-label">{t('details.read')}</dt>
-          <dd class="t-data">{doc.finishedAt ? t('details.finishedOn', { when: relativeDay(doc.finishedAt) }) : doc.openedAt ? t('details.progress', { percent: Math.floor(doc.progress * 100), when: relativeDay(doc.openedAt) }) : t('details.notOpened')}</dd>
-        </div>
-        {#if time.ms >= 60_000}<div><dt class="t-field-label">{t('details.time')}</dt><dd class="t-data" id="detailsTime">{t('details.timeOver', { time: duration(time.ms), days: t('stats.days', { count: time.days }) })}</dd></div>{/if}
-        {#if marks.length}<div><dt class="t-field-label">{t('details.marks')}</dt><dd class="t-data">{t('details.markCounts', { highlights, bookmarks })}</dd></div>{/if}
-      </dl>
     </div>
-    {#if doc.tags.length || collectionNames.length}
-      <div class="chip-row details-tags">
-        {#each collectionNames as name (name)}<span class="chip-status">{name}</span>{/each}
-        {#each doc.tags as tag (tag)}<span class="chip-tag">#{tag}</span>{/each}
-      </div>
-    {/if}
-    <p class="t-data-small faint details-file ellipsis">{doc.fileName}</p>
+
+    <div class="details-actions">
+      {#if doc.offloaded}
+        <button type="button" class="btn btn-primary" id="restoreFile" onclick={() => void restoreFile(id)}><Icon name="download" />{t('details.addFileAgain')}</button>
+      {:else}
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="readDoc"
+          onclick={() => {
+            onclose();
+            void reader.open(id);
+          }}><Icon name="book-open" />{doc.openedAt && !doc.finishedAt ? t('details.continue') : t('details.readAction')}</button
+        >
+      {/if}
+      <button type="button" class="btn btn-secondary" id="toggleFinished" onclick={toggleFinished}><Icon name={doc.finishedAt ? 'rotate-ccw' : 'check'} />{doc.finishedAt ? t('details.markUnread') : t('details.markFinished')}</button>
+    </div>
+
     {#if next}
       <button
         type="button"
@@ -146,32 +158,32 @@
       </button>
     {/if}
 
-    <div class="btn-grid">
-      {#if doc.offloaded}
-        <button type="button" class="btn btn-primary" id="restoreFile" onclick={() => void restoreFile(id)}><Icon name="download" />{t('details.addFileAgain')}</button>
-      {:else}
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="readDoc"
-          onclick={() => {
-            onclose();
-            void reader.open(id);
-          }}><Icon name="book-open" />{doc.openedAt && !doc.finishedAt ? t('details.continue') : t('details.readAction')}</button
-        >
-      {/if}
-      <button type="button" class="btn btn-secondary" id="toggleFinished" onclick={toggleFinished}><Icon name={doc.finishedAt ? 'rotate-ccw' : 'check'} />{doc.finishedAt ? t('details.markUnread') : t('details.markFinished')}</button>
-      <button type="button" class="btn btn-secondary" id="editDetails" onclick={() => ui.open('edit')}><Icon name="pencil" />{t('details.edit')}</button>
-    </div>
-    <div class="btn-grid">
-      {#if highlights || bookmarks}<button type="button" class="btn btn-muted" onclick={() => void exportNotes()}><Icon name="file-down" />{t('details.exportNotes')}</button>{/if}
-      {#if doc.location}<button type="button" class="btn btn-muted" onclick={() => void startOver()}><Icon name="rotate-ccw" />{t('details.startOver')}</button>{/if}
-      {#if !doc.offloaded}<button type="button" class="btn btn-muted" onclick={() => void share()}><Icon name="share-2" />{t('details.shareFile')}</button>{/if}
-      <button type="button" class="btn btn-muted" id="sendBookShelf" onclick={() => void bookShelf()}><Icon name="library" />{t('details.toBookShelf')}</button>
-      {#if nookling && doc.finishedAt}<button type="button" class="btn btn-muted" id="sendNookling" onclick={() => void toNookling()}><Icon name="library" />{t('details.toNookling')}</button>{/if}
-      {#if doc.format === 'epub' && !doc.offloaded}<button type="button" class="btn btn-muted" id="openColophon" onclick={() => void colophon()}><Icon name="file-code" />{t('details.toColophon')}</button>{/if}
-      {#if !doc.offloaded}<button type="button" class="btn btn-muted" id="offloadDoc" onclick={() => void offload()}><Icon name="hard-drive" />{t('details.offload')}</button>{/if}
-      <button type="button" class="btn btn-danger" id="removeDoc" onclick={() => void remove()}><Icon name="trash-2" />{t('action.remove')}</button>
-    </div>
+    {#if doc.tags.length || collectionNames.length}
+      <div class="chip-row details-tags">
+        {#each collectionNames as name (name)}<span class="chip-status">{name}</span>{/each}
+        {#each doc.tags as tag (tag)}<span class="chip-tag">#{tag}</span>{/each}
+      </div>
+    {/if}
+
+    <dl class="details-facts">
+      <div><dt class="t-field-label">{t('details.format')}</dt><dd class="t-data">{FORMAT_LABEL[doc.format]} · {doc.offloaded ? t('details.offloadedShort') : fileSize(doc.size)}</dd></div>
+      <div><dt class="t-field-label">{t('details.added')}</dt><dd class="t-data">{relativeDay(doc.addedAt)}</dd></div>
+      {#if time.ms >= 60_000}<div><dt class="t-field-label">{t('details.time')}</dt><dd class="t-data" id="detailsTime">{t('details.timeOver', { time: duration(time.ms), days: t('stats.days', { count: time.days }) })}</dd></div>{/if}
+      {#if marks.length}<div><dt class="t-field-label">{t('details.marks')}</dt><dd class="t-data">{t('details.markCounts', { highlights, bookmarks })}</dd></div>{/if}
+    </dl>
+    <p class="t-data-small faint details-file ellipsis">{doc.fileName}</p>
+
+    <!-- Everything else acts in place, so no chevrons, except Edit details, which opens a form. -->
+    <ul class="row-list details-rows">
+      <li><button type="button" class="row" id="editDetails" onclick={() => ui.open('edit')}><Icon name="pencil" /><span class="row-label">{t('details.edit')}</span><Icon name="chevron-right" /></button></li>
+      {#if highlights || bookmarks}<li><button type="button" class="row" onclick={() => void exportNotes()}><Icon name="file-down" /><span class="row-label">{t('details.exportNotes')}</span></button></li>{/if}
+      {#if doc.location}<li><button type="button" class="row" onclick={() => void startOver()}><Icon name="rotate-ccw" /><span class="row-label">{t('details.startOver')}</span></button></li>{/if}
+      {#if !doc.offloaded}<li><button type="button" class="row" onclick={() => void share()}><Icon name="share-2" /><span class="row-label">{t('details.shareFile')}</span></button></li>{/if}
+      <li><button type="button" class="row" id="sendBookShelf" onclick={() => void bookShelf()}><Icon name="library" /><span class="row-label">{t('details.toBookShelf')}</span></button></li>
+      {#if nookling && doc.finishedAt}<li><button type="button" class="row" id="sendNookling" onclick={() => void toNookling()}><Icon name="heart" /><span class="row-label">{t('details.toNookling')}</span></button></li>{/if}
+      {#if doc.format === 'epub' && !doc.offloaded}<li><button type="button" class="row" id="openColophon" onclick={() => void colophon()}><Icon name="file-code" /><span class="row-label">{t('details.toColophon')}</span></button></li>{/if}
+      {#if !doc.offloaded}<li><button type="button" class="row" id="offloadDoc" onclick={() => void offload()}><Icon name="hard-drive" /><span class="row-label">{t('details.offload')}</span></button></li>{/if}
+    </ul>
+    <button type="button" class="row row-danger" id="removeDoc" onclick={() => void remove()}><Icon name="trash-2" /><span class="row-label">{t('action.remove')}</span></button>
   </Sheet>
 {/if}

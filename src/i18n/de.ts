@@ -114,9 +114,9 @@ const de: Messages = {
   'details.startOver': 'Von vorn beginnen',
   'details.startedOver': 'Zurück zum Anfang.',
   'details.shareFile': 'Datei teilen',
-  'details.toBookShelf': 'In BookShelf eintragen',
+  'details.toBookShelf': 'An BookShelf senden',
   'details.noBookShelf': 'BookShelf ist hier nicht installiert, deshalb ging der Titel an das Teilen-Menü.',
-  'details.toNookling': 'Nookling erzählen',
+  'details.toNookling': 'An Nookling senden',
   'details.noNookling': 'Nookling ist hier nicht installiert.',
   'details.toColophon': 'In Colophon öffnen',
   'details.offload': 'Auslagern',
@@ -520,6 +520,7 @@ const de: Messages = {
   'panel.rate': 'Tempo',
   'panel.listenHint': 'Liest ab dem oberen Seitenrand, Satz für Satz, und liest bei ausgeschaltetem Bildschirm weiter.',
   'settings.readingWhere': 'Schrift-, Seiten- und Vorlese-Einstellungen findest du im Buch unter Aa, wo du siehst, wie sie die Seite ändern.',
+  'details.title': 'Details',
 };
 
 export default de;

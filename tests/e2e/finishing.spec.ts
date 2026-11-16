@@ -74,6 +74,12 @@ test('Undo on "Finished" sticks until the end is reached again', async ({ page }
   await toBottom(page);
   await finished(page);
   await page.locator('.toast-action').click();
+  // A nudge up and back down at the end isn't reading to it again.
+  await page.mouse.wheel(0, -120);
+  await page.waitForTimeout(500);
+  await toBottom(page);
+  await page.waitForTimeout(1200);
+  await expect(page.locator('#toast', { hasText: 'Finished' })).toHaveCount(0);
   // Straight back to the library: still not finished.
   await page.keyboard.press('Escape');
   await page.waitForTimeout(800);

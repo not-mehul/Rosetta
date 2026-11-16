@@ -27,8 +27,8 @@ export interface Jump {
 }
 
 const SAVE_MS = 800;
-/** After "not finished", going back below this lets reaching the end finish the document again. */
-const REOPEN_BELOW = 0.99;
+/** A document opened at or past this, and not finished, was declined at its end (see finishDeclined). */
+const DECLINED_AT = 0.99;
 
 class ReaderState {
   doc = $state.raw<StoredDoc | null>(null);
@@ -86,6 +86,19 @@ class ReaderState {
     if (!c) return 0;
     if (this.atEnd) return 1;
     return c.kind === 'pdf' ? pageProgress(c.pageCount, this.location) : flowProgress(this.lengths, this.location);
+  }
+
+  /**
+   * Far enough back from the end that coming to it again is a new finish:
+   * a couple of screens (or 1% of a long book, or half a short one), or more
+   * than two pages from the end of a PDF. A nudge at the end isn't enough.
+   */
+  private wellBeforeEnd(): boolean {
+    const c = this.content;
+    if (!c || this.atEnd) return false;
+    if (c.kind === 'pdf') return c.pageCount - this.location.section > 2;
+    const total = this.lengths.reduce((a, b) => a + b, 0);
+    return total - globalOffset(this.lengths, this.location) > Math.min(Math.max(FAR_CHARS, total * 0.01), total / 2);
   }
 
   /** The last words (or the bottom of a PDF's last page) are on screen. */
@@ -201,7 +214,7 @@ class ReaderState {
       this.content = content;
       this.marks = marks;
       this.openedProgress = doc.progress;
-      this.finishDeclined = doc.finishedAt === null && doc.progress >= REOPEN_BELOW;
+      this.finishDeclined = doc.finishedAt === null && doc.progress >= DECLINED_AT;
       const at = doc.location && doc.location.section < this.sectionCount ? doc.location : START;
       this.location = at;
       this.visibleEnd = 0;
@@ -383,7 +396,7 @@ class ReaderState {
     if (location.section !== this.location.section || location.offset !== this.location.offset) this.dirty = true;
     this.location = location;
     this.visibleEnd = visibleEnd;
-    if (this.finishDeclined && this.progress < REOPEN_BELOW) this.finishDeclined = false;
+    if (this.finishDeclined && this.wellBeforeEnd()) this.finishDeclined = false;
     // A note that fits on one screen isn't finished by being opened.
     if (!this.moved && this.openedAt && (location.section !== this.openedAt.section || location.offset !== this.openedAt.offset)) this.moved = true;
     if (this.doc) stats.activity(this.doc.id, Math.abs(this.globalChar(location) - before));

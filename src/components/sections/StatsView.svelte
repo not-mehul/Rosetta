@@ -173,3 +173,158 @@
     <p class="t-hint"><em>{t('stats.noteTerm')}</em> {t('stats.note')}</p>
   {/if}
 </div>
+
+<style>
+  /* ─── Stats (style.md §8.15) ────────────────────────────────── */
+
+  .stat-grid {
+    /* In the sheet's flex column, overflow: hidden would let it shrink to its border. */
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .stat-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-2);
+    background: var(--sheet-bg);
+    text-align: center;
+  }
+  .stat-value {
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    color: var(--text-heading);
+    font-variant-numeric: tabular-nums;
+  }
+  .bar-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .bar-list li {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr 4.5rem;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .bar-label {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+  .bar-track {
+    height: 4px;
+    border-radius: var(--corner-full);
+    background: var(--chart-track);
+    overflow: hidden;
+  }
+  .bar-fill {
+    display: block;
+    height: 100%;
+    background: var(--series-1);
+    transform-origin: left;
+  }
+  .bar-value {
+    text-align: right;
+    color: var(--text-muted);
+  }
+  .goal-figure {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .calendar-months,
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(var(--weeks), minmax(0, 1fr));
+    gap: 3px;
+  }
+  .calendar-months {
+    min-height: 1rem;
+  }
+  .calendar-months > span {
+    overflow: visible;
+    white-space: nowrap;
+  }
+  .calendar-days {
+    grid-template-rows: repeat(7, auto);
+    grid-auto-flow: column;
+  }
+  .calendar-days:focus {
+    outline: none;
+  }
+  .calendar-day {
+    display: block;
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 0;
+    border-radius: var(--radius);
+    background: var(--chart-track);
+  }
+  .calendar-day.is-future {
+    background: transparent;
+  }
+  .calendar-day.is-today {
+    box-shadow: inset 0 0 0 1px var(--text-dim);
+  }
+  .calendar-day[aria-pressed='true'] {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  .calendar-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .calendar-foot p {
+    margin: 0;
+  }
+  .calendar-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .calendar-legend .calendar-day {
+    width: 10px;
+  }
+  .calendar-legend .calendar-day:first-child {
+    margin-left: var(--space-1);
+  }
+  .calendar-legend .calendar-day:last-of-type {
+    margin-right: var(--space-1);
+  }
+
+  /* Most read: a title, its time, and a bar that compares it with the first. */
+  .most-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .most-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+    align-items: center;
+  }
+  .most-title {
+    font-family: var(--font-serif);
+    color: var(--text-heading);
+  }
+  .most-days {
+    text-align: right;
+  }
+</style>

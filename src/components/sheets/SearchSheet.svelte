@@ -88,3 +88,27 @@
     {/if}
   {/if}
 </Sheet>
+
+<style>
+  .search-match {
+    background: rgba(var(--accent-amber-rgb), 0.14);
+    color: var(--accent-amber);
+    border-radius: 2px;
+    box-shadow: inset 0 -1px 0 rgba(var(--accent-amber-rgb), 0.5);
+  }
+  .search-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .search-group-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-2);
+    min-width: 0;
+  }
+  .search-excerpt {
+    color: var(--text-body);
+  }
+</style>

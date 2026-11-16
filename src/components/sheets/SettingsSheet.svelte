@@ -171,3 +171,14 @@
     <p class="t-hint"><em>{t('about.privateTerm')}</em> {t('about.private')}</p>
   </section>
 </Sheet>
+
+<style>
+  /* Groups of actions (details, settings): two equal columns, so the buttons
+     line up instead of wrapping to ragged rows. A lone last button takes the
+     whole row, and a long label wraps inside its button. */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+</style>

@@ -85,3 +85,18 @@
 <PromptModal />
 
 <Toast toast={ui.toast} onpause={() => ui.pauseToast()} onresume={() => ui.resumeToast()} onaction={() => ui.actOnToast()} />
+
+<style>
+  /* Dropping a file on the page */
+  .drop-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: grid;
+    place-items: center;
+    background: var(--modal-backdrop);
+    border: 2px dashed var(--accent-amber);
+    pointer-events: none;
+    animation: fade-in var(--dur-enter);
+  }
+</style>

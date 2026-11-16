@@ -84,4 +84,10 @@
   .sheet-grip {
     touch-action: none;
   }
+
+  .sheet-foot {
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-5) calc(var(--space-3) + var(--inset-bottom));
+    border-top: 1px solid var(--border-faint);
+  }
 </style>

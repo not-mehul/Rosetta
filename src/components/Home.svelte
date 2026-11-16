@@ -93,3 +93,60 @@
     <CatalogView />
   {/if}
 </div>
+
+<style>
+  /* ─── Header and the edition bar ─────────────────────────────── */
+
+  /* On a phone the header stacks (style.md §15): Settings and the theme toggle
+     make one row across the top, at its right (§8.8), and the eyebrow, title
+     and tagline get the full width under it. From 640px they sit side by side.
+     The section tabs sit under the header (§8.5.1). */
+  .site-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    margin-bottom: var(--space-7);
+  }
+  .site-title {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .header-tools {
+    order: -1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  @media (min-width: 640px) {
+    .site-header {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+    .header-tools {
+      order: 0;
+      justify-content: flex-end;
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+  }
+
+  .app-tabs {
+    margin-bottom: var(--space-6);
+  }
+  /* The section tabs mark the header's end, so the gap above them is the smaller one (style.md §6.1). */
+  .site-header:has(+ .app-tabs) {
+    margin-bottom: var(--space-5);
+  }
+
+  /* The title word that reads off the stone (an easter egg): flips in place. */
+  .script-word {
+    display: inline-block;
+  }
+</style>

@@ -83,3 +83,50 @@
   </div>
   {#if alt}<p class="t-hint image-caption">{alt}</p>{/if}
 </dialog>
+
+<style>
+  .image-viewer {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--sheet-bg);
+    color: var(--text-body);
+  }
+  .image-viewer::backdrop {
+    background: var(--modal-backdrop);
+  }
+  .image-stage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    touch-action: none;
+  }
+  .image-stage img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transform-origin: center;
+    user-select: none;
+  }
+  .image-close {
+    position: absolute;
+    z-index: 2;
+    top: calc(var(--space-2) + var(--inset-top));
+    right: calc(var(--space-2) + var(--inset-right));
+    background: var(--modal-bg);
+  }
+  .image-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--space-4) + var(--inset-bottom));
+    text-align: center;
+    padding: 0 var(--space-5);
+  }
+</style>

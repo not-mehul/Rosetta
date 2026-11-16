@@ -20,3 +20,12 @@
   <p class="empty-text">{text}</p>
   {#if children}<div class="empty-actions">{@render children()}</div>{/if}
 </div>
+
+<style>
+  .empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+</style>

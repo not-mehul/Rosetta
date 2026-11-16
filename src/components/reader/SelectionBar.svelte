@@ -47,3 +47,19 @@
   <button type="button" class="btn-icon" id="lookUp" aria-label={t('selection.lookUp')} onclick={() => void lookUp(text)}><Icon name="book-a" /></button>
   <button type="button" class="btn-icon" aria-label={t('selection.copy')} onclick={() => void copy()}><Icon name="copy" /></button>
 </div>
+
+<style>
+  .selection-bar {
+    position: fixed;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+    background: var(--modal-bg);
+    border: 1px solid rgba(var(--accent-amber-rgb), 0.3);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 32px rgba(var(--shadow-rgb), calc(0.5 * var(--shadow-strength)));
+    animation: fade-in var(--dur-hover);
+  }
+</style>

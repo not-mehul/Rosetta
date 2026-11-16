@@ -83,3 +83,19 @@
     {/if}
   {/if}
 </div>
+
+<style>
+  .hl-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: var(--space-1);
+  }
+  .notes-tools {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+</style>

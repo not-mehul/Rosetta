@@ -39,3 +39,28 @@
   >
   <button type="button" class="btn-icon" id="speechStop" aria-label={t('speech.stop')} onclick={() => speech.stop()}><Icon name="x" /></button>
 </div>
+
+<style>
+  .speech-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin: var(--space-2) 0 0;
+    padding: var(--space-1) var(--space-2);
+  }
+  .speech-bar .speech-main {
+    color: var(--accent-amber);
+  }
+  .speech-rate {
+    min-width: 3ch;
+    text-align: center;
+  }
+  .speech-sleep {
+    width: auto;
+    min-width: 44px;
+    gap: 2px;
+    padding: 0 var(--space-2);
+  }
+</style>

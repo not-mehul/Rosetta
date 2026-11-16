@@ -122,3 +122,9 @@
 {#if editing}
   <MarkModal id={editing} onclose={() => (editing = null)} />
 {/if}
+
+<style>
+  .toc-row {
+    padding-left: calc(var(--space-2) + var(--depth, 0) * 1.25rem);
+  }
+</style>

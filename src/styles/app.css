@@ -536,6 +536,13 @@ ol {
 .row:hover {
   background: var(--hover-bg);
 }
+/* A trailing chevron means "opens a screen", quietly (style.md §7.2). */
+.row > svg:last-child {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--text-faint);
+}
 .row-with-action {
   display: flex;
   align-items: center;

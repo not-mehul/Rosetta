@@ -7,6 +7,8 @@ export const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocal
 /** Reading time: "45 min", "3 h 10 min". */
 export function duration(ms: number): string {
   const minutes = Math.round(ms / 60_000);
+  // Some reading, but not a minute of it, isn't "0 min".
+  if (ms > 0 && minutes < 1) return t('time.underMinute');
   if (minutes < 60) return t('time.minutes', { count: minutes });
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

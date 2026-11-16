@@ -165,6 +165,7 @@ const es: Messages = {
   'error.cardDraw': 'No se pudo dibujar la tarjeta.',
   'error.speechDone': 'Lectura en voz alta terminada.',
   'speech.stopped': 'La lectura en voz alta se detuvo ({reason}). Vuelve a intentarlo o elige otra voz en Letra y tema.',
+  'speech.noVoice': 'Leer en voz alta necesita una voz de texto a voz y ninguna respondió. Instala una en los ajustes de texto a voz del teléfono y vuelve a intentarlo.',
   'error.fileMissing': 'falta el fichero en la biblioteca',
   'error.docx': 'No se pudo leer este documento de Word ({reason}).',
   'error.pdf': 'No se pudo leer este PDF ({reason}).',
@@ -237,7 +238,6 @@ const es: Messages = {
   },
   'library.drop': 'Suelta para añadir a la biblioteca',
   'library.finishedChip': 'Terminado',
-  'library.new': 'Nuevo',
   'library.detailsFor': 'Detalles de {title}',
   'library.upNext': 'A continuación',
   'library.upNextAfter': 'Sigue en {series}, después de {title}',
@@ -405,6 +405,7 @@ const es: Messages = {
   'time.minutes': { one: '{count} min', other: '{count} min' },
   'time.hours': { one: '{count} h', other: '{count} h' },
   'time.hoursMinutes': '{h} h {m} min',
+  'time.underMinute': 'Menos de un minuto',
 
   'type.flow': 'Flujo',
   'type.flowHint': 'Una frase cada vez, letra a letra. Toca para verla entera y otra vez para la siguiente. Toca el borde izquierdo para volver.',

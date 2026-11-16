@@ -24,8 +24,10 @@ export interface Summary {
   /** The longest run of days in a row with some reading, ever. */
   longest: number;
   totalMs: number;
-  /** Characters a minute, from the reader's own sessions. */
+  /** Characters a minute, from the reader's own sessions (the default until there's enough to measure). */
   pace: number;
+  /** Ten minutes of reading have measured the pace; before that it's only the default. */
+  paceMeasured: boolean;
   /** Time read on each day, by YYYY-MM-DD. */
   byDay: ReadonlyMap<string, number>;
   /** Time read in each document, most first. */
@@ -72,6 +74,7 @@ export function summarise(sessions: readonly ReadingSession[], now = Date.now())
     longest: longestRun([...byDay].filter(([, ms]) => ms > 0).map(([day]) => day)),
     totalMs,
     pace: Math.max(300, Math.min(6000, pace)),
+    paceMeasured: paceMs >= 10 * 60_000,
     byDay,
     byDoc: [...docs].map(([docId, d]) => ({ docId, ...d })).sort((a, b) => b.ms - a.ms),
   };

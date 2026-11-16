@@ -165,6 +165,7 @@ const fr: Messages = {
   'error.cardDraw': 'La carte n’a pas pu être dessinée.',
   'error.speechDone': 'Lecture à voix haute terminée.',
   'speech.stopped': 'La lecture à voix haute s’est arrêtée ({reason}). Réessayez, ou choisissez une autre voix dans Texte et thème.',
+  'speech.noVoice': 'La lecture à voix haute a besoin d’une voix de synthèse, et aucune n’a répondu. Installez-en une dans les réglages de synthèse vocale du téléphone, puis réessayez.',
   'error.fileMissing': 'le fichier manque dans la bibliothèque',
   'error.docx': 'Ce document Word est illisible ({reason}).',
   'error.pdf': 'Ce PDF est illisible ({reason}).',
@@ -237,7 +238,6 @@ const fr: Messages = {
   },
   'library.drop': 'Déposez pour ajouter à la bibliothèque',
   'library.finishedChip': 'Terminé',
-  'library.new': 'Nouveau',
   'library.detailsFor': 'Détails de {title}',
   'library.upNext': 'Pour la suite',
   'library.upNextAfter': 'Suite de {series}, après {title}',
@@ -402,6 +402,7 @@ const fr: Messages = {
   'time.minutes': { one: '{count} min', other: '{count} min' },
   'time.hours': { one: '{count} h', other: '{count} h' },
   'time.hoursMinutes': '{h} h {m} min',
+  'time.underMinute': 'Moins d’une minute',
 
   'type.flow': 'Flux',
   'type.flowHint': 'Une phrase à la fois, lettre par lettre. Touchez pour tout afficher, puis encore pour la suivante. Touchez le bord gauche pour revenir.',

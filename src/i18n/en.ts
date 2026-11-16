@@ -383,6 +383,10 @@ const en = {
   'sync.done': 'Synced: {marks} mark changes, {docs} documents updated.',
   'sync.first': 'Sync file written. Other devices will pick it up.',
   'sync.failed': 'Sync failed ({reason}).',
+  'sync.unreadable': 'The sync file couldn’t be read, so a copy was kept as {name} and a new one written.',
+  'sync.unreadableLost': 'The sync file couldn’t be read or copied, so it was left as it is. Check the sync folder.',
+  'sync.elsewhere': 'Another device left off at {percent}.',
+  'sync.goThere': 'Go there',
 
   'time.minutes': { one: '{count} min', other: '{count} min' },
   'time.hours': { one: '{count} h', other: '{count} h' },

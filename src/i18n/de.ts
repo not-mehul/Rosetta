@@ -383,6 +383,10 @@ const de: Messages = {
   'sync.done': 'Synchronisiert: {marks} Änderungen an Markierungen, {docs} Dokumente aktualisiert.',
   'sync.first': 'Sync-Datei geschrieben. Andere Geräte übernehmen sie.',
   'sync.failed': 'Synchronisierung fehlgeschlagen ({reason}).',
+  'sync.unreadable': 'Die Sync-Datei ließ sich nicht lesen; eine Kopie wurde als {name} behalten und eine neue geschrieben.',
+  'sync.unreadableLost': 'Die Sync-Datei ließ sich weder lesen noch kopieren und bleibt unverändert. Prüfe den Sync-Ordner.',
+  'sync.elsewhere': 'Ein anderes Gerät ist bei {percent} stehen geblieben.',
+  'sync.goThere': 'Dorthin',
 
   'time.minutes': { one: '{count} Min.', other: '{count} Min.' },
   'time.hours': { one: '{count} Std.', other: '{count} Std.' },

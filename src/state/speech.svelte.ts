@@ -149,6 +149,10 @@ class SpeechState {
         showReadAloud({ ...this.controls(), playing: true });
       }
       this.current = next;
+      // With the screen off the page doesn't scroll, so nothing else saves the place: the sentence being read does.
+      if (document.visibilityState === 'hidden' && (!reader.isPdf || reader.location.section !== next.section)) {
+        reader.report({ section: next.section, offset: reader.isPdf ? 0 : next.start }, reader.isPdf ? 0 : next.end);
+      }
       try {
         const voice = this.voices.find((v) => v.name === settings.value.voice);
         await TextToSpeech.speak({
@@ -161,7 +165,7 @@ class SpeechState {
       } catch (err) {
         if (run !== this.run) return;
         this.playing = false;
-        ui.notify(`Reading aloud stopped: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        ui.notify(t('speech.stopped', { reason: err instanceof Error ? err.message : String(err) }), 'error');
         return;
       }
     }

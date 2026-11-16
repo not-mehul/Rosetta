@@ -73,6 +73,7 @@ const es: Messages = {
   'data.noHighlights': 'Todavía no hay subrayados que exportar.',
   'data.backupSaved': 'Copia guardada en {where}.',
   'data.archiveSaved': 'Biblioteca guardada en {where}.',
+  'data.archiveFailed': 'No se pudo guardar la biblioteca ({reason}). Comprueba que hay espacio en el dispositivo y vuelve a intentarlo.',
   'data.restored': 'Se restauraron {marks} marcas en {docs} documentos; se añadieron {added} ficheros.',
   'data.missing': {
     one: '{count} no está en esta biblioteca; añade su fichero y restaura de nuevo.',
@@ -156,9 +157,12 @@ const es: Messages = {
   'error.noSyncFolder': 'No se eligió una carpeta de sincronización.',
   'error.cardDraw': 'No se pudo dibujar la tarjeta.',
   'error.speechDone': 'Lectura en voz alta terminada.',
+  'speech.stopped': 'La lectura en voz alta se detuvo ({reason}). Vuelve a intentarlo o elige otra voz en Letra y tema.',
   'error.fileMissing': 'falta el fichero en la biblioteca',
   'error.docx': 'No se pudo leer este documento de Word ({reason}).',
   'error.pdf': 'No se pudo leer este PDF ({reason}).',
+  'error.couldntRead': 'No se pudo leer {name} ({reason}). Puede estar dañado o en un formato que Rosetta no lee.',
+  'error.pdfLocked': 'Este PDF está protegido con contraseña.',
 
   'handoff.finished': 'Terminado. ¿Registrarlo en BookShelf?',
   'handoff.logIt': 'Registrar',
@@ -181,8 +185,8 @@ const es: Messages = {
   'intake.knownOne': 'Ese ya está en la biblioteca.',
   'intake.knownMany': 'Esos ya están en la biblioteca.',
   'intake.unreadable': {
-    one: 'No se pudo leer {count} fichero.',
-    other: 'No se pudieron leer {count} ficheros.',
+    one: '{count} archivo no se pudo leer: {names}.',
+    other: '{count} archivos no se pudieron leer: {names}.',
   },
   'intake.differentFile': 'Ese fichero no es el que se liberó. Elige el mismo fichero para recuperarlo.',
   'intake.openFailed': 'No se pudo abrir ese fichero ({reason}).',

@@ -130,11 +130,18 @@ export function headingToc(html: string): { html: string; toc: TocEntry[] } {
   const toc: TocEntry[] = [];
   const headings = [...t.content.querySelectorAll('h1, h2, h3')];
   const top = Math.min(...headings.map((h) => Number(h.tagName[1])));
+  const taken = new Set([...t.content.querySelectorAll('[id]')].map((e) => e.id));
   headings.forEach((h, i) => {
     const label = (h.textContent ?? '').replace(/\s+/g, ' ').trim();
     if (!label) return;
     // clean() prefixes every id, so the contents point at the prefixed one.
-    if (!h.id) h.id = `h${i}`;
+    if (!h.id) {
+      // Never one the document already uses for something else.
+      let id = `h${i}`;
+      for (let n = 2; taken.has(id); n++) id = `h${i}-${n}`;
+      h.id = id;
+      taken.add(id);
+    }
     toc.push({
       label,
       section: 0,

@@ -42,6 +42,8 @@
     try {
       const out = await saveFile({ name: `rosetta-library-${today()}.zip`, data: await makeArchive(), mime: 'application/zip' });
       ui.notify(t('data.archiveSaved', { where: out.label }), 'success');
+    } catch (err) {
+      ui.notify(t('data.archiveFailed', { reason: err instanceof Error ? err.message : String(err) }), 'error');
     } finally {
       busy = false;
     }

@@ -73,6 +73,7 @@ const de: Messages = {
   'data.noHighlights': 'Es gibt noch keine Markierungen zum Exportieren.',
   'data.backupSaved': 'Sicherung gespeichert unter {where}.',
   'data.archiveSaved': 'Bibliothek gespeichert unter {where}.',
+  'data.archiveFailed': 'Die Bibliothek konnte nicht gespeichert werden ({reason}). Prüfe den freien Speicher und versuche es erneut.',
   'data.restored': '{marks} Markierungen in {docs} Dokumenten wiederhergestellt; {added} Dateien hinzugefügt.',
   'data.missing': {
     one: '{count} ist nicht in dieser Bibliothek; füge die Datei hinzu und stelle erneut wieder her.',
@@ -156,9 +157,12 @@ const de: Messages = {
   'error.noSyncFolder': 'Kein Sync-Ordner gewählt.',
   'error.cardDraw': 'Die Karte konnte nicht gezeichnet werden.',
   'error.speechDone': 'Vorlesen beendet.',
+  'speech.stopped': 'Das Vorlesen wurde beendet ({reason}). Versuche es erneut oder wähle unter Schrift und Thema eine andere Stimme.',
   'error.fileMissing': 'die Datei fehlt in der Bibliothek',
   'error.docx': 'Dieses Word-Dokument konnte nicht gelesen werden ({reason}).',
   'error.pdf': 'Dieses PDF konnte nicht gelesen werden ({reason}).',
+  'error.couldntRead': '{name} konnte nicht gelesen werden ({reason}). Die Datei ist vielleicht beschädigt oder in einem Format, das Rosetta nicht liest.',
+  'error.pdfLocked': 'Dieses PDF ist mit einem Passwort geschützt.',
 
   'handoff.finished': 'Beendet. In BookShelf eintragen?',
   'handoff.logIt': 'Eintragen',
@@ -181,8 +185,8 @@ const de: Messages = {
   'intake.knownOne': 'Das ist schon in der Bibliothek.',
   'intake.knownMany': 'Die sind schon in der Bibliothek.',
   'intake.unreadable': {
-    one: '{count} Datei konnte nicht gelesen werden.',
-    other: '{count} Dateien konnten nicht gelesen werden.',
+    one: '{count} Datei konnte nicht gelesen werden: {names}.',
+    other: '{count} Dateien konnten nicht gelesen werden: {names}.',
   },
   'intake.differentFile': 'Das ist nicht die ausgelagerte Datei. Wähle dieselbe Datei, um sie zurückzuholen.',
   'intake.openFailed': 'Die Datei konnte nicht geöffnet werden ({reason}).',

@@ -1,3 +1,5 @@
+import { t } from '../i18n/index.svelte';
+
 // The shapes every format is read into. EPUB, Word, Markdown, HTML and plain
 // text become a "flow" document: sections of sanitised HTML that reflow in
 // the reader's own typography. PDF stays as fixed pages.
@@ -98,6 +100,6 @@ export class FormatError extends Error {}
 /** A PDF that needs its password; `retry` is true when the one given was wrong. */
 export class PasswordError extends FormatError {
   constructor(public retry: boolean) {
-    super(retry ? 'That password didn’t open it.' : 'This PDF is protected by a password.');
+    super(retry ? t('password.wrong') : t('error.pdfLocked'));
   }
 }

@@ -21,7 +21,7 @@ test('a home catalog asks for its sign-in once, and Back goes up a feed', async 
     return route.fulfill({ body: EPUB, contentType: 'application/epub+zip' });
   });
   await page.goto('/');
-  await page.click('#openCatalogs');
+  await page.click('#tab-catalogs');
   await page.click('#addCatalog');
   await page.fill('#promptInput', '192.168.1.20:8080/opds');
   await page.click('#promptAction');
@@ -36,7 +36,7 @@ test('a home catalog asks for its sign-in once, and Back goes up a feed', async 
   await page.getByRole('button', { name: /Lighthouse stories/ }).click();
   await expect(page.getByText('The Lantern Keeper')).toBeVisible();
 
-  // Escape (Android's Back) goes up one feed, then leaves the catalog, then closes the sheet.
+  // Escape (Android's Back) goes up one feed, then leaves the catalog, then goes home to the library.
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: /Lighthouse stories/ })).toBeVisible();
   await page.getByRole('button', { name: /Lighthouse stories/ }).click();

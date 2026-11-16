@@ -8,9 +8,7 @@
   import { settings } from '../../state/settings.svelte';
   import { ui } from '../../state/ui.svelte';
   import Icon from '../ui/Icon.svelte';
-  import Sheet from '../ui/Sheet.svelte';
 
-  let { onclose }: { onclose: () => void } = $props();
   const catalogs = $derived<Catalog[]>([...PRESETS, ...settings.value.catalogs]);
   let catalog = $state.raw<Catalog | null>(null);
   /** The feeds opened, for Back. */
@@ -118,9 +116,8 @@
   });
 </script>
 
-<Sheet title={catalog ? (current?.title || catalog.name) : t('catalog.title')} {onclose} wide>
+<div class="section-view" id="view-catalogs" role="tabpanel" aria-labelledby="tab-catalogs">
   {#if !catalog}
-    <p class="t-body-small dim">{t('catalog.intro')}</p>
     <ul class="row-list" id="catalogList">
       {#each catalogs as c (c.id)}
         <li class="row-with-action">
@@ -137,8 +134,9 @@
     </div>
     <p class="t-hint"><em>{t('catalog.noteTerm')}</em> {t('catalog.note')}</p>
   {:else}
-    <div class="btn-row btn-row-start">
-      <button type="button" class="btn btn-muted" id="catalogBack" onclick={back}><Icon name="chevron-left" />{t('catalog.back')}</button>
+    <div class="catalog-head">
+      <button type="button" class="btn-icon" id="catalogBack" aria-label={t('catalog.back')} onclick={back}><Icon name="arrow-left" /></button>
+      <h2 class="t-card-title ellipsis">{current?.title || catalog.name}</h2>
     </div>
     {#if template}
       <form
@@ -190,7 +188,7 @@
     {/if}
     {#if loading}<div class="catalog-loading"><LoadingIndicator label={t('catalog.loading')} size={40} /></div>{/if}
   {/if}
-</Sheet>
+</div>
 
 <style>
   .catalog-loading {

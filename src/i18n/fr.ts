@@ -266,6 +266,7 @@ const fr: Messages = {
   'mark.note': 'Note',
   'mark.notePlaceholder': 'Ce que cela vous a inspiré',
   'mark.share': 'Partager en carte',
+  'mark.toBookShelf': 'BookShelf',
 
   'note.title': 'Note',
   'note.goTo': 'Aller à la note',

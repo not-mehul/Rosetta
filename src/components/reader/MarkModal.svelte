@@ -2,8 +2,10 @@
   // A highlight: its words, its colour and a note (style.md §8.10).
   import { t } from '../../i18n/index.svelte';
   import { shareQuote } from '../../lib/quote';
+  import { canOpen, sendQuoteToBookShelf } from '../../platform/handoff';
   import type { HighlightColour } from '../../state/db';
   import { reader } from '../../state/reader.svelte';
+  import { ui } from '../../state/ui.svelte';
   import Icon from '../ui/Icon.svelte';
   import Modal from '../ui/Modal.svelte';
   import { COLOURS } from './colours';
@@ -20,6 +22,19 @@
   async function remove() {
     onclose();
     await reader.removeMark(id);
+  }
+
+  // BookShelf keeps quotes; offered when it's here to take one.
+  let bookShelf = $state(false);
+  $effect(() => {
+    void canOpen('bookshelf').then((v) => (bookShelf = v));
+  });
+  async function toBookShelf() {
+    const doc = reader.doc;
+    if (!mark || !doc) return;
+    if (note !== mark.note) await reader.updateMark(id, { note: note.trim() });
+    const sent = await sendQuoteToBookShelf({ text: mark.text, title: doc.title, author: doc.author, where: mark.where, note: note.trim() });
+    if (!sent) ui.notify(t('details.noBookShelf'), 'info');
   }
 
   function colour(c: HighlightColour) {
@@ -45,6 +60,7 @@
     <div class="btn-row">
       <button type="button" class="btn btn-danger" onclick={() => void remove()}>{t('action.remove')}</button>
       {#if reader.doc}<button type="button" class="btn btn-muted" id="shareQuote" onclick={() => void shareQuote(mark, reader.doc!)}><Icon name="share-2" />{t('mark.share')}</button>{/if}
+      {#if bookShelf}<button type="button" class="btn btn-muted" id="quoteToBookShelf" aria-label={t('details.toBookShelf')} onclick={() => void toBookShelf()}><Icon name="library" />{t('mark.toBookShelf')}</button>{/if}
       <button type="button" class="btn btn-primary" id="saveNote" onclick={() => void done()}>{t('action.done')}</button>
     </div>
   </Modal>

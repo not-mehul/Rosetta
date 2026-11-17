@@ -19,7 +19,6 @@ const es: Messages = {
 
 
   'collections.title': 'Colecciones',
-  'collections.everything': 'Todo',
   'collections.new': 'Nueva colección',
   'collections.newHint': 'Un documento puede estar en más de una colección.',
   'collections.name': 'Nombre',

@@ -56,3 +56,20 @@ test('the search field filters as you type, and clearing it shows everything', a
   await page.fill('#libraryFilter', '');
   await expect(page.locator('.doc-card')).toHaveCount(4);
 });
+
+test('the filter: three states in one row, toggled; collections at the bottom', async ({ page }) => {
+  await page.click('#arrangeLibrary');
+  const chips = page.locator('.show-row [role=radio]');
+  await expect(chips).toHaveText(['Not started', 'Reading', 'Finished']);
+  const boxes = await chips.evaluateAll((els) => els.map((el) => el.getBoundingClientRect()).map((r) => ({ y: r.top, w: r.width, right: r.right })));
+  expect(new Set(boxes.map((b) => Math.round(b.y))).size).toBe(1);
+  expect(Math.max(...boxes.map((b) => b.w)) - Math.min(...boxes.map((b) => b.w))).toBeLessThan(1);
+  expect(boxes[2]!.right).toBeLessThanOrEqual(page.viewportSize()!.width);
+  await page.click('#show-unread');
+  await expect(page.locator('#show-unread')).toHaveAttribute('aria-checked', 'true');
+  await page.click('#show-unread');
+  await expect(page.locator('#show-unread')).toHaveAttribute('aria-checked', 'false');
+  // Collections are the sheet's last field.
+  const fields = page.locator('dialog[open] .field > .t-field-label');
+  await expect(fields.last()).toHaveText('Collections');
+});

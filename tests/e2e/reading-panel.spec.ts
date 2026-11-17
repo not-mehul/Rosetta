@@ -29,6 +29,10 @@ test('a book gets Text, Page, Light and Listen; the page shows through and chang
   await page.keyboard.press('Escape');
   await page.click('#openType');
   await expect(tabs(page)).toHaveText(['Text', 'Page', 'Light', 'Listen']);
+  // Icon tabs as in Settings, sharing the row evenly.
+  const widths = await tabs(page).evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width));
+  expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1);
+  await expect(page.locator('#panel-page .icon-tab-word')).toHaveCSS('opacity', '0');
   const panel = (await page.locator('dialog.sheet-peek').boundingBox())!;
   expect(Math.abs(panel.height - contents.height)).toBeLessThanOrEqual(2);
   await page.click('#panel-light');
@@ -95,6 +99,12 @@ test('Settings has tabs: general, the reading defaults, listening, data and abou
   await page.click('#openSettings');
   const sheet = page.locator('dialog[open]');
   await expect(sheet.getByRole('tablist').getByRole('tab')).toHaveText(['General', 'Reading', 'Listen', 'Data', 'About']);
+  // Icons sharing the row evenly; only the open tab shows its word.
+  const widths = await sheet.getByRole('tab').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width));
+  expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1);
+  await expect(sheet.locator('[role=tab] svg')).toHaveCount(5);
+  await expect(sheet.locator('#settings-general .icon-tab-word')).toHaveCSS('opacity', '1');
+  await expect(sheet.locator('#settings-data .icon-tab-word')).toHaveCSS('opacity', '0');
   // General: theme, language (Russian too), goals and the reminder.
   await expect(sheet.locator('[data-theme-option=dark]')).toBeVisible();
   await sheet.locator('#language').click();

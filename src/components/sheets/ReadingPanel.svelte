@@ -8,7 +8,7 @@
   //   Listen  read aloud, its speed and voice
   // A book keeps changes to its text and page for itself; the icon in the
   // header puts it back on the defaults (set in Settings → Reading).
-  import { Switch, TabRail } from 'dusk-dawn';
+  import { IconTabs, Switch } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { autoScroll } from '../../state/autoscroll.svelte';
   import { reader } from '../../state/reader.svelte';
@@ -21,6 +21,7 @@
   import TextControls from '../controls/TextControls.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
+  import type { Snippet } from 'svelte';
 
   let { onclose }: { onclose: () => void } = $props();
   const v = $derived(reader.view);
@@ -35,13 +36,14 @@
   const bookStyles = $derived(c?.kind === 'flow' && !!c.css);
   const canListen = $derived(!!c && !pictures && !fixed);
 
+  // Icons that share the row evenly, as in Settings; only the open tab shows its word.
   const tabs = $derived(
     [
-      text && { id: 'text' as const, label: t('panel.text'), domId: 'panel-text', controls: 'panelBody' },
-      { id: 'page' as const, label: t('panel.page'), domId: 'panel-page', controls: 'panelBody' },
-      { id: 'light' as const, label: t('panel.light'), domId: 'panel-light', controls: 'panelBody' },
-      canListen && { id: 'listen' as const, label: t('panel.listen'), domId: 'panel-listen', controls: 'panelBody' },
-    ].filter((x): x is { id: PanelTab; label: string; domId: string; controls: string } => !!x),
+      text && { id: 'text' as const, label: t('panel.text'), icon: textIcon, domId: 'panel-text', controls: 'panelBody' },
+      { id: 'page' as const, label: t('panel.page'), icon: pageIcon, domId: 'panel-page', controls: 'panelBody' },
+      { id: 'light' as const, label: t('panel.light'), icon: lightIcon, domId: 'panel-light', controls: 'panelBody' },
+      canListen && { id: 'listen' as const, label: t('panel.listen'), icon: listenIcon, domId: 'panel-listen', controls: 'panelBody' },
+    ].filter((x): x is { id: PanelTab; label: string; icon: Snippet; domId: string; controls: string } => !!x),
   );
   /** The tab last used, if it applies here; otherwise the first. */
   const tab = $derived(tabs.some((x) => x.id === ui.panelTab) ? ui.panelTab : tabs[0]!.id);
@@ -62,6 +64,11 @@
   }
 </script>
 
+{#snippet textIcon()}<Icon name="type" />{/snippet}
+{#snippet pageIcon()}<Icon name="book-text" />{/snippet}
+{#snippet lightIcon()}<Icon name="sun-moon" />{/snippet}
+{#snippet listenIcon()}<Icon name="headphones" />{/snippet}
+
 {#snippet revert()}
   {#if reader.ownView}
     <button type="button" class="btn-icon" id="useDefaults" aria-label={t('panel.useDefaults')} title={t('panel.useDefaults')} onclick={() => void reader.useDefaults()}><Icon name="rotate-ccw" /></button>
@@ -69,8 +76,8 @@
 {/snippet}
 
 <Sheet title={t('reader.type')} {onclose} peek tall actions={revert}>
-  <div class="panel-tabs">
-    <TabRail {tabs} value={tab} label={t('panel.label')} onselect={(id) => (ui.panelTab = id)} />
+  <div class="panel-tabs sheet-icon-tabs">
+    <IconTabs {tabs} value={tab} label={t('panel.label')} onselect={(id) => (ui.panelTab = id)} />
   </div>
 
   <div class="panel-body" id="panelBody" role="tabpanel" aria-labelledby="panel-{tab}">

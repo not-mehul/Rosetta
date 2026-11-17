@@ -19,7 +19,6 @@ const de: Messages = {
 
 
   'collections.title': 'Sammlungen',
-  'collections.everything': 'Alles',
   'collections.new': 'Neue Sammlung',
   'collections.newHint': 'Ein Dokument kann in mehreren Sammlungen sein.',
   'collections.name': 'Name',

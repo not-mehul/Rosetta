@@ -95,3 +95,41 @@ export function firstOffsetOnPage(index: TextIndex, page: number, c: Columns): n
 export function pageCount(scrollWidth: number, stride: number): number {
   return Math.max(1, Math.round(scrollWidth / stride) || 1);
 }
+
+/** How a paged screen is divided: one column, or two side by side, and where they sit. */
+export interface ScreenColumns {
+  /** Columns on one screen. */
+  perScreen: 1 | 2;
+  /** One column's width. */
+  pageW: number;
+  /** The gap between columns, so every column starts a fixed share of the screen after the last. */
+  gap: number;
+  /** The column box's left edge, for the book's direction. */
+  left: number;
+}
+
+/**
+ * One column at the reading measure, centred; or, on a wide screen held
+ * sideways, two, as a printed book lies open. Two only when each still gets
+ * a comfortable line (26em at the reading size), so a phone never splits.
+ */
+export function screenColumns(w: number, h: number, measure: number, minColumn: number, side: number, rtl: boolean, allowTwo: boolean): ScreenColumns {
+  const two = allowTwo && w > h * 1.1 && w / 2 - 1.5 * side >= minColumn;
+  const perScreen = two ? 2 : 1;
+  const share = w / perScreen;
+  const pageW = Math.floor(Math.min(share - (two ? 1.5 : 2) * side, measure));
+  const gap = share - pageW;
+  // The first column is on the left in a left-to-right book, on the right in a right-to-left one.
+  const first = gap / 2;
+  return { perScreen, pageW, gap, left: Math.floor(rtl ? w - first - pageW : first) };
+}
+
+/**
+ * A fixed-layout book's pages two at a time: the cover alone, then 1–2,
+ * 3–4… The pair holding page `i`, as page numbers in reading order.
+ */
+export function spreadAt(i: number, count: number): number[] {
+  if (i <= 0) return [0];
+  const start = i % 2 === 1 ? i : i - 1;
+  return start + 1 < count ? [start, start + 1] : [start];
+}

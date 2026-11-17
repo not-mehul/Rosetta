@@ -55,6 +55,8 @@ test('restoring the archive brings back the finished shelf and tags', async ({ p
 test('opening and leaving a document without reading isn’t a change for sync', async ({ page }) => {
   await page.goto('/');
   await add(page, ['garden.md', 'tide.txt']);
+  // Both stored before reading what was stored (under load the second can lag behind).
+  await expect.poll(async () => (await stored(page, 'Garden Diary'))?.updatedAt).toBeTruthy();
   const before = await stored(page, 'Garden Diary');
   await page.waitForTimeout(50);
   await page.getByRole('button', { name: /^Garden Diary/ }).click();

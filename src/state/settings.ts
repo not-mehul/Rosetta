@@ -48,6 +48,8 @@ export interface Settings {
   customFont: string;
   /** How a page turns in paged mode. Reduce-motion always means none. */
   pageTurn: PageTurn;
+  /** Paged mode on a wide screen held sideways: two pages side by side, as an open book. */
+  spreads: boolean;
   /** Volume keys turn pages (Android). */
   volumeKeys: boolean;
   /** Keep the screen on while a document is open. */
@@ -117,6 +119,7 @@ export const DEFAULT_SETTINGS: Settings = {
   anchors: false,
   customFont: '',
   pageTurn: 'curl',
+  spreads: true,
   volumeKeys: true,
   keepAwake: false,
   dim: 0,

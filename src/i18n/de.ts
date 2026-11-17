@@ -266,6 +266,7 @@ const de: Messages = {
   'mark.note': 'Notiz',
   'mark.notePlaceholder': 'Was es dir zu denken gab',
   'mark.share': 'Als Karte teilen',
+  'mark.toBookShelf': 'BookShelf',
 
   'note.title': 'Fußnote',
   'note.goTo': 'Zur Fußnote',

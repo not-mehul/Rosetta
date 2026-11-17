@@ -267,6 +267,7 @@ const en = {
   'mark.note': 'Note',
   'mark.notePlaceholder': 'What it made you think',
   'mark.share': 'Share as a card',
+  'mark.toBookShelf': 'BookShelf',
 
   'note.title': 'Note',
   'note.goTo': 'Go to the note',

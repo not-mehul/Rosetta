@@ -57,7 +57,7 @@ Rosetta has two themes. _Dusk_ is a late-night reading room and _Dawn_ is a sunl
 
 ## Your library
 
-The tabs under the title are **Library**, **Notes**, **Stats** and **Catalogs**. In the Library, **Arrange** chooses covers or a list, the order, and which collection or tag to show. Search the library with the magnifier, or with `#tag`. Tap a book's **⋮** for its details, where you can put it in a **collection**, and _Edit details_ fixes the title, author, series, tags and cover.
+The tabs under the title are **Library**, **Notes**, **Stats** and **Catalogs**. In the Library, **Arrange** chooses covers or a list, the order, and which collection or tag to show. Search the library with the magnifier: it finds titles and authors, and under _Inside the books_ the places in every book where the words appear (the first search reads each book once). Search with `#tag` for a tag. Tap a book's **⋮** for its details, where you can put it in a **collection**, and _Edit details_ fixes the title, author, series, tags and cover.
 
 **Stats** shows time read today and this week, your streak, a calendar of the last few months and what you finished this year. Set a daily goal there if you'd like one.
 

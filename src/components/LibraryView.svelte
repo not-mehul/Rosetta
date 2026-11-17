@@ -20,6 +20,7 @@
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
   import { TabRail, WavyProgress } from 'dusk-dawn';
+  import TextResults from './TextResults.svelte';
   import { tick } from 'svelte';
   import { hatch } from '../lib/delight';
 
@@ -203,6 +204,9 @@
           </div>
         {/if}
       </div>
+      {#if searching && !filter.trim().startsWith('#')}
+        <TextResults query={filter} />
+      {/if}
     {/if}
   </main>
 </div>

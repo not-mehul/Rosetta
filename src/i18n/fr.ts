@@ -232,6 +232,13 @@ const fr: Messages = {
   'library.documents': 'Documents',
   'library.count': { one: '{count} document', other: '{count} documents' },
   'library.noMatch': 'Aucun résultat.',
+  'library.inside': 'Dans les livres',
+  'library.readingBooks': 'Lecture de {done} livres sur {total}',
+  'library.matches': {
+    one: '{count} passage',
+    other: '{count} passages',
+  },
+  'library.insideNone': 'Aucun livre ne contient ces mots.',
   'library.clearFilter': 'Effacer le filtre',
   'library.emptyReading': 'Rien en cours. Ouvrez un document et il vous attendra ici.',
   'library.emptyFinished': 'Rien de terminé pour l’instant.',

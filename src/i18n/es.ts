@@ -232,6 +232,13 @@ const es: Messages = {
   'library.documents': 'Documentos',
   'library.count': { one: '{count} documento', other: '{count} documentos' },
   'library.noMatch': 'No hay coincidencias.',
+  'library.inside': 'Dentro de los libros',
+  'library.readingBooks': 'Leyendo {done} de {total} libros',
+  'library.matches': {
+    one: '{count} lugar',
+    other: '{count} lugares',
+  },
+  'library.insideNone': 'Ningún libro tiene esas palabras.',
   'library.clearFilter': 'Borrar filtro',
   'library.emptyReading': 'Nada a medias. Abre un documento y te esperará aquí.',
   'library.emptyFinished': 'Aún no has terminado nada.',

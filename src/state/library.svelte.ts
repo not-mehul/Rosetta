@@ -166,11 +166,12 @@ class LibraryState {
   /** Removes a document with its marks, returning a function that puts it all back. */
   async remove(id: string): Promise<() => Promise<void>> {
     const [doc, blob, marks] = await Promise.all([db.docs.get(id), db.bytes.get(id), db.marks.where('docId').equals(id).toArray()]);
-    await db.transaction('rw', [db.docs, db.bytes, db.marks, db.pdfText], async () => {
+    await db.transaction('rw', [db.docs, db.bytes, db.marks, db.pdfText, db.texts], async () => {
       await db.docs.delete(id);
       await db.bytes.delete(id);
       await db.marks.where('docId').equals(id).delete();
       await db.pdfText.delete(id);
+      await db.texts.delete(id);
     });
     this.items = this.items.filter((d) => d.id !== id);
     return async () => {
@@ -190,8 +191,8 @@ class LibraryState {
   }
 
   async clear(): Promise<void> {
-    await db.transaction('rw', [db.docs, db.bytes, db.marks, db.collections, db.sessions, db.pdfText], async () => {
-      await Promise.all([db.docs.clear(), db.bytes.clear(), db.marks.clear(), db.collections.clear(), db.sessions.clear(), db.pdfText.clear()]);
+    await db.transaction('rw', [db.docs, db.bytes, db.marks, db.collections, db.sessions, db.pdfText, db.texts], async () => {
+      await Promise.all([db.docs.clear(), db.bytes.clear(), db.marks.clear(), db.collections.clear(), db.sessions.clear(), db.pdfText.clear(), db.texts.clear()]);
     });
     this.items = [];
     this.collections = [];

@@ -214,13 +214,11 @@ const de: Messages = {
   'note.title': 'Fußnote',
   'note.goTo': 'Zur Fußnote',
 
-  'notes.title': 'Alle Notizen',
-  'notes.search': 'Wörter, Notizen oder Titel',
+  'notes.search': 'Markierungen, Notizen, Lesezeichen oder Titel',
   'notes.count': { one: '{count} Markierung', other: '{count} Markierungen' },
-  'notes.export': 'Diese exportieren',
   'notes.all': 'Alle',
-  'notes.emptyTitle': 'Noch keine Markierungen',
-  'notes.emptyText': 'Markierungen aus allen Dokumenten sammeln sich hier.',
+  'notes.emptyTitle': 'Noch keine Markierungen oder Lesezeichen',
+  'notes.emptyText': 'Markierungen, Notizen und Lesezeichen aus allen Dokumenten sammeln sich hier.',
   'notes.removedDoc': 'Entferntes Dokument',
 
   'password.title': 'Passwort erforderlich',
@@ -560,6 +558,9 @@ const de: Messages = {
   'arrange.show': 'Zeigen',
   'arrange.showing': 'Gezeigt:',
   'library.emptyUnread': 'Alles hier wurde schon geöffnet.',
+  'notes.show': 'Zeigen',
+  'notes.bookmark': 'Lesezeichen',
+  'notes.bookmarkCount': { one: '{count} Lesezeichen', other: '{count} Lesezeichen' },
 };
 
 export default de;

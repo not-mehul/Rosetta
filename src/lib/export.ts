@@ -29,19 +29,6 @@ export function notesMarkdown(doc: Pick<StoredDoc, 'title' | 'author'> & Partial
   return lines.join('\n');
 }
 
-/** Every document's notes in one Markdown file, documents in the order given, apart by rules. */
-export function allNotesMarkdown(docs: readonly (Pick<StoredDoc, 'id' | 'title' | 'author'> & Partial<Pick<StoredDoc, 'note'>>)[], marks: readonly Mark[]): string {
-  return docs
-    .filter((d) => d.note?.trim() || marks.some((m) => m.docId === d.id && m.kind === 'highlight'))
-    .map((d) =>
-      notesMarkdown(
-        d,
-        marks.filter((m) => m.docId === d.id),
-      ),
-    )
-    .join('\n---\n\n');
-}
-
 /** The highlight for a day: the same one all day, a different one tomorrow. */
 export function lineOfTheDay<T extends Pick<Mark, 'id'>>(highlights: readonly T[], day: string): T | null {
   if (!highlights.length) return null;

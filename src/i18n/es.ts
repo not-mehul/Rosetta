@@ -214,13 +214,11 @@ const es: Messages = {
   'note.title': 'Nota',
   'note.goTo': 'Ir a la nota',
 
-  'notes.title': 'Todas las notas',
-  'notes.search': 'Palabras, notas o títulos',
+  'notes.search': 'Subrayados, notas, marcadores o títulos',
   'notes.count': { one: '{count} subrayado', other: '{count} subrayados' },
-  'notes.export': 'Exportar estos',
   'notes.all': 'Todas',
-  'notes.emptyTitle': 'Aún no hay subrayados',
-  'notes.emptyText': 'Aquí se reúnen los subrayados de todos los documentos.',
+  'notes.emptyTitle': 'Aún no hay subrayados ni marcadores',
+  'notes.emptyText': 'Aquí se reúnen los subrayados, las notas y los marcadores de todos los documentos.',
   'notes.removedDoc': 'Documento eliminado',
 
   'password.title': 'Hace falta una contraseña',
@@ -563,6 +561,9 @@ const es: Messages = {
   'arrange.show': 'Mostrar',
   'arrange.showing': 'Mostrando',
   'library.emptyUnread': 'Todo lo de aquí ya se ha abierto.',
+  'notes.show': 'Mostrar',
+  'notes.bookmark': 'Marcador',
+  'notes.bookmarkCount': { one: '{count} marcador', other: '{count} marcadores' },
 };
 
 export default es;

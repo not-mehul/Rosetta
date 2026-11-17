@@ -178,13 +178,11 @@ const ru: Messages = {
   'mark.toBookShelf': 'BookShelf',
   'note.title': 'Сноска',
   'note.goTo': 'Перейти к сноске',
-  'notes.title': 'Все заметки',
-  'notes.search': 'Слова, заметки или названия',
+  'notes.search': 'Выделения, заметки, закладки или названия',
   'notes.count': { one: '{count} выделение', few: '{count} выделения', many: '{count} выделений', other: '{count} выделения' },
-  'notes.export': 'Экспортировать',
   'notes.all': 'Все',
-  'notes.emptyTitle': 'Выделений пока нет',
-  'notes.emptyText': 'Здесь собираются выделения из всех документов.',
+  'notes.emptyTitle': 'Выделений и закладок пока нет',
+  'notes.emptyText': 'Здесь собираются выделения, заметки и закладки из всех документов.',
   'notes.removedDoc': 'Удалённый документ',
   'password.title': 'Нужен пароль',
   'password.message': '«{title}» защищён паролем.',
@@ -505,6 +503,9 @@ const ru: Messages = {
   'arrange.show': 'Показать',
   'arrange.showing': 'Показаны:',
   'library.emptyUnread': 'Здесь всё уже открывалось.',
+  'notes.show': 'Показать',
+  'notes.bookmark': 'Закладка',
+  'notes.bookmarkCount': { one: '{count} закладка', few: '{count} закладки', many: '{count} закладок', other: '{count} закладки' },
 };
 
 export default ru;

@@ -215,13 +215,11 @@ const en = {
   'note.title': 'Note',
   'note.goTo': 'Go to the note',
 
-  'notes.title': 'All notes',
-  'notes.search': 'Words, notes or titles',
+  'notes.search': 'Highlights, notes, bookmarks or titles',
   'notes.count': { one: '{count} highlight', other: '{count} highlights' },
-  'notes.export': 'Export these',
   'notes.all': 'All',
-  'notes.emptyTitle': 'No highlights yet',
-  'notes.emptyText': 'Highlights from every document gather here.',
+  'notes.emptyTitle': 'No highlights or bookmarks yet',
+  'notes.emptyText': 'Highlights, notes and bookmarks from every document gather here.',
   'notes.removedDoc': 'Removed document',
 
   'password.title': 'Password needed',
@@ -561,6 +559,9 @@ const en = {
   'arrange.show': 'Show',
   'arrange.showing': 'Showing',
   'library.emptyUnread': 'Everything here has been opened.',
+  'notes.show': 'Show',
+  'notes.bookmark': 'Bookmark',
+  'notes.bookmarkCount': { one: '{count} bookmark', other: '{count} bookmarks' },
 };
 
 export default en;

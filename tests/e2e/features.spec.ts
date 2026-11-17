@@ -204,11 +204,40 @@ test('all notes gather in one place and search', async ({ page }) => {
   await page.getByRole('button', { name: 'Highlight in Amber' }).click();
   await page.click('#closeReader');
 
+  // And a bookmark, at the start of the next chapter.
+  await page.locator('#resume').click();
+  await showBars(page);
+  await page.click('#nextSection');
+  await expect(page.locator('.reading h1')).toHaveText('The ledger');
+  await showBars(page);
+  await page.click('#toggleBookmark');
+  await page.click('#closeReader');
+
+  // Notes has both, under the book's title, in reading order.
   await page.click('#tab-notes');
+  await expect(page.locator('#allNotes li')).toHaveCount(2);
+  await expect(page.locator('.notes-book-title')).toContainText('The Lantern Keeper');
+  await expect(page.locator('#allNotes li').nth(0)).toContainText('Paragraph 1');
+  await expect(page.locator('#allNotes .bookmark-row')).toContainText('The ledger');
+  await expect(page.locator('#notesCount')).toHaveText('1 highlight · 1 bookmark');
+  // The notes field keeps its own height, and its search icon sits inside it.
+  const field = (await page.locator('#notesSearch').boundingBox())!;
+  const icon = (await page.locator('.notes-tools .filter-field > svg').boundingBox())!;
+  expect(icon.y).toBeGreaterThan(field.y);
+  expect(icon.y + icon.height).toBeLessThan(field.y + field.height);
+  // Search finds bookmarks by their chapter too; Bookmarks shows only them.
+  await page.fill('#notesSearch', 'ledger');
   await expect(page.locator('#allNotes li')).toHaveCount(1);
-  await expect(page.locator('#allNotes')).toContainText('Paragraph 1');
+  await expect(page.locator('#allNotes .bookmark-row')).toHaveCount(1);
   await page.fill('#notesSearch', 'albatross');
   await expect(page.locator('#allNotes li')).toHaveCount(0);
+  await page.fill('#notesSearch', '');
+  await page.click('#notesBookmarks');
+  await expect(page.locator('#allNotes li')).toHaveCount(1);
+  // A bookmark opens its place.
+  await page.locator('#allNotes .bookmark-row').click();
+  await expect(page.locator('.reading h1')).toHaveText('The ledger');
+  await expect(page.locator('#toggleBookmark')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('the interface speaks Spanish, French and German', async ({ page }) => {

@@ -214,13 +214,11 @@ const fr: Messages = {
   'note.title': 'Note',
   'note.goTo': 'Aller à la note',
 
-  'notes.title': 'Toutes les notes',
-  'notes.search': 'Mots, notes ou titres',
+  'notes.search': 'Surlignages, notes, signets ou titres',
   'notes.count': { one: '{count} surlignage', other: '{count} surlignages' },
-  'notes.export': 'Exporter ceux-ci',
   'notes.all': 'Toutes',
-  'notes.emptyTitle': 'Pas encore de surlignages',
-  'notes.emptyText': 'Les surlignages de tous les documents se retrouvent ici.',
+  'notes.emptyTitle': 'Pas encore de surlignages ni de signets',
+  'notes.emptyText': 'Les surlignages, notes et signets de tous les documents se rassemblent ici.',
   'notes.removedDoc': 'Document retiré',
 
   'password.title': 'Mot de passe requis',
@@ -560,6 +558,9 @@ const fr: Messages = {
   'arrange.show': 'Afficher',
   'arrange.showing': 'Affichés :',
   'library.emptyUnread': 'Tout ici a déjà été ouvert.',
+  'notes.show': 'Afficher',
+  'notes.bookmark': 'Signet',
+  'notes.bookmarkCount': { one: '{count} signet', other: '{count} signets' },
 };
 
 export default fr;

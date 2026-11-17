@@ -11,6 +11,7 @@ import com.getcapacitor.PluginHandle;
  * appUrlOpen (src/platform/intake.ts). Volume keys turn pages while the
  * reader asks for them (VolumeKeysPlugin, src/platform/device.ts). Reading
  * aloud carries on with the screen off (ReadAloudPlugin, ReadAloudService).
+ * Sync and backups use folders chosen with the system picker (FolderPlugin).
  */
 public class MainActivity extends BridgeActivity {
 
@@ -19,6 +20,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(VolumeKeysPlugin.class);
         registerPlugin(ReadAloudPlugin.class);
         registerPlugin(ReadingWidgetPlugin.class);
+        registerPlugin(FolderPlugin.class);
         super.onCreate(savedInstanceState);
     }
 

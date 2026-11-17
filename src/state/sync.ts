@@ -15,6 +15,7 @@ import { makeBackup, parseBackup, type Backup } from '../lib/export';
 import { base64ToBytes, bytesToBase64 } from '../lib/base64';
 import { isNative } from '../platform/native';
 import { FOLDER } from '../platform/output';
+import { canPickFolder, folderStatus, listFolder, pickFolder, readFolderFile, removeFolderFile, writeFolderFile, type FolderKey } from '../platform/folders';
 import { db, toBytes, type Collection, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
 import { settings } from './settings.svelte';
@@ -191,27 +192,34 @@ export function backupsToPrune(names: string[], keep = KEEP_BACKUPS): string[] {
     .slice(keep);
 }
 
-/** Writes this week's backup if one is due. True when one was written. */
+/** Writes this week's backup if one is due: to the chosen folder, or to Documents/Rosetta/backups. True when one was written. */
 export async function autoBackup(now = Date.now()): Promise<boolean> {
   if (!isNative || !settings.value.autoBackup || !library.items.length) return false;
   if (now - settings.value.lastAutoBackup < WEEK) return false;
   try {
     const backup = await currentBackup(new Date(now), true);
-    await Filesystem.writeFile({
-      path: `${BACKUP_DIR}/${backupName(new Date(now))}`,
-      directory: Directory.Documents,
-      recursive: true,
-      data: bytesToBase64(strToU8(JSON.stringify(backup))),
-    });
-    const { files } = await Filesystem.readdir({
-      path: BACKUP_DIR,
-      directory: Directory.Documents,
-    });
-    for (const name of backupsToPrune(files.map((f) => f.name)))
-      await Filesystem.deleteFile({
+    const name = backupName(new Date(now));
+    const text = JSON.stringify(backup);
+    if (await legacy('backup')) {
+      await Filesystem.writeFile({
         path: `${BACKUP_DIR}/${name}`,
         directory: Directory.Documents,
-      }).catch(() => undefined);
+        recursive: true,
+        data: bytesToBase64(strToU8(text)),
+      });
+      const { files } = await Filesystem.readdir({
+        path: BACKUP_DIR,
+        directory: Directory.Documents,
+      });
+      for (const old of backupsToPrune(files.map((f) => f.name)))
+        await Filesystem.deleteFile({
+          path: `${BACKUP_DIR}/${old}`,
+          directory: Directory.Documents,
+        }).catch(() => undefined);
+    } else {
+      await writeFolderFile('backup', name, text);
+      for (const old of backupsToPrune(await listFolder('backup').catch(() => []))) await removeFolderFile('backup', old).catch(() => undefined);
+    }
     await settings.update({ lastAutoBackup: now });
     return true;
   } catch (err) {
@@ -285,46 +293,26 @@ export async function restoreArchive(bytes: Uint8Array): Promise<{ added: number
 
 // ─── Sync ────────────────────────────────────────────────────
 
-type DirHandle = {
-  getFileHandle: (
-    name: string,
-    o?: { create?: boolean },
-  ) => Promise<{
-    getFile: () => Promise<File>;
-    createWritable: () => Promise<{
-      write: (d: string) => Promise<void>;
-      close: () => Promise<void>;
-    }>;
-  }>;
-};
+/** The sync file's name, in the chosen folder (or the old place in Documents/Rosetta/sync). */
+const SYNC_NAME = 'rosetta-sync.json';
 
-/** Desktop browsers can sync with a folder the person picks (File System Access). */
-export const canPickSyncFolder = typeof window !== 'undefined' && 'showDirectoryPicker' in window && !isNative;
+/** Phones, tablets and some browsers sync through a folder the reader chooses. */
+export const canPickSyncFolder = canPickFolder;
 
-async function folderHandle(): Promise<DirHandle | null> {
-  const row = await db.settings.get('syncFolder' as 'settings').catch(() => undefined);
-  return ((row?.value as unknown as { handle?: DirHandle })?.handle ?? null) as DirHandle | null;
+export function chooseSyncFolder(): Promise<boolean> {
+  return pickFolder('sync');
 }
 
-export async function chooseSyncFolder(): Promise<boolean> {
-  try {
-    const handle = await (
-      window as unknown as {
-        showDirectoryPicker: (o: object) => Promise<DirHandle>;
-      }
-    ).showDirectoryPicker({ mode: 'readwrite', id: 'rosetta-sync' });
-    await db.settings.put({
-      id: 'syncFolder' as 'settings',
-      value: { handle } as never,
-    });
-    return true;
-  } catch {
-    return false;
-  }
+/**
+ * Before a folder was chosen, phones kept the sync file in Documents/Rosetta/sync.
+ * That still works on one device, so it stays the fallback until a folder is chosen.
+ */
+async function legacy(key: FolderKey): Promise<boolean> {
+  return isNative && !(await folderStatus(key)).chosen;
 }
 
 async function readSync(): Promise<string | null> {
-  if (isNative) {
+  if (await legacy('sync')) {
     try {
       const { data } = await Filesystem.readFile({
         path: SYNC_PATH,
@@ -335,17 +323,16 @@ async function readSync(): Promise<string | null> {
       return null;
     }
   }
-  const dir = await folderHandle();
-  if (!dir) return null;
   try {
-    return await (await (await dir.getFileHandle('rosetta-sync.json')).getFile()).text();
-  } catch {
-    return null;
+    return await readFolderFile('sync', SYNC_NAME);
+  } catch (err) {
+    // A file that is there but can't be read is worth saying so, not a first sync.
+    throw new Error(t('sync.cantRead', { reason: err instanceof Error ? err.message : String(err) }), { cause: err });
   }
 }
 
 async function writeSync(text: string): Promise<void> {
-  if (isNative) {
+  if (await legacy('sync')) {
     await Filesystem.writeFile({
       path: SYNC_PATH,
       directory: Directory.Documents,
@@ -354,11 +341,8 @@ async function writeSync(text: string): Promise<void> {
     });
     return;
   }
-  const dir = await folderHandle();
-  if (!dir) throw new Error(t('error.noSyncFolder'));
-  const w = await (await dir.getFileHandle('rosetta-sync.json', { create: true })).createWritable();
-  await w.write(text);
-  await w.close();
+  if (!(await folderStatus('sync')).chosen) throw new Error(t('error.noSyncFolder'));
+  await writeFolderFile('sync', SYNC_NAME, text);
 }
 
 let syncing: Promise<MergeResult | null> | null = null;
@@ -373,13 +357,10 @@ export function syncFile(mine: Backup, theirs: Backup | null): Backup {
 /** Keeps a copy of a sync file that couldn't be read, beside it, before it is written over. */
 async function keepUnreadable(text: string): Promise<string> {
   const name = `rosetta-sync.unreadable-${new Date().toISOString().slice(0, 10)}.json`;
-  if (isNative) {
+  if (await legacy('sync')) {
     await Filesystem.writeFile({ path: `${FOLDER}/sync/${name}`, directory: Directory.Documents, recursive: true, data: bytesToBase64(strToU8(text)) });
   } else {
-    const dir = await folderHandle();
-    const w = await dir?.getFileHandle(name, { create: true }).then((f) => f.createWritable());
-    await w?.write(text);
-    await w?.close();
+    await writeFolderFile('sync', name, text);
   }
   return name;
 }

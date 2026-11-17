@@ -29,7 +29,7 @@ npm run assets       # redraw the app icon and splash screens
 - **Links.** Both platforms register the `rosetta` URL scheme and are allowed to ask whether each sibling app (`waymark`, `bookshelf`, `ledger`, `colophon`, `mise`, `nookling`) is installed (`<queries>` on Android, `LSApplicationQueriesSchemes` on iOS).
 - **Volume keys** turn pages through a small Android plugin (`VolumeKeysPlugin.java`); iOS has no public API for them.
 - **System.** The back button closes the topmost sheet, then the reader, then the app. The system bars follow the theme, and the splash is Dusk's `--bg-grad-mid` behind the amber R.
-- Notes and backups are saved to `Documents/Rosetta/` (the app's folder in Files on iOS), or downloaded in a browser.
+- Notes and backups are saved to `Documents/Rosetta/` (the app's folder in Files on iOS), or downloaded in a browser. The sync file and the weekly backups go to a folder chosen with the system picker (`src/platform/folders.ts`, `FolderPlugin.java`, `FoldersPlugin.swift`), falling back to `Documents/Rosetta/` until one is chosen.
 
 ## Layout
 

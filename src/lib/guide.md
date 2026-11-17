@@ -65,7 +65,7 @@ The tabs under the title are **Library**, **Notes**, **Stats** and **Catalogs**.
 
 The **Notes** tab gathers every highlight from every document. From a document's details, or from the highlights list, you can export them as Markdown.
 
-Settings can back up every place, bookmark, highlight and collection to a file, save the whole library with its files, and restore either later. **Sync with a folder** keeps places and notes the same on your devices through a folder you share between them. **Storage** shows what each file takes and can offload one, keeping its place and notes until you add it again.
+Settings can back up every place, bookmark, highlight and collection to a file, save the whole library with its files, and restore either later. **Sync with a folder** keeps places and notes the same on your devices through a folder you share between them: choose one in iCloud Drive, or one Syncthing or Dropbox keeps in step. Weekly backups can go to a folder of your choice too. **Storage** shows what each file takes and can offload one, keeping its place and notes until you add it again.
 
 A finished book can be logged in **BookShelf**, and an EPUB can be opened in **Colophon**.
 

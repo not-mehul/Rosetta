@@ -23,6 +23,8 @@ import { refreshReminders } from './state/reminders';
 import { ui } from './state/ui.svelte';
 import { followForWidget } from './state/widget.svelte';
 import './styles/app.css';
+import './styles/motion.css';
+import { startIconMotion } from './lib/iconMotion';
 
 async function start(): Promise<void> {
   await Promise.all([settings.load(), library.load(), stats.load()]).catch((err) => console.error('Loading saved data failed:', err));
@@ -39,6 +41,8 @@ async function start(): Promise<void> {
   void autoBackup();
 
   mount(App, { target: document.getElementById('app')! });
+  // Icons answer a tap with their own small motion (src/styles/motion.css).
+  startIconMotion();
 
   // Back into the document that was open, at the same place.
   const last = settings.value.lastDocId;

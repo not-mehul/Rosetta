@@ -3,13 +3,24 @@
   // (a dashed ring in the dim text colour), being read (an open book on
   // amber) or finished (a tick on sage). Its name is in the document's button for
   // screen readers, so the mark itself is drawn only.
+  import { playIcon } from '../../lib/iconMotion';
   import type { DocStatus } from '../../state/library.svelte';
   import Icon from './Icon.svelte';
 
   let { status }: { status: DocStatus } = $props();
+
+  // A change of state plays the new mark's motion (the tick writes itself, the
+  // book opens), once, when it happens: not each time the library opens.
+  let mark = $state<HTMLElement>();
+  let was: DocStatus | undefined;
+  $effect(() => {
+    const now = status;
+    if (was !== undefined && was !== now) requestAnimationFrame(() => playIcon(mark?.querySelector('svg[data-icon]')));
+    was = now;
+  });
 </script>
 
-<span class="status-mark is-{status}" data-status={status} aria-hidden="true">
+<span class="status-mark is-{status}" data-status={status} aria-hidden="true" bind:this={mark}>
   {#if status === 'reading'}<Icon name="book-open" />{:else if status === 'finished'}<Icon name="check" />{/if}
 </span>
 

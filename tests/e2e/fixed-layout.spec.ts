@@ -2,6 +2,7 @@
 // and turns with a tap at the edge.
 import { expect, test } from '@playwright/test';
 import { strToU8, zipSync } from 'fflate';
+import { fileURLToPath } from 'node:url';
 
 function fixedEpub(pages: number): Buffer {
   const files: Record<string, Uint8Array> = {
@@ -37,4 +38,49 @@ test('a fixed-layout page is centred and scaled to the screen', async ({ page })
   // A tap at the right edge turns the page.
   await page.mouse.click(pager.x + pager.width - 10, pager.y + pager.height / 2);
   await expect(page.locator('.page-number')).toHaveText('Page 2 of 3');
+});
+
+test.describe('on a tablet held sideways', () => {
+  test.use({ viewport: { width: 1180, height: 820 } });
+
+  test('a fixed-layout book opens two pages at a time after its cover', async ({ page }) => {
+    await page.goto('/');
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#addFirst')]);
+    await chooser.setFiles({ name: 'picture-book.epub', mimeType: 'application/epub+zip', buffer: fixedEpub(5) });
+    await expect(page.locator('.page-number')).toHaveText('Page 1 of 5');
+    await expect(page.locator('.fixed-leaf')).toHaveCount(1);
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.page-number')).toHaveText('Pages 2–3 of 5');
+    await expect(page.locator('.fixed-leaf')).toHaveCount(2);
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.page-number')).toHaveText('Pages 4–5 of 5');
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.locator('.page-number')).toHaveText('Pages 2–3 of 5');
+  });
+
+  test('a book in pages mode lies open in two columns', async ({ page }) => {
+    await page.goto('/');
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#addFirst')]);
+    await chooser.setFiles(fileURLToPath(new URL('../fixtures/lantern.epub', import.meta.url)));
+    await expect(page.locator('.reading h1').first()).toBeVisible();
+    if (await page.locator('.reader.chrome-hidden').count()) await page.mouse.click(590, 400);
+    await page.click('#openType');
+    await page.click('#panel-page');
+    await page.click('#modePaged');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.reading.paged.spread').first()).toBeVisible();
+    // Text on both halves of the screen.
+    const halves = await page.evaluate(() => {
+      const xs = [...document.querySelectorAll('.reading.paged p')].map((p) => p.getBoundingClientRect()).filter((r) => r.right > 0 && r.left < innerWidth);
+      return { left: xs.some((r) => r.right < innerWidth / 2), right: xs.some((r) => r.left > innerWidth / 2) };
+    });
+    expect(halves).toEqual({ left: true, right: true });
+    // Turned off, one column again.
+    if (await page.locator('.reader.chrome-hidden').count()) await page.mouse.click(590, 400);
+    await page.click('#openType');
+    await page.click('#panel-page');
+    await page.getByRole('switch', { name: /Two pages side by side/ }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.reading.paged.spread')).toHaveCount(0);
+  });
 });

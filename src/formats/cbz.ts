@@ -34,29 +34,33 @@ export function isComicArchive(names: string[]): boolean {
   return files.some((n) => IMAGE.test(n)) && files.every((n) => IMAGE.test(n) || n.startsWith('__MACOSX/') || /(^|\/)\./.test(n) || /\.(xml|json|txt|nfo|sfv|md5|url|ini|db)$/i.test(n));
 }
 
+/** ComicInfo.xml, read: its fields by name, or empty when there is none. */
+function comicInfo(files: Record<string, Uint8Array>): (name: string) => string {
+  const infoName = Object.keys(files).find((n) => /(^|\/)comicinfo\.xml$/i.test(n));
+  if (!infoName) return () => '';
+  try {
+    const doc = new DOMParser().parseFromString(strFromU8(files[infoName]!), 'application/xml');
+    return (n: string) => doc.getElementsByTagName(n)[0]?.textContent?.trim() ?? '';
+  } catch {
+    return () => '';
+  }
+}
+
+/** Manga read right to left: ComicInfo says so with Manga = YesAndRightToLeft. */
+export const readsRightToLeft = (manga: string) => /^yesandrighttoleft$/i.test(manga.trim());
+
 export function cbzInfo(bytes: Uint8Array): Omit<DocInfo, 'cover'> & {
   coverBytes: Uint8Array | null;
   coverType: string;
 } {
   const { names, files } = pages(bytes);
-  const infoName = Object.keys(files).find((n) => /(^|\/)comicinfo\.xml$/i.test(n));
-  let title = '';
-  let author = '';
-  let series = '';
-  let seriesIndex: number | null = null;
-  if (infoName) {
-    try {
-      const doc = new DOMParser().parseFromString(strFromU8(files[infoName]!), 'application/xml');
-      const get = (n: string) => doc.getElementsByTagName(n)[0]?.textContent?.trim() ?? '';
-      series = get('Series');
-      const num = Number.parseFloat(get('Number'));
-      seriesIndex = Number.isFinite(num) ? num : null;
-      title = get('Title') || (series ? `${series}${seriesIndex !== null ? ` ${seriesIndex}` : ''}` : '');
-      author = get('Writer');
-    } catch {
-      // No metadata: the file name stands in.
-    }
-  }
+  const get = comicInfo(files);
+  const series = get('Series');
+  const num = Number.parseFloat(get('Number'));
+  const seriesIndex = Number.isFinite(num) ? num : null;
+  // No metadata: the file name stands in.
+  const title = get('Title') || (series ? `${series}${seriesIndex !== null ? ` ${seriesIndex}` : ''}` : '');
+  const author = get('Writer');
   return {
     format: 'cbz',
     title,
@@ -78,6 +82,7 @@ export function openCbz(bytes: Uint8Array): FlowDoc {
   return {
     kind: 'flow',
     pictures: true,
+    ...(readsRightToLeft(comicInfo(files)('Manga')) ? { dir: 'rtl' as const } : {}),
     sections: [{ title: '', html, text: t.content.textContent ?? '' }],
     toc: [],
     dispose: () => urls.forEach((u) => URL.revokeObjectURL(u)),

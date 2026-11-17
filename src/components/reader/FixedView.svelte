@@ -1,10 +1,14 @@
 <script lang="ts">
   // A fixed-layout EPUB (picture books, comics, cookbooks): each page as the
   // publisher drew it, with its own CSS inside a shadow root so it can't
-  // touch the app, scaled to fit the screen. Pages turn like paged mode.
+  // touch the app, scaled to fit the screen. Pages turn like paged mode. On a
+  // wide screen held sideways, upright pages show two at a time, as the book
+  // lies open: the cover alone, then 1–2, 3–4…
   import { onMount } from 'svelte';
   import type { FlowDoc } from '../../formats/types';
   import { t } from '../../i18n/index.svelte';
+  import { keyTurn, tapTurn } from '../../reader/gestures';
+  import { spreadAt } from '../../reader/paging';
   import { reader } from '../../state/reader.svelte';
   import { settings } from '../../state/settings.svelte';
 
@@ -12,40 +16,55 @@
   const pages = $derived(content.fixed!);
   const index = $derived(reader.section);
   const rtl = $derived(content.dir === 'rtl');
-  let host = $state<HTMLDivElement>();
+  let hosts = $state<HTMLDivElement[]>([]);
   let box = $state<HTMLDivElement>();
   let size = $state({ w: 360, h: 640 });
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let sliding = $state(0);
 
   const pageSize = $derived(pages[index] ?? { width: 1200, height: 1600 });
-  const scale = $derived(Math.min(size.w / pageSize.width, size.h / pageSize.height));
+  /** Two upright pages fit side by side on this screen. */
+  const spread = $derived(reader.view.spreads && size.w > size.h * 1.1 && pageSize.height > pageSize.width);
+  /** The pages on screen, in reading order. */
+  const shown = $derived(spread ? spreadAt(index, pages.length) : [index]);
+  /** Left to right on screen: a right-to-left book's first page is on the right. */
+  const laidOut = $derived(rtl ? [...shown].reverse() : shown);
+  const across = $derived(laidOut.reduce((w, i) => w + (pages[i]?.width ?? pageSize.width), 0));
+  const tallest = $derived(Math.max(...shown.map((i) => pages[i]?.height ?? pageSize.height)));
+  const scale = $derived(Math.min(size.w / across, size.h / tallest));
+  const label = $derived(shown.length > 1 ? t('reader.pagesOf', { first: shown[0]! + 1, last: shown.at(-1)! + 1, pages: pages.length }) : t('reader.pageOf', { page: index + 1, pages: pages.length }));
 
   $effect(() => {
-    const page = pages[index];
-    if (!host || !page) return;
-    const shadow = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
-    // The page's own markup and CSS, already sanitised and scoped to .fx (styles.ts).
-    shadow.innerHTML = `<style>:host{display:block}.fx{position:relative;overflow:hidden;width:${page.width}px;height:${page.height}px;background:var(--sheet-bg)}.fx img{max-width:none}${page.css}</style><div class="fx">${page.html}</div>`;
-    reader.report({ section: index, offset: 0 }, content.sections[index]?.text.length ?? 0);
+    const order = laidOut;
+    order.forEach((i, slot) => {
+      const page = pages[i];
+      const host = hosts[slot];
+      if (!host || !page) return;
+      const shadow = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
+      // The page's own markup and CSS, already sanitised and scoped to .fx (styles.ts).
+      shadow.innerHTML = `<style>:host{display:block}.fx{position:relative;overflow:hidden;width:${page.width}px;height:${page.height}px;background:var(--sheet-bg)}.fx img{max-width:none}${page.css}</style><div class="fx">${page.html}</div>`;
+    });
+    // The place is the last page on screen, so the end of the book is reached on its last spread.
+    const last = shown.at(-1)!;
+    reader.report({ section: last, offset: 0 }, content.sections[last]?.text.length ?? 0);
     if (reader.jump) reader.jump = null;
   });
 
   function turn(dir: 1 | -1) {
-    const to = index + dir;
+    const to = dir === 1 ? shown.at(-1)! + 1 : shown[0]! - 1;
     if (to < 0 || to >= pages.length) return;
     if (!reduceMotion && settings.value.pageTurn !== 'none') {
       sliding = dir;
       setTimeout(() => (sliding = 0), 180);
     }
-    reader.goTo({ section: to, offset: 0 });
+    reader.goTo({ section: spread ? spreadAt(to, pages.length)[0]! : to, offset: 0 });
   }
 
   function onclick(e: MouseEvent) {
     const r = box!.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width;
-    if (x < 0.3 || x > 0.7) {
-      turn((x > 0.7) !== rtl ? 1 : -1);
+    const dir = tapTurn((e.clientX - r.left) / r.width, rtl);
+    if (dir) {
+      turn(dir);
       reader.chrome = false;
     } else reader.chrome = !reader.chrome;
   }
@@ -65,9 +84,9 @@
 
   function onkeydown(e: KeyboardEvent) {
     if (e.defaultPrevented || document.querySelector('dialog[open]')) return;
-    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) turn(rtl ? -1 : 1);
-    else if (['ArrowLeft', 'PageUp'].includes(e.key)) turn(rtl ? 1 : -1);
-    else return;
+    const dir = keyTurn(e.key, e.shiftKey, rtl);
+    if (!dir) return;
+    turn(dir);
     e.preventDefault();
   }
 
@@ -99,17 +118,20 @@
     class="fixed-page"
     class:slide-next={sliding === 1}
     class:slide-prev={sliding === -1}
+    class:spread={laidOut.length > 1}
     role="img"
-    aria-label={t('reader.pageOf', { page: index + 1, pages: pages.length })}
-    style:width="{pageSize.width}px"
-    style:height="{pageSize.height}px"
+    aria-label={label}
+    style:width="{across}px"
+    style:height="{tallest}px"
     style:transform="translate(-50%, -50%) scale({scale})"
   >
-    <div bind:this={host}></div>
+    {#each laidOut as i, slot (i)}
+      <div class="fixed-leaf" style:width="{pages[i]?.width}px" style:height="{pages[i]?.height}px" bind:this={hosts[slot]}></div>
+    {/each}
   </div>
 </div>
-<p class="t-data-small faint page-number tabular">{t('reader.pageOf', { page: index + 1, pages: pages.length })}</p>
-<p class="visually-hidden">{content.sections[index]?.text}</p>
+<p class="t-data-small faint page-number tabular">{label}</p>
+<p class="visually-hidden">{shown.map((i) => content.sections[i]?.text ?? '').join(' ')}</p>
 
 <style>
   /* ─── Fixed layout and pictures ─────────────────────────────── */
@@ -123,6 +145,14 @@
     top: 50%;
     transform-origin: center;
     box-shadow: 0 8px 24px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-strength)));
+  }
+  .fixed-page {
+    display: flex;
+    align-items: center;
+  }
+  /* The fold between two pages: a soft shadow into the gutter. */
+  .fixed-page.spread .fixed-leaf:first-child {
+    box-shadow: inset -12px 0 16px -12px rgba(var(--shadow-rgb), calc(0.45 * var(--shadow-strength)));
   }
   .fixed-page.slide-next {
     animation: page-in-next var(--spring-spatial-calm-dur) var(--spring-spatial-calm);

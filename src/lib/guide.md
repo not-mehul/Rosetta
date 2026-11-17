@@ -26,7 +26,7 @@ Tap the middle of the page to hide the toolbars, and again to bring them back. S
 
 In **Aa**, the **Page** tab offers **Flow**: one sentence at a time, letter by letter. Tap to show the rest of the sentence and again for the next; tap the left edge to go back, and the count under the sentence to bring the toolbars back. **Visual anchors** set the start of every word in bold, and **Yours** reads in a font file of your own.
 
-In **Pages** mode (also in the **Page** tab), tap the left or right edge, swipe, or use the arrow keys to turn a page. The corner curls under your finger; choose _Slide_ or _None_ if you prefer less motion. On Android the volume keys turn pages too.
+In **Pages** mode (also in the **Page** tab), tap the left or right edge, swipe, or use the arrow keys to turn a page. The corner curls under your finger; choose _Slide_ or _None_ if you prefer less motion. On Android the volume keys turn pages too. On a tablet held sideways, pages lie open two at a time, as a printed book does; turn _Two pages side by side_ off in the **Page** tab for one. Comics marked as manga read right to left.
 
 Tap a footnote number and the note opens over the page. Tap a picture to see it full screen.
 

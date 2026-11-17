@@ -201,6 +201,9 @@
       {/if}
 
       <div class="settings-list">
+        {#if fixed || (!pdf && v.readingMode === 'paged')}
+          <Switch checked={v.spreads} label={t('type.spreads')} hint={t('type.spreadsHint')} onchange={(on) => set({ spreads: on })} />
+        {/if}
         <Switch checked={v.keepAwake} label={t('type.keepAwake')} hint={t('type.keepAwakeHint')} onchange={(on) => set({ keepAwake: on })} />
         {#if volumeKeysAvailable}
           <Switch checked={v.volumeKeys} label={t('type.volumeKeys')} hint={t('type.volumeKeysHint')} onchange={(on) => set({ volumeKeys: on })} />

@@ -11,7 +11,7 @@
   import { isNoteRef, noteHtml } from '../../reader/notes';
   import { firstVisibleOffset, paint, rangeAt, unpaint, type Paint } from '../../reader/offsets';
   import { keyTurn, linkTarget, swipeCommits, swipeDirection, tapTurn } from '../../reader/gestures';
-  import { findPage, firstOffsetOnPage, pageCount, pageOfOffset, pageOfRect, TextIndex, type Columns } from '../../reader/paging';
+  import { findPage, firstOffsetOnPage, pageCount, pageOfOffset, pageOfRect, screenColumns, TextIndex, type Columns } from '../../reader/paging';
   import { watchSelection, type PageSelection } from '../../reader/selection.svelte';
   import type { HighlightColour } from '../../state/db';
   import { library, nextInSeries } from '../../state/library.svelte';
@@ -66,8 +66,9 @@
   let text: TextIndex | null = null;
   /** The pager's width: one turn. */
   let stride = 0;
-  let side = SIDE;
   let pageW = 0;
+  /** Two columns on the screen, as an open book (wide screens held sideways). */
+  let spread = $state(false);
   let tx = 0;
   let turning = false;
 
@@ -86,20 +87,21 @@
     const h = pager.clientHeight;
     // The text is sized in rem, so it follows the phone's text size; the column follows with it.
     const rootScale = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
-    const measure = parseFloat(MEASURE_VALUE[v.measure]) * v.fontSize * rootScale;
-    pageW = Math.floor(Math.min(w - 2 * SIDE, measure));
-    side = Math.floor((w - pageW) / 2);
+    const em = v.fontSize * rootScale;
+    const cols = screenColumns(w, h, parseFloat(MEASURE_VALUE[v.measure]) * em, 26 * em, SIDE, rtl, v.spreads);
+    pageW = cols.pageW;
+    spread = cols.perScreen === 2;
     stride = w;
     Object.assign(root.style, {
       position: 'absolute',
       top: '0',
-      left: `${side}px`,
+      left: `${cols.left}px`,
       width: `${pageW}px`,
       height: `${h}px`,
       columnWidth: `${pageW}px`,
-      columnGap: `${2 * side}px`,
+      columnGap: `${cols.gap}px`,
     });
-    pages = pageCount(root.scrollWidth + 2 * side, stride);
+    pages = pageCount(root.scrollWidth + cols.gap, stride);
     text = new TextIndex(root);
     warmCurl();
   }
@@ -245,7 +247,7 @@
 
   // Type or size changes: keep the same words at the top.
   $effect(() => {
-    void [v.fontSize, v.typeface, v.customFont, v.anchors, v.spacing, v.measure, v.justify, publisher];
+    void [v.fontSize, v.typeface, v.customFont, v.anchors, v.spacing, v.measure, v.justify, v.spreads, publisher];
     const at = untrack(() => reader.location.offset);
     void tick().then(() =>
       requestAnimationFrame(() => {
@@ -602,6 +604,7 @@
   >
     <article
       class="reading paged"
+      class:spread
       class:sans={v.typeface === 'sans'}
       class:custom={v.typeface === 'custom' && !!v.customFont}
       class:anchored={v.anchors}

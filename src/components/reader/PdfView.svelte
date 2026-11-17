@@ -4,6 +4,7 @@
   import { onMount, tick, untrack } from 'svelte';
   import type { PdfDoc } from '../../formats/types';
   import { paint, unpaint, type Paint } from '../../reader/offsets';
+  import { PDF_END } from '../../reader/progress';
   import { watchSelection, type PageSelection } from '../../reader/selection.svelte';
   import type { HighlightColour } from '../../state/db';
   import { reader } from '../../state/reader.svelte';
@@ -131,11 +132,14 @@
   function track() {
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
+      // The bottom of the last page on screen is the end of the document, whichever page is at the top.
+      const last = pages.at(-1)?.getBoundingClientRect();
+      const end = last && (last.bottom <= innerHeight + 2 || scrollY + innerHeight >= document.documentElement.scrollHeight - 2) ? PDF_END : 0;
       for (let i = 0; i < pages.length; i++) {
         const r = pages[i]!.getBoundingClientRect();
         if (r.bottom > TOP) {
           const offset = Math.round(Math.max(0, Math.min(1, (TOP - r.top) / r.height)) * 10000);
-          reader.report({ section: i, offset }, 0);
+          reader.report({ section: i, offset }, end);
           return;
         }
       }

@@ -11,6 +11,19 @@ export interface Location {
 
 export const START: Location = { section: 0, offset: 0 };
 
+/** A PDF view reports this as its visible end when the bottom of the last page is on screen. */
+export const PDF_END = 10000;
+
+/**
+ * Whether the end of the document is on screen. The place is the top of the
+ * screen, which can't reach the end, so finishing goes by the last words seen.
+ */
+export function endInView(kind: 'flow' | 'pdf', lengths: readonly number[], sectionCount: number, at: Location, visibleEnd: number): boolean {
+  if (kind === 'pdf') return visibleEnd >= PDF_END;
+  const last = sectionCount - 1;
+  return last >= 0 && at.section === last && visibleEnd >= (lengths[last] ?? 0);
+}
+
 /** Fraction read, 0…1, weighting each section by its length. */
 export function flowProgress(lengths: readonly number[], at: Location): number {
   const total = lengths.reduce((a, b) => a + b, 0);

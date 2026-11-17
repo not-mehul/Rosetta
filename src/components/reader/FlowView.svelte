@@ -527,7 +527,9 @@
       if (!root) return;
       if (placed && Math.abs(scrollY - placed.y) > 2) placed = null;
       const offset = placed?.offset ?? firstVisibleOffset(root, TOP);
-      const end = firstVisibleOffset(root, innerHeight - 80);
+      // Scrolled as far as it goes: the last words are on screen, however short the last screen is.
+      const bottom = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+      const end = bottom ? section.text.length : firstVisibleOffset(root, innerHeight - 80);
       reader.report({ section: index, offset }, end);
     });
   }

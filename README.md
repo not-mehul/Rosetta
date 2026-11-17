@@ -16,18 +16,17 @@ Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB
   <img src="docs/screenshots/reader.webp" width="200" alt="Reading Moby-Dick: the first chapter in a serif typeface with the reader bar above">
   <img src="docs/screenshots/flow.webp" width="200" alt="Flow mode: Call me Ishmael, one sentence at a time in the middle of the screen">
   <img src="docs/screenshots/reading-panel.webp" width="200" alt="The reading panel over the page, with Text, Page, Light and Listen tabs">
-  <img src="docs/screenshots/library-dawn.webp" width="200" alt="The library in the light Dawn theme, with Continue reading and document cards">
+  <img src="docs/screenshots/library-dawn.webp" width="200" alt="The library in the light Dawn theme: Rosetta, Continue reading, the search field and filter, and covers marked as being read">
 </p>
 
 ## Features
 
 ### Your library
 
-- **Shelves and collections.** Documents as cards with their covers, a *Continue reading* panel (and an Android home-screen widget that opens the book at your place), shelves for Reading, All and Finished, and collections a document can be on any number of.
+- **A library with marks and collections.** Documents as cards with their covers, each marked as not opened, being read or finished, a *Continue reading* panel (and an Android home-screen widget that opens the book at your place), one search field and one filter, and collections a document can be on any number of.
 - **Up next.** When nothing is in progress, Rosetta offers the next volume of a series you just finished.
 - **Find anything.** Sort by recent, title, author or series, and filter by title, author, series or `#tag`. *Edit details* fixes the title, author, series, tags and cover.
 - **Add in bulk.** Add a whole folder at once where the browser allows it. Adding the same file twice keeps one copy.
-- **Catalogs.** Browse and download from OPDS catalogs. Project Gutenberg and Standard Ebooks are built in, and you can add a Calibre server or a library's feed.
 
 ### Every format
 
@@ -36,31 +35,30 @@ EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading dire
 ### Reading
 
 - **Scroll or turn pages** with a page curl, a slide or no motion. Tap the edges, swipe, use the arrow keys or, on Android, the volume keys.
-- **Flow.** One sentence at a time in the middle of the screen, its letters appearing at the speed you set. The sentence count and bar stay put at the bottom centre.
-- **Visual anchors** set the start of every word in bold, and **Yours** reads in a font file you add (TTF, OTF, WOFF or WOFF2).
+- **Flow.** One sentence at a time in the middle of the screen, its letters appearing at the speed you set. Hold a sentence to highlight it. The sentence count and bar stay put at the bottom centre.
+- **A reading panel that stays out of the way.** Text, Page, Light and Listen, each with only what applies; the defaults, and niche aids such as a reading ruler and visual anchors, live in Settings.
 - **Read aloud**, sentence by sentence with the sentence highlighted. On Android it keeps reading with the screen off, with controls on the lock screen, pauses when headphones are unplugged, and a sleep timer stops it after 15 to 60 minutes or at the end of the chapter.
 - **Footnotes open in place**, and pictures open full screen with pinch zoom.
-- **Night comfort.** A dim and warmth layer, and the screen can stay on.
+- **Night comfort.** True black for OLED screens, night light in five steps that dim and warm the page together, and the screen can stay on.
 - **Always know where you are.** The footer shows the time left in the book or chapter, or which chapter this is. After a jump, *Back to* returns you to where you were.
-- **Contents, bookmarks and highlights** in one sheet, with page thumbnails for PDFs. Highlights come in three colours with an optional note, export as Markdown and share as a quote card. *All notes* gathers every highlight from every document, searchable. *Look up* sends a word to the system dictionary.
+- **Contents, bookmarks and highlights** in one sheet, with page thumbnails for PDFs. Highlights come in three colours with an optional note, export as Markdown and share as a quote card. *Notes* gathers every highlight and bookmark from every document, by book, searchable, each opening at its place. *Look up* sends a word to the system dictionary.
 
 ### Reading habits
 
 - **Stats.** Time read today and this week, your streak and longest streak, pace, a calendar of the last four months, the documents that took the most time, and what you finished this year.
-- **A daily goal** of 15, 30 or 60 minutes, noted once when it is met.
+- **Goals and a reminder.** A daily goal of 15, 30 or 60 minutes and a number of books for the year, set in Settings and followed in Stats, and an optional reminder to read at a time you choose.
 - **A little delight.** Confetti when you finish a book, an idle stone that says "read" in nine scripts, and four easter eggs, counted in Settings. All of it respects reduced motion.
 
 ### Your data
 
-- **Export and back up.** Every note as Markdown, your places, marks, details and collections as JSON, or the whole library with its files as a zip. On a phone, a dated backup is written each week, to a folder you can choose.
-- **Sync with a folder.** Places and marks merge with a file in a folder you choose with the system picker, in iCloud Drive or a folder Syncthing or Dropbox shares.
+- **Back up and sync.** Your places, marks, details, collections and settings as JSON, or the whole library with its files as a zip. Sync and automatic backups (daily, weekly or monthly) go through a folder you choose, and a reading reminder can come once a day.
 - **Storage.** See what each file takes, and offload a file while keeping its place and notes.
-- **Four languages.** English, Spanish, French and German.
+- **Five languages.** English, Spanish, French, German and Russian.
 - **The other apps.** Log a finished book in BookShelf, and let other apps open a document with `rosetta://open?title=…`.
 
 ## Private by design
 
-Your documents never leave the device. Rosetta goes online only when you browse a catalog, and sync goes through a folder you choose, not a Rosetta server. There are no accounts.
+Your documents never leave the device. Rosetta never goes online: sync goes through a folder you choose, not a Rosetta server. There are no accounts.
 
 ## Install
 

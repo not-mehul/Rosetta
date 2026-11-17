@@ -41,7 +41,7 @@ npm run assets       # redraw the app icon and splash screens
 | `src/components/` | The library, the reader views and the sheets; `ui/` holds Rosetta's own pieces (Sheet, Modal and the rest); TabRail, Toast and ThemeToggle come from `dusk-dawn` |
 | `src/platform/` | Native bridges: files in and out, theme and system bars, haptics, keep-awake, volume keys and hand-off to the other apps |
 | `src/i18n/` | The interface strings: `en.ts` is the reference, and `es.ts`, `fr.ts` and `de.ts` must have every key (a unit test checks the placeholders) |
-| `src/lib/` | Pickers, exports, quote cards, OPDS catalogs and the guide |
+| `src/lib/` | Pickers, exports, quote cards, reminders and the guide |
 | `src/styles/` | `app.css`, which imports `dusk-dawn/tokens.css` and `dusk-dawn/components.css` first |
 | `tests/` | Vitest unit tests, Playwright end-to-end tests, and the fixtures (`tests/fixtures/make-fixtures.mjs` rebuilds them) |
 | `android/`, `ios/` | The Capacitor projects |

@@ -160,6 +160,35 @@ const RANGES: Partial<Record<keyof Settings, readonly [number, number]>> = {
   flowSpeed: [FLOW_SPEED.min, FLOW_SPEED.max],
 };
 
+/**
+ * The settings a document keeps for itself. A new document reads with the
+ * defaults; a change made while it is open is remembered for it alone.
+ */
+export const BOOK_KEYS = ['typeface', 'fontSize', 'spacing', 'measure', 'justify', 'readingMode', 'publisherStyles', 'pdfZoom', 'pdfFit', 'pageTone', 'flowSpeed', 'anchors'] as const satisfies readonly (keyof Settings)[];
+export type BookKey = (typeof BOOK_KEYS)[number];
+export type BookSettings = Partial<Pick<Settings, BookKey>>;
+
+export const isBookKey = (key: string): key is BookKey => (BOOK_KEYS as readonly string[]).includes(key);
+
+/** A document's own settings, keeping only the ones that fit. */
+export function cleanBookSettings(raw: unknown): BookSettings {
+  if (!raw || typeof raw !== 'object') return {};
+  const given = raw as Record<string, unknown>;
+  const valid = mergeSettings(given as Partial<Record<keyof Settings, unknown>>);
+  const out: Record<string, unknown> = {};
+  for (const key of BOOK_KEYS) if (key in given && JSON.stringify(valid[key]) === JSON.stringify(given[key])) out[key] = valid[key];
+  return out as BookSettings;
+}
+
+/** The settings a document reads with: the defaults, under its own. */
+export function settingsFor(defaults: Settings, own: BookSettings | undefined): Settings {
+  if (!own) return defaults;
+  const out = { ...defaults, ...cleanBookSettings(own) };
+  // A font file of one's own that has since been removed.
+  if (out.typeface === 'custom' && !defaults.customFont) out.typeface = defaults.typeface === 'custom' ? 'serif' : defaults.typeface;
+  return out;
+}
+
 /** Kept to this device: what a backup leaves out of the settings it carries. */
 const DEVICE_ONLY = ['lastAutoBackup', 'lastDocId', 'customFont', 'sync'] as const satisfies readonly (keyof Settings)[];
 

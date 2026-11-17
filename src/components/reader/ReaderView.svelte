@@ -24,7 +24,7 @@
   import SpeechBar from './SpeechBar.svelte';
 
   const doc = $derived(reader.doc!);
-  const v = $derived(settings.value);
+  const v = $derived(reader.view);
   const where = $derived(reader.content ? reader.whereIs(reader.location.section, reader.location.offset) : '');
   /** The bar's title: the chapter a reader would name (a PDF's from its outline), or nothing, and then the book's own title. */
   const chapter = $derived.by(() => {

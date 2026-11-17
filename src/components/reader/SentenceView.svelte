@@ -10,12 +10,11 @@
   import { anchorRuns } from '../../reader/anchors';
   import { beatAt, beats, type Beat } from '../../reader/cadence';
   import { reader } from '../../state/reader.svelte';
-  import { settings } from '../../state/settings.svelte';
   import { MEASURE_VALUE } from '../../state/settings';
 
   let { content }: { content: FlowDoc } = $props();
 
-  const v = $derived(settings.value);
+  const v = $derived(reader.view);
   const index = $derived(reader.section);
   const section = $derived(content.sections[index]!);
   const list = $derived<Beat[]>(beats(section.html, section.text, content.lang));

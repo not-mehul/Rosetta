@@ -2,6 +2,7 @@
 // listing the library stays light; marks (bookmarks and highlights) are kept
 // per document.
 
+import type { BookSettings } from './settings';
 import Dexie, { type EntityTable } from 'dexie';
 import type { Format } from '../formats/types';
 import type { Location } from '../reader/progress';
@@ -36,6 +37,8 @@ export interface StoredDoc {
   password?: string;
   /** Last change to place, progress or details, for sync. */
   updatedAt: number;
+  /** Reading settings changed while this document was open, over the defaults (see BOOK_KEYS). */
+  reading?: BookSettings;
 }
 
 export interface StoredBytes {

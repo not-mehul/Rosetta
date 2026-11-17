@@ -38,7 +38,7 @@ export const slug = (s: string) =>
     .slice(0, 60) || 'notes';
 
 type BackedUpDoc = Pick<StoredDoc, 'id' | 'title' | 'author' | 'fileName' | 'location' | 'progress' | 'finishedAt' | 'openedAt'> &
-  Partial<Pick<StoredDoc, 'format' | 'size' | 'addedAt' | 'tags' | 'collections' | 'series' | 'seriesIndex' | 'updatedAt'>> & { marks: Mark[] };
+  Partial<Pick<StoredDoc, 'format' | 'size' | 'addedAt' | 'tags' | 'collections' | 'series' | 'seriesIndex' | 'updatedAt' | 'reading'>> & { marks: Mark[] };
 
 export interface Backup {
   app: 'rosetta';
@@ -78,6 +78,7 @@ export function makeBackup(docs: readonly StoredDoc[], marks: readonly Mark[], n
       series: d.series,
       seriesIndex: d.seriesIndex,
       updatedAt: d.updatedAt,
+      ...(d.reading && Object.keys(d.reading).length ? { reading: d.reading } : {}),
       marks: marks.filter((m) => m.docId === d.id),
     })),
   };

@@ -53,6 +53,10 @@ export interface Settings {
   pageTurn: PageTurn;
   /** Paged mode on a wide screen held sideways: two pages side by side, as an open book. */
   spreads: boolean;
+  /** Auto-scroll's pace, in lines a minute. */
+  autoScrollSpeed: number;
+  /** A band over the line being read, the rest of the page dimmed. */
+  ruler: boolean;
   /** Volume keys turn pages (Android). */
   volumeKeys: boolean;
   /** Keep the screen on while a document is open. */
@@ -124,6 +128,8 @@ export const DEFAULT_SETTINGS: Settings = {
   customFont: '',
   pageTurn: 'curl',
   spreads: true,
+  autoScrollSpeed: 12,
+  ruler: false,
   volumeKeys: true,
   keepAwake: false,
   dim: 0,
@@ -175,6 +181,7 @@ const RANGES: Partial<Record<keyof Settings, readonly [number, number]>> = {
   warmth: [0, 1],
   speechRate: [SPEECH_RATE.min, SPEECH_RATE.max],
   flowSpeed: [FLOW_SPEED.min, FLOW_SPEED.max],
+  autoScrollSpeed: [4, 60],
 };
 
 /**

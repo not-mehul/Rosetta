@@ -9,6 +9,7 @@
   //   Listen read aloud, its voice and speed
   import { onMount } from 'svelte';
   import { Select, Switch, TabRail } from 'dusk-dawn';
+  import { autoScroll } from '../../state/autoscroll.svelte';
   import { t } from '../../i18n/index.svelte';
   import { pickFiles } from '../../lib/pick';
   import { volumeKeysAvailable } from '../../platform/device';
@@ -134,6 +135,7 @@
 
       <div class="settings-list">
         <Switch checked={v.anchors} label={t('type.anchors')} hint={t('type.anchorsHint')} onchange={(on) => set({ anchors: on })} />
+        <Switch checked={v.ruler} label={t('type.ruler')} hint={t('type.rulerHint')} onchange={(on) => set({ ruler: on })} />
         <Switch checked={v.justify} label={t('type.justify')} hint={t('type.justifyHint')} onchange={(on) => set({ justify: on })} />
         {#if bookStyles}
           <Switch checked={v.publisherStyles} label={t('type.bookStyles')} hint={t('type.bookStylesHint')} onchange={(on) => set({ publisherStyles: on })} />
@@ -159,6 +161,20 @@
             {#if !pictures}<button type="button" role="radio" id="modeFlow" aria-checked={v.readingMode === 'flow'} onclick={() => set({ readingMode: 'flow' })}>{t('type.flow')}</button>{/if}
           </div>
           {#if v.readingMode === 'paged'}<span class="field-hint">{t('type.pagesHint')}</span>{/if}
+          {#if v.readingMode === 'scroll' && text}
+            <div class="autoscroll-start">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="startAutoScroll"
+                onclick={() => {
+                  onclose();
+                  autoScroll.start();
+                }}><Icon name="play" />{t('autoscroll.start')}</button
+              >
+              <span class="field-hint">{t('autoscroll.hint')}</span>
+            </div>
+          {/if}
           {#if v.readingMode === 'flow' && !pictures}<span class="field-hint">{t('type.flowHint')}</span>{/if}
         </div>
 
@@ -296,6 +312,13 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+  }
+  .autoscroll-start {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
   }
   .listen-start {
     display: flex;

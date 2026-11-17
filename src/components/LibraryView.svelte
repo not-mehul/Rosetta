@@ -21,6 +21,7 @@
   import Icon from './ui/Icon.svelte';
   import { TabRail, WavyProgress } from 'dusk-dawn';
   import TextResults from './TextResults.svelte';
+  import LibraryCards from './LibraryCards.svelte';
   import { tick } from 'svelte';
   import { hatch } from '../lib/delight';
 
@@ -124,6 +125,7 @@
         <button type="button" class="btn btn-muted" id="readGuide" onclick={() => void addGuide()}>{t('library.readGuide')}</button>
       </EmptyState>
     {:else if library.loaded}
+      <LibraryCards quiet={!current && !next} />
       {#if current}
         <section class="resume panel" aria-label={t('library.continue')}>
           <p class="t-section-label">{t('library.continue')}</p>

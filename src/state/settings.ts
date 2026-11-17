@@ -19,6 +19,8 @@ export type LocaleSetting = 'system' | 'en' | 'es' | 'fr' | 'de';
 export type FooterShows = 'book' | 'chapter' | 'place';
 /** Minutes a day, or 0 for no goal. */
 export const DAILY_GOALS = [0, 15, 30, 60] as const;
+/** Books a year, or 0 for no goal. */
+export const YEARLY_GOALS = [0, 6, 12, 24, 52] as const;
 
 export interface Settings {
   theme: ThemeSetting;
@@ -86,6 +88,10 @@ export interface Settings {
   footerShows: FooterShows;
   /** Minutes of reading a day to aim for; 0 is no goal. */
   dailyGoal: number;
+  /** Books to finish this year; 0 is no goal. */
+  yearlyGoal: number;
+  /** The Monday of the last week whose recap was put away. */
+  recapSeen: string;
   /** The document open when the app last closed. */
   lastDocId: string | null;
 }
@@ -130,6 +136,8 @@ export const DEFAULT_SETTINGS: Settings = {
   layout: 'grid',
   footerShows: 'book',
   dailyGoal: 0,
+  yearlyGoal: 0,
+  recapSeen: '',
   lastDocId: null,
 };
 
@@ -148,6 +156,7 @@ const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   layout: ['grid', 'list'],
   footerShows: ['book', 'chapter', 'place'],
   dailyGoal: DAILY_GOALS,
+  yearlyGoal: YEARLY_GOALS,
 };
 
 /** Numbers kept within their range: [min, max]. */
@@ -190,7 +199,7 @@ export function settingsFor(defaults: Settings, own: BookSettings | undefined): 
 }
 
 /** Kept to this device: what a backup leaves out of the settings it carries. */
-const DEVICE_ONLY = ['lastAutoBackup', 'lastDocId', 'customFont', 'sync'] as const satisfies readonly (keyof Settings)[];
+const DEVICE_ONLY = ['lastAutoBackup', 'lastDocId', 'customFont', 'sync', 'recapSeen'] as const satisfies readonly (keyof Settings)[];
 
 /** The settings a backup carries: everything but what belongs to this device, and no catalog passwords. */
 export function portableSettings(s: Settings): Partial<Settings> {

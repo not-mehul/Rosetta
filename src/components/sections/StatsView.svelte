@@ -7,7 +7,7 @@
   import { locale, t } from '../../i18n/index.svelte';
   import { duration } from '../../lib/format';
   import { library } from '../../state/library.svelte';
-  import { DAILY_GOALS } from '../../state/settings';
+  import { DAILY_GOALS, YEARLY_GOALS } from '../../state/settings';
   import { settings } from '../../state/settings.svelte';
   import { calendarWeeks, dayKey, stats, type Summary } from '../../state/stats.svelte';
 
@@ -60,6 +60,14 @@
   );
   const mostMs = $derived(mostRead[0]?.ms ?? 1);
   const goalShare = $derived(summary && goal ? Math.min(1, summary.todayMs / (goal * 60_000)) : 0);
+  const yearGoal = $derived(settings.value.yearlyGoal);
+  const yearShare = $derived(yearGoal ? Math.min(1, finishedThisYear.length / yearGoal) : 0);
+  /** Where the year's goal would have you by today, in books. */
+  const onPace = $derived.by(() => {
+    const start = new Date(year, 0, 1).getTime();
+    const end = new Date(year + 1, 0, 1).getTime();
+    return Math.floor((yearGoal * (Date.now() - start)) / (end - start));
+  });
 </script>
 
 <div class="section-view" id="view-stats" role="tabpanel" aria-labelledby="tab-stats">
@@ -93,6 +101,27 @@
         {/each}
       </div>
       <p class="t-hint">{t('stats.goalHint')}</p>
+    </section>
+
+    <section class="settings-group">
+      <h3 class="t-section-label" id="yearGoalLabel">{t('stats.yearGoal', { year })}</h3>
+      {#if yearGoal}
+        <div class="goal-figure">
+          <div class="meter" role="meter" aria-labelledby="yearGoalLabel" aria-valuemin={0} aria-valuemax={yearGoal} aria-valuenow={Math.min(yearGoal, finishedThisYear.length)}>
+            <div class="meter-fill" class:is-complete={yearShare >= 1} style:transform="scaleX({yearShare})"></div>
+          </div>
+          <p class="t-data-small tabular dim" id="yearGoalStatus">
+            {yearShare >= 1 ? t('stats.yearGoalDone', { count: finishedThisYear.length }) : t('stats.yearGoalSoFar', { done: finishedThisYear.length, goal: yearGoal, pace: onPace })}
+          </p>
+        </div>
+      {/if}
+      <div class="segmented" role="radiogroup" aria-labelledby="yearGoalLabel">
+        {#each YEARLY_GOALS as books (books)}
+          <button type="button" role="radio" aria-checked={yearGoal === books} data-year-goal={books} onclick={() => void settings.update({ yearlyGoal: books })}>
+            {books || t('stats.goalOff')}
+          </button>
+        {/each}
+      </div>
     </section>
 
     <section class="settings-group">

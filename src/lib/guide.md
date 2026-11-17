@@ -59,11 +59,11 @@ Rosetta has two themes. _Dusk_ is a late-night reading room and _Dawn_ is a sunl
 
 The tabs under the title are **Library**, **Notes**, **Stats** and **Catalogs**. In the Library, **Arrange** chooses covers or a list, the order, and which collection or tag to show. Search the library with the magnifier: it finds titles and authors, and under _Inside the books_ the places in every book where the words appear (the first search reads each book once). Search with `#tag` for a tag. Tap a book's **⋮** for its details, where you can put it in a **collection**, and _Edit details_ fixes the title, author, series, tags and cover.
 
-**Stats** shows time read today and this week, your streak, a calendar of the last few months and what you finished this year. Set a daily goal there if you'd like one.
+**Stats** shows time read today and this week, your streak, a calendar of the last few months and what you finished this year. Set a daily goal there, or a number of books for the year, if you'd like one. The first time the library opens in a new week, it shows last week's reading until you put it away; when nothing is in progress, it shows a line from your highlights instead.
 
 ## Your notes
 
-The **Notes** tab gathers every highlight from every document. From a document's details, or from the highlights list, you can export them as Markdown.
+The **Notes** tab gathers every highlight from every document; filter it by colour or words, and _Export these_ saves what it shows as Markdown. A book's details have room for a note on the whole book, which goes out with its highlights. From a document's details, or from the highlights list, you can export them as Markdown.
 
 Settings can back up every place, bookmark, highlight and collection to a file, save the whole library with its files, and restore either later. **Sync with a folder** keeps places and notes the same on your devices through a folder you share between them: choose one in iCloud Drive, or one Syncthing or Dropbox keeps in step. Weekly backups can go to a folder of your choice too. **Storage** shows what each file takes and can offload one, keeping its place and notes until you add it again.
 

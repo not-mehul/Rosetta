@@ -3,7 +3,7 @@
 // stats sheet its figures and "time left" the reader's own pace.
 
 import { DEFAULT_PACE } from '../reader/progress';
-import { dayKey, daysBefore, longestRun } from '../lib/calendar';
+import { dayKey, daysBefore, longestRun, weekStart } from '../lib/calendar';
 import { db, type ReadingSession } from './db';
 import { settings } from './settings.svelte';
 
@@ -32,6 +32,38 @@ export interface Summary {
   byDay: ReadonlyMap<string, number>;
   /** Time read in each document, most first. */
   byDoc: { docId: string; ms: number; days: number }[];
+}
+
+/** Last week, Monday to Sunday: what the library shows the first time it opens in a new week. */
+export interface Recap {
+  /** The Monday it began, YYYY-MM-DD. */
+  week: string;
+  ms: number;
+  days: number;
+  finished: number;
+  /** The document read longest that week. */
+  topDocId: string | null;
+}
+
+/** The week before the one holding `now`; null when nothing was read in it. Pure, for the tests. */
+export function lastWeek(sessions: readonly ReadingSession[], finishedAt: readonly (number | null)[], now = Date.now()): Recap | null {
+  const thisWeek = weekStart(now);
+  const week = daysBefore(thisWeek, 7);
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const days = new Set<string>();
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const docs = new Map<string, number>();
+  let ms = 0;
+  for (const s of sessions) {
+    if (s.day < week || s.day >= thisWeek || s.ms <= 0) continue;
+    ms += s.ms;
+    days.add(s.day);
+    docs.set(s.docId, (docs.get(s.docId) ?? 0) + s.ms);
+  }
+  if (!ms) return null;
+  const finished = finishedAt.filter((at) => at !== null && dayKey(at) >= week && dayKey(at) < thisWeek).length;
+  const top = [...docs].sort((a, b) => b[1] - a[1])[0];
+  return { week, ms, days: days.size, finished, topDocId: top?.[0] ?? null };
 }
 
 /** Figures from stored sessions; pure, for the tests. */

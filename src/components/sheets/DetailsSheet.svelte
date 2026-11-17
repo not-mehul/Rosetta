@@ -40,6 +40,22 @@
   const next = $derived(doc ? nextInSeries(library.items, doc) : undefined);
   const collectionNames = $derived(doc ? library.collections.filter((c) => doc.collections.includes(c.id)).map((c) => c.name) : []);
 
+  // The note on the whole book saves as it is typed, a moment after the last key, and on leaving the field.
+  let noteDraft: string | null = null;
+  let noteTimer: ReturnType<typeof setTimeout> | undefined;
+  function keepNote(text: string) {
+    noteDraft = text;
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(saveNote, 600);
+  }
+  function saveNote() {
+    clearTimeout(noteTimer);
+    if (noteDraft === null || noteDraft === (doc?.note ?? '')) return;
+    void library.update(id, { note: noteDraft });
+    noteDraft = null;
+  }
+  $effect(() => () => saveNote());
+
   function toggleFinished() {
     if (!doc) return;
     void library.update(id, { finishedAt: doc.finishedAt ? null : Date.now() });
@@ -165,6 +181,11 @@
       </div>
     {/if}
 
+    <label class="field details-note">
+      <span class="t-field-label">{t('details.note')}</span>
+      <textarea class="textarea" id="bookNote" rows="3" placeholder={t('details.notePlaceholder')} value={doc.note ?? ''} oninput={(e) => keepNote(e.currentTarget.value)} onblur={() => saveNote()}></textarea>
+    </label>
+
     <dl class="details-facts">
       <div><dt class="t-field-label">{t('details.format')}</dt><dd class="t-data">{FORMAT_LABEL[doc.format]} · {doc.offloaded ? t('details.offloadedShort') : fileSize(doc.size)}</dd></div>
       <div><dt class="t-field-label">{t('details.added')}</dt><dd class="t-data">{relativeDay(doc.addedAt)}</dd></div>
@@ -176,7 +197,7 @@
     <!-- Everything else acts in place, so no chevrons, except Edit details, which opens a form. -->
     <ul class="row-list details-rows">
       <li><button type="button" class="row" id="editDetails" onclick={() => ui.open('edit')}><Icon name="pencil" /><span class="row-label">{t('details.edit')}</span><Icon name="chevron-right" /></button></li>
-      {#if highlights || bookmarks}<li><button type="button" class="row" onclick={() => void exportNotes()}><Icon name="file-down" /><span class="row-label">{t('details.exportNotes')}</span></button></li>{/if}
+      {#if highlights || bookmarks || doc.note?.trim()}<li><button type="button" class="row" onclick={() => void exportNotes()}><Icon name="file-down" /><span class="row-label">{t('details.exportNotes')}</span></button></li>{/if}
       {#if doc.location}<li><button type="button" class="row" onclick={() => void startOver()}><Icon name="rotate-ccw" /><span class="row-label">{t('details.startOver')}</span></button></li>{/if}
       {#if !doc.offloaded}<li><button type="button" class="row" onclick={() => void share()}><Icon name="share-2" /><span class="row-label">{t('details.shareFile')}</span></button></li>{/if}
       <li><button type="button" class="row" id="sendBookShelf" onclick={() => void bookShelf()}><Icon name="library" /><span class="row-label">{t('details.toBookShelf')}</span></button></li>
@@ -225,6 +246,13 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
     gap: var(--space-2);
+  }
+  .details-note {
+    margin: 0;
+  }
+  .details-note .textarea {
+    min-height: 4.5rem;
+    resize: vertical;
   }
   .details-facts {
     display: grid;

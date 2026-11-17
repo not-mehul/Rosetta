@@ -100,7 +100,8 @@ test('contents, chapters, search, highlights, notes and bookmarks', async ({ pag
   // Search the whole book; a result goes there and flashes the words.
   await page.click('#openSearch');
   await page.fill('#searchInput', 'albatross');
-  await expect(page.locator('.sheet [role=status]')).toHaveText('1 match');
+  // The search's own count; the toast region also sits in an open sheet (dusk-dawn 2.4.1).
+  await expect(page.locator('.sheet p[role=status]')).toHaveText('1 match');
   await page.locator('#searchResults button').click();
   await expect(page.locator('mark.hl-flash')).toHaveText('albatross');
 

@@ -505,6 +505,13 @@ const de: Messages = {
   'catalog.titleBefore': 'Offene ',
   'catalog.titleEm': 'Regale',
   'catalog.titleAfter': '',
+  'arrange.title': 'Bibliothek ordnen',
+  'arrange.open': 'Bibliothek ordnen',
+  'arrange.layout': 'Anzeigen als',
+  'arrange.grid': 'Cover',
+  'arrange.list': 'Liste',
+  'arrange.in': 'In',
+  'arrange.showEverything': 'Alles zeigen',
 };
 
 export default de;

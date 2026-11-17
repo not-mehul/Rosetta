@@ -125,6 +125,10 @@ ol {
 .app-tabs {
   margin-bottom: var(--space-6);
 }
+/* The section tabs mark the header's end, so the gap above them is the smaller one (style.md §6.1). */
+.site-header:has(+ .app-tabs) {
+  margin-bottom: var(--space-5);
+}
 .section-view {
   display: flex;
   flex-direction: column;
@@ -392,18 +396,53 @@ ol {
   flex-direction: column;
   gap: 4px;
 }
-.shelf-tabs {
+.shelf-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
   margin-bottom: var(--space-5);
+}
+.shelf-row > .shelf-tabs {
+  flex: 1;
+  min-width: 0;
+}
+/* Search and Arrange sit on the tab rail's baseline, its rule running under them too. */
+.shelf-row > .btn-icon {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 0;
 }
 .library-tools {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   margin-bottom: var(--space-5);
 }
-.library-tools > .segmented {
-  flex: 1 1 18rem;
+/* Arranged other than by default (a collection, a tag, another order): a dot says so; the collection bar names it. */
+.arrange-button {
+  position: relative;
+  flex-shrink: 0;
+}
+.arrange-button.is-set::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--corner-full);
+  background: var(--accent-amber);
+}
+.collection-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  min-width: 0;
+}
+.collection-name {
+  flex: 1;
+  min-width: 0;
 }
 .filter-field {
   position: relative;
@@ -435,6 +474,179 @@ ol {
 }
 .doc-list > li {
   min-width: 0;
+}
+
+/* The cover grid: two columns on a phone, up to five at the content width. */
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
+  gap: var(--space-5) var(--space-4);
+}
+.doc-grid > li {
+  min-width: 0;
+}
+.doc-card.doc-tile {
+  /* A container, so the menu can sit on the cover's corner: the cover is 2:3, 150% of the tile's width tall. */
+  container-type: inline-size;
+  flex-direction: column;
+  background: none;
+  border: 0;
+}
+.doc-card.doc-tile:hover {
+  background: none;
+}
+.doc-tile .doc-open {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: 0;
+}
+.doc-tile .doc-open:hover .tile-cover {
+  border-color: var(--border);
+}
+.doc-thumb.tile-cover {
+  width: 100%;
+  border-radius: var(--corner-sm);
+  box-shadow: 0 8px 24px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-strength)));
+}
+.tile-meter {
+  height: 3px;
+}
+.tile-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+.tile-title {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text-heading);
+}
+/* The tile's menu sits on the cover's corner, on an opaque disc so it reads over any picture. */
+.doc-tile .doc-more {
+  position: absolute;
+  top: calc(150cqw - 44px - var(--space-1));
+  right: var(--space-1);
+  margin: 0;
+  background: var(--modal-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--corner-full);
+}
+
+/* A list row stacks when the text is large (rem-based, so it follows the
+   phone's text size): the figure goes under the words, titles wrap. */
+.doc-list .doc-card {
+  container: doc / inline-size;
+}
+@container doc (max-width: 21rem) {
+  .doc-list .doc-open {
+    flex-wrap: wrap;
+  }
+  .doc-list .doc-text {
+    flex-basis: calc(100% - 56px - var(--space-4));
+  }
+  .doc-list .doc-figure {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    margin-left: calc(56px + var(--space-4));
+  }
+  .doc-list .doc-title {
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+}
+
+/* A cover drawn for a book without one (lib/cover.ts, style.md §3.3): a flat
+   tint of one accent, a spine, the title in serif and the author in mono caps.
+   Sized in container units, so it reads the same at any size it's shown. */
+.cover-art {
+  --cover-rgb: var(--accent-amber-rgb);
+  /* The container: its children measure in cqw against the cover's own width. */
+  container-type: inline-size;
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgba(var(--cover-rgb), 0.16);
+  color: var(--text-heading);
+  text-align: left;
+  overflow: hidden;
+}
+.cover-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12cqw 10cqw 11cqw 18cqw;
+}
+.cover-art.tint-1 {
+  --cover-rgb: var(--accent-sage-rgb);
+}
+.cover-art.tint-2 {
+  --cover-rgb: var(--cream-rgb);
+}
+.cover-art.tint-3 {
+  --cover-rgb: var(--accent-bright-rgb);
+}
+.cover-spine {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8cqw;
+  background: rgba(var(--cover-rgb), 0.35);
+  border-right: 1px solid rgba(var(--cover-rgb), 0.45);
+}
+.cover-title {
+  font-family: var(--font-serif);
+  font-size: 12.5cqw;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cover-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4cqw;
+}
+.cover-rule {
+  width: 30cqw;
+  height: 1px;
+  background: rgba(var(--cover-rgb), 0.7);
+}
+.cover-author {
+  font-family: var(--font-mono);
+  font-size: 5.5cqw;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cover-art.small .cover-body {
+  display: grid;
+  place-items: center;
+  padding: 0 0 0 8cqw;
+}
+.cover-initial {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 52cqw;
+  line-height: 1;
+  color: var(--text-heading);
 }
 .list-count {
   margin-top: var(--space-4);

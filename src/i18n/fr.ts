@@ -505,6 +505,13 @@ const fr: Messages = {
   'catalog.titleBefore': 'Rayons ',
   'catalog.titleEm': 'ouverts',
   'catalog.titleAfter': '',
+  'arrange.title': 'Ranger la bibliothèque',
+  'arrange.open': 'Ranger la bibliothèque',
+  'arrange.layout': 'Afficher en',
+  'arrange.grid': 'Couvertures',
+  'arrange.list': 'Liste',
+  'arrange.in': 'Dans',
+  'arrange.showEverything': 'Tout afficher',
 };
 
 export default fr;

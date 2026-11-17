@@ -156,17 +156,24 @@ test('collections, tags and series from a document’s details', async ({ page }
   await expect(page.locator('#toast')).toContainText('Details saved');
   await page.keyboard.press('Escape');
 
-  // The collection shows only its documents.
+  // The collection shows only its documents (chosen in Arrange, named over the shelf).
+  await page.click('#arrangeLibrary');
   await page.locator('.chip[data-collection="Holiday"]').click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(1);
-  await page.getByRole('radio', { name: 'Everything' }).click();
+  await expect(page.locator('.collection-bar')).toContainText('Holiday');
+  await page.getByRole('button', { name: 'Show everything' }).click();
   await expect(page.locator('.doc-card')).toHaveCount(3);
 
   // #tags filter, and series sort puts volume 1 before volume 2.
+  await page.click('#arrangeLibrary');
   await page.getByRole('button', { name: '#sea' }).click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(1);
-  await page.fill('#libraryFilter', '');
+  await page.click('#searchLibrary');
+  await page.click('#arrangeLibrary');
   await page.getByRole('radio', { name: 'Series' }).click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card').nth(0)).toContainText('The Lantern Keeper');
   await expect(page.locator('.doc-card').nth(1)).toContainText('The Salt Road');
 });

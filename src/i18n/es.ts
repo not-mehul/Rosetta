@@ -508,6 +508,13 @@ const es: Messages = {
   'catalog.titleBefore': 'Estantes ',
   'catalog.titleEm': 'abiertos',
   'catalog.titleAfter': '',
+  'arrange.title': 'Ordenar la biblioteca',
+  'arrange.open': 'Ordenar la biblioteca',
+  'arrange.layout': 'Mostrar como',
+  'arrange.grid': 'Portadas',
+  'arrange.list': 'Lista',
+  'arrange.in': 'En',
+  'arrange.showEverything': 'Mostrar todo',
 };
 
 export default es;

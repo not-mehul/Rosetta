@@ -3,7 +3,10 @@
   // address (a Calibre server, a library). Browse, search and download.
   import { LoadingIndicator } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
-  import { CatalogAuthError, catalogFrom, downloadName, fetchBytes, fetchText, fillSearch, parseFeed, PRESETS, searchTemplate, type Catalog, type Feed, type FeedEntry, type FeedLink } from '../../lib/opds';
+  import { CatalogAuthError, catalogFrom, downloadName, fetchBytes, fetchText, fillSearch, parseFeed, PRESETS, searchTemplate, SORT_GROUP, type Catalog, type Feed, type FeedEntry, type FeedFacet, type FeedLink } from '../../lib/opds';
+  import { library } from '../../state/library.svelte';
+  import { reader } from '../../state/reader.svelte';
+  import CatalogCover from './CatalogCover.svelte';
   import { addFiles } from '../../state/intake';
   import { settings } from '../../state/settings.svelte';
   import { ui } from '../../state/ui.svelte';
@@ -20,16 +23,21 @@
   let downloading = $state<string | null>(null);
   const current = $derived(stack.at(-1)?.feed ?? null);
 
-  async function load(url: string, push = true, retried = false) {
+  /** push: a new feed (Back returns); more: the next page, added below; replace: the same feed narrowed or reordered. */
+  type How = 'push' | 'more' | 'replace';
+
+  async function load(url: string, how: How = 'push', retried = false) {
     if (!catalog) return;
     loading = true;
     error = '';
     try {
       const feed = parseFeed(await fetchText(url, catalog), url);
-      stack = push ? [...stack, { url, feed }] : [...stack.slice(0, -1), { url, feed: { ...feed, entries: [...(stack.at(-1)?.feed.entries ?? []), ...feed.entries] } }];
+      if (how === 'push' || !stack.length) stack = [...stack, { url, feed }];
+      else if (how === 'replace') stack = [...stack.slice(0, -1), { url, feed }];
+      else stack = [...stack.slice(0, -1), { url, feed: { ...feed, entries: [...(stack.at(-1)?.feed.entries ?? []), ...feed.entries] } }];
       if (feed.search && !template) {
         try {
-          template = searchTemplate(feed.search.includes('{searchTerms}') ? feed.search : await fetchText(feed.search, catalog), url);
+          template = searchTemplate(/\{(searchTerms|\?)/.test(feed.search) ? feed.search : await fetchText(feed.search, catalog), url);
         } catch {
           template = null;
         }
@@ -38,7 +46,7 @@
       // A private catalog (a Calibre server with accounts) asks for its sign-in only when it needs it.
       if (err instanceof CatalogAuthError && !retried && (await signIn())) {
         loading = false;
-        return load(url, push, true);
+        return load(url, how, true);
       }
       error = t('catalog.failed', { reason: err instanceof Error ? err.message : String(err) });
     } finally {
@@ -105,6 +113,34 @@
     await settings.update({ catalogs: settings.value.catalogs.filter((c) => c.id !== id) });
   }
 
+  /** The feed's facets by group, sorts first as "Order". */
+  const facetGroups = $derived.by(() => {
+    const groups: [string, FeedFacet[]][] = [];
+    for (const f of current?.facets ?? []) {
+      const g = groups.find(([name]) => name === f.group);
+      if (g) g[1].push(f);
+      else groups.push([f.group, [f]]);
+    }
+    return groups.sort(([a], [b]) => (a === SORT_GROUP ? -1 : b === SORT_GROUP ? 1 : 0)).map(([group, facets]) => ({ name: group === SORT_GROUP ? t('catalog.order') : group || t('catalog.show'), facets }));
+  });
+
+  /** A book already in the library, by its title and (when both have one) its author. */
+  const squash = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/^(the|a|an)\s+/, '')
+      .replace(/[^a-z0-9]+/g, '');
+  const owned = $derived(new Map(library.items.map((d) => [squash(d.title), d])));
+  function inLibrary(entry: FeedEntry) {
+    const doc = owned.get(squash(entry.title));
+    if (!doc || !squash(entry.title)) return null;
+    const a = squash(entry.author);
+    const b = squash(doc.author);
+    return !a || !b || a.includes(b) || b.includes(a) ? doc : null;
+  }
+
   const label = (l: FeedLink) =>
     /epub/.test(l.type) ? 'EPUB' : /pdf/.test(l.type) ? 'PDF' : /fb2|fiction/.test(l.type) ? 'FB2' : /cbz|comic/.test(l.type) ? 'CBZ' : /mobi|amazon/.test(l.type) ? 'Kindle' : /html/.test(l.type) ? 'HTML' : t('catalog.text');
 
@@ -151,6 +187,16 @@
         <input class="input" type="search" placeholder={t('catalog.search')} enterkeyhint="search" autocomplete="off" bind:value={query} />
       </form>
     {/if}
+    {#each facetGroups as group (group.name)}
+      <div class="facet-group" role="group" aria-label={group.name}>
+        <span class="t-section-label">{group.name}</span>
+        <div class="chip-row facet-row">
+          {#each group.facets as f (f.href)}
+            <button type="button" class="chip" aria-pressed={f.active} disabled={loading} onclick={() => void load(f.href, 'replace')}>{f.title}{#if f.count !== null}<span class="facet-count tabular">{f.count}</span>{/if}</button>
+          {/each}
+        </div>
+      </div>
+    {/each}
     {#if error}
       <p class="t-body-small danger" role="alert">{error}</p>
     {/if}
@@ -164,26 +210,33 @@
                 <Icon name="chevron-right" />
               </button>
             {:else}
-              <div class="row">
-                <span class="row-main">
+              {@const have = inLibrary(entry)}
+              <div class="catalog-book">
+                <CatalogCover url={entry.thumbnail} {catalog} id={entry.id} title={entry.title} author={entry.author} />
+                <div class="catalog-book-body">
                   <span class="row-title">{entry.title}</span>
                   {#if entry.author}<span class="row-sub">{entry.author}</span>{/if}
                   {#if entry.summary}<span class="t-hint ellipsis-3">{entry.summary}</span>{/if}
-                </span>
-              </div>
-              <div class="btn-row btn-row-start">
-                {#each entry.downloads.slice(0, 2) as link (link.href)}
-                  <button type="button" class="btn btn-secondary" disabled={downloading === entry.id} onclick={() => void download(entry, link)}><Icon name="download" />{label(link)}</button>
-                {:else}
-                  <span class="t-hint">{t('catalog.nothingToRead')}</span>
-                {/each}
+                  <div class="btn-row btn-row-start">
+                    {#if have}
+                      <span class="in-library t-data-small"><Icon name="check" />{t('catalog.inLibrary')}</span>
+                      <button type="button" class="btn btn-secondary" onclick={() => void reader.open(have.id)}><Icon name="book-open" />{t('catalog.read')}</button>
+                    {:else}
+                      {#each entry.downloads.slice(0, 2) as link (link.href)}
+                        <button type="button" class="btn btn-secondary" disabled={downloading === entry.id} onclick={() => void download(entry, link)}><Icon name="download" />{label(link)}</button>
+                      {:else}
+                        <span class="t-hint">{t('catalog.nothingToRead')}</span>
+                      {/each}
+                    {/if}
+                  </div>
+                </div>
               </div>
             {/if}
           </li>
         {/each}
       </ul>
       {#if current.next}
-        <div class="btn-row"><button type="button" class="btn btn-muted" disabled={loading} onclick={() => void load(current.next!, false)}>{t('catalog.more')}</button></div>
+        <div class="btn-row"><button type="button" class="btn btn-muted" disabled={loading} onclick={() => void load(current.next!, 'more')}>{t('catalog.more')}</button></div>
       {/if}
     {/if}
     {#if loading}<div class="catalog-loading"><LoadingIndicator label={t('catalog.loading')} size={40} /></div>{/if}
@@ -206,6 +259,48 @@
   /* In a column, the shared field's flex basis would become its height. */
   .catalog-search {
     flex: none;
+  }
+  .facet-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
+  }
+  /* One row that scrolls sideways, rather than a wall of chips. */
+  .facet-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--space-5));
+    padding: 0 var(--space-5) var(--space-1);
+  }
+  .facet-count {
+    margin-left: var(--space-1);
+    color: var(--text-faint);
+  }
+  .catalog-book {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    padding: var(--space-2) 0;
+  }
+  .catalog-book-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+    flex: 1;
+  }
+  .in-library {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--text-dim);
+  }
+  .in-library :global(svg) {
+    width: 16px;
+    height: 16px;
+    color: var(--accent-sage);
   }
   .catalog-entry {
     padding: var(--space-2) 0;

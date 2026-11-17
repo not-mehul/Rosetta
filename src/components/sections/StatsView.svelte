@@ -7,8 +7,8 @@
   import { locale, t } from '../../i18n/index.svelte';
   import { duration } from '../../lib/format';
   import { library } from '../../state/library.svelte';
-  import { DAILY_GOALS, YEARLY_GOALS } from '../../state/settings';
-  import { settings } from '../../state/settings.svelte';
+    import { settings } from '../../state/settings.svelte';
+  import { ui } from '../../state/ui.svelte';
   import { calendarWeeks, dayKey, stats, type Summary } from '../../state/stats.svelte';
 
   let summary = $state.raw<Summary | null>(null);
@@ -81,48 +81,46 @@
       <div class="stat-tile"><span class="stat-value">{duration(summary.totalMs)}</span><span class="t-field-label">{t('stats.allTime')}</span></div>
     </div>
 
-    <section class="settings-group">
-      <h3 class="t-section-label" id="goalLabel">{t('stats.goal')}</h3>
-      {#if goal}
-        <div class="goal-figure">
-          <div class="meter" role="meter" aria-labelledby="goalLabel" aria-valuemin={0} aria-valuemax={goal} aria-valuenow={Math.min(goal, Math.floor(summary.todayMs / 60_000))}>
-            <div class="meter-fill" class:is-complete={goalShare >= 1} style:transform="scaleX({goalShare})"></div>
+    <!-- Goals are set in Settings → General; here, how far along they are. -->
+    {#if goal || yearGoal}
+      <section class="settings-group goals">
+        {#if goal}
+          <div class="goal-figure">
+            <h3 class="t-section-label" id="goalLabel">{t('stats.goal')}</h3>
+            <div class="meter" role="meter" aria-labelledby="goalLabel" aria-valuemin={0} aria-valuemax={goal} aria-valuenow={Math.min(goal, Math.floor(summary.todayMs / 60_000))}>
+              <div class="meter-fill" class:is-complete={goalShare >= 1} style:transform="scaleX({goalShare})"></div>
+            </div>
+            <p class="t-data-small tabular dim" id="goalStatus">
+              {goalShare >= 1 ? t('stats.goalDone', { time: duration(summary.todayMs) }) : t('stats.goalToday', { done: Math.floor(summary.todayMs / 60_000), goal })}
+            </p>
           </div>
-          <p class="t-data-small tabular dim" id="goalStatus">
-            {goalShare >= 1 ? t('stats.goalDone', { time: duration(summary.todayMs) }) : t('stats.goalToday', { done: Math.floor(summary.todayMs / 60_000), goal })}
-          </p>
-        </div>
-      {/if}
-      <div class="segmented" role="radiogroup" aria-labelledby="goalLabel">
-        {#each DAILY_GOALS as minutes (minutes)}
-          <button type="button" role="radio" aria-checked={goal === minutes} data-goal={minutes} onclick={() => void settings.update({ dailyGoal: minutes })}>
-            {minutes ? t('time.minutes', { count: minutes }) : t('stats.goalOff')}
-          </button>
-        {/each}
-      </div>
-      <p class="t-hint">{t('stats.goalHint')}</p>
-    </section>
-
-    <section class="settings-group">
-      <h3 class="t-section-label" id="yearGoalLabel">{t('stats.yearGoal', { year })}</h3>
-      {#if yearGoal}
-        <div class="goal-figure">
-          <div class="meter" role="meter" aria-labelledby="yearGoalLabel" aria-valuemin={0} aria-valuemax={yearGoal} aria-valuenow={Math.min(yearGoal, finishedThisYear.length)}>
-            <div class="meter-fill" class:is-complete={yearShare >= 1} style:transform="scaleX({yearShare})"></div>
+        {/if}
+        {#if yearGoal}
+          <div class="goal-figure">
+            <h3 class="t-section-label" id="yearGoalLabel">{t('stats.yearGoal', { year })}</h3>
+            <div class="meter" role="meter" aria-labelledby="yearGoalLabel" aria-valuemin={0} aria-valuemax={yearGoal} aria-valuenow={Math.min(yearGoal, finishedThisYear.length)}>
+              <div class="meter-fill" class:is-complete={yearShare >= 1} style:transform="scaleX({yearShare})"></div>
+            </div>
+            <p class="t-data-small tabular dim" id="yearGoalStatus">
+              {yearShare >= 1 ? t('stats.yearGoalDone', { count: finishedThisYear.length }) : t('stats.yearGoalSoFar', { done: finishedThisYear.length, goal: yearGoal, pace: onPace })}
+            </p>
           </div>
-          <p class="t-data-small tabular dim" id="yearGoalStatus">
-            {yearShare >= 1 ? t('stats.yearGoalDone', { count: finishedThisYear.length }) : t('stats.yearGoalSoFar', { done: finishedThisYear.length, goal: yearGoal, pace: onPace })}
-          </p>
-        </div>
-      {/if}
-      <div class="segmented" role="radiogroup" aria-labelledby="yearGoalLabel">
-        {#each YEARLY_GOALS as books (books)}
-          <button type="button" role="radio" aria-checked={yearGoal === books} data-year-goal={books} onclick={() => void settings.update({ yearlyGoal: books })}>
-            {books || t('stats.goalOff')}
-          </button>
-        {/each}
+        {/if}
+      </section>
+    {:else}
+      <div class="goal-none">
+        <p class="t-hint">{t('stats.noGoals')}</p>
+        <button
+          type="button"
+          class="btn btn-muted"
+          id="setGoals"
+          onclick={() => {
+            ui.settingsTab = 'general';
+            ui.open('settings');
+          }}>{t('stats.setGoals')}</button
+        >
       </div>
-    </section>
+    {/if}
 
     <section class="settings-group">
       <h3 class="t-section-label">{t('stats.week')}</h3>
@@ -266,10 +264,20 @@
     text-align: right;
     color: var(--text-muted);
   }
+  .goals {
+    gap: var(--space-5);
+  }
   .goal-figure {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+  .goal-none {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
   }
   .calendar-months,
   .calendar-days {

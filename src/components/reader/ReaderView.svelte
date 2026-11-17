@@ -25,7 +25,7 @@
   import AutoScrollBar from './AutoScrollBar.svelte';
   import Ruler from './Ruler.svelte';
   import { autoScroll } from '../../state/autoscroll.svelte';
-  import { SPACING_VALUE } from '../../state/settings';
+  import { NIGHT_LIGHT, SPACING_VALUE } from '../../state/settings';
 
   const doc = $derived(reader.doc!);
   const v = $derived(reader.view);
@@ -225,8 +225,8 @@
   <Ruler {lineHeight} />
 {/if}
 
-{#if v.dim > 0 || v.warmth > 0}
-  <div class="night-veil" aria-hidden="true" style:--dim={v.dim} style:--warmth={v.warmth}></div>
+{#if v.nightLight !== 'off'}
+  <div class="night-veil" aria-hidden="true" data-light={v.nightLight} style:--dim={NIGHT_LIGHT[v.nightLight].dim} style:--warmth={NIGHT_LIGHT[v.nightLight].warmth}></div>
 {/if}
 
 {#if editing}

@@ -143,12 +143,6 @@ class ReaderState {
     if (switching) await this.switchPdfView(view);
   }
 
-  /** The open document's settings become the defaults, for every document without its own. */
-  async useForAll(): Promise<void> {
-    const own = cleanBookSettings(this.doc?.reading);
-    if (Object.keys(own).length) await settings.update(own);
-  }
-
   /** The open document goes back to reading with the defaults. */
   async useDefaults(): Promise<void> {
     const doc = this.doc;

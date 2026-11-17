@@ -94,8 +94,11 @@ test('a book note, a line from your notes, the weekly recap and the yearly goal'
   expect(md).toContain('# The Lantern Keeper');
   expect(md).toContain('> Paragraph 1 about stairs. The');
 
-  // A goal of books this year, with the one finished.
-  await page.click('#tab-stats');
+  // A goal of books this year, set in Settings, with the one finished in Stats.
+  await page.click('#openSettings');
+  await page.click('#settings-general');
   await page.click('[data-year-goal="12"]');
+  await page.keyboard.press('Escape');
+  await page.click('#tab-stats');
   await expect(page.locator('#yearGoalStatus')).toContainText('1 of 12 so far');
 });

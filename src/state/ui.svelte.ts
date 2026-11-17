@@ -43,6 +43,9 @@ export interface PromptRequest {
 /** Overlays the app opens; one at a time per kind. */
 export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | 'edit' | 'storage' | null;
 
+/** Settings' tabs. */
+export type SettingsTab = 'general' | 'reading' | 'listen' | 'data' | 'about';
+
 /** The reader's Aa panel tabs. */
 export type PanelTab = 'text' | 'page' | 'light' | 'listen';
 
@@ -61,6 +64,8 @@ class UiState {
   section = $state<Section>('library');
   /** The Aa panel's tab last used, so it opens where it was left. */
   panelTab = $state<PanelTab>('text');
+  /** Settings' tab last used. */
+  settingsTab = $state<SettingsTab>('general');
   /** The document the details sheet is about. */
   detailsId = $state<string | null>(null);
   toast = $state.raw<Toast | null>(null);

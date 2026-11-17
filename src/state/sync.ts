@@ -1,7 +1,8 @@
 // Backups, the full archive, and sync.
 //
-// - Automatic backups: a dated JSON file in Documents/Rosetta/backups once a
-//   week (native), keeping the last five.
+// - Automatic backups: a dated JSON file daily, weekly or monthly, keeping
+//   the last five: in the sync folder once one is chosen, otherwise (on a
+//   phone) in Documents/Rosetta/backups.
 // - The archive: one .zip with every file plus the backup, for a new phone.
 // - Sync: places, marks, details and collections merged with a sync file in a
 //   folder the reader chooses (Documents/Rosetta/sync on a phone, which iCloud
@@ -15,15 +16,14 @@ import { makeBackup, parseBackup, type Backup } from '../lib/export';
 import { base64ToBytes, bytesToBase64 } from '../lib/base64';
 import { isNative } from '../platform/native';
 import { FOLDER } from '../platform/output';
-import { canPickFolder, folderStatus, listFolder, pickFolder, readFolderFile, removeFolderFile, writeFolderFile, type FolderKey } from '../platform/folders';
+import { canPickFolder, folderStatus, forgetFolder, listFolder, pickFolder, readFolderFile, removeFolderFile, writeFolderFile, type FolderKey } from '../platform/folders';
 import { db, toBytes, type Collection, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
 import { settings } from './settings.svelte';
-import { cleanBookSettings, portableSettings, restoredSettings } from './settings';
+import { BACKUP_DAYS, cleanBookSettings, portableSettings, restoredSettings, type BackupFrequency } from './settings';
 import { t } from '../i18n/index.svelte';
 import { ui } from './ui.svelte';
 
-export const WEEK = 7 * 86_400_000;
 export const KEEP_BACKUPS = 5;
 const BACKUP_DIR = `${FOLDER}/backups`;
 const SYNC_PATH = `${FOLDER}/sync/rosetta-sync.json`;
@@ -193,15 +193,29 @@ export function backupsToPrune(names: string[], keep = KEEP_BACKUPS): string[] {
     .slice(keep);
 }
 
-/** Writes this week's backup if one is due: to the chosen folder, or to Documents/Rosetta/backups. True when one was written. */
-export async function autoBackup(now = Date.now()): Promise<boolean> {
-  if (!isNative || !settings.value.autoBackup || !library.items.length) return false;
-  if (now - settings.value.lastAutoBackup < WEEK) return false;
+/** Whether a backup is due: an hour's slack, so "daily" doesn't drift later each day. */
+export function backupDue(frequency: BackupFrequency, last: number, now = Date.now()): boolean {
+  if (frequency === 'off') return false;
+  return !last || now - last >= BACKUP_DAYS[frequency] * 86_400_000 - 3_600_000;
+}
+
+/** Where automatic backups go: the sync folder, or Documents/Rosetta/backups on a phone without one. Null when there is nowhere. */
+export async function backupPlace(): Promise<'folder' | 'documents' | null> {
+  if ((await folderStatus('sync')).chosen) return 'folder';
+  return isNative ? 'documents' : null;
+}
+
+/** Writes a backup if one is due (or now, when forced). True when one was written. */
+export async function autoBackup(now = Date.now(), force = false): Promise<boolean> {
+  if (!library.items.length) return false;
+  if (!force && !backupDue(settings.value.autoBackup, settings.value.lastAutoBackup, now)) return false;
+  const place = await backupPlace();
+  if (!place) return false;
   try {
     const backup = await currentBackup(new Date(now), true);
     const name = backupName(new Date(now));
     const text = JSON.stringify(backup);
-    if (await legacy('backup')) {
+    if (place === 'documents') {
       await Filesystem.writeFile({
         path: `${BACKUP_DIR}/${name}`,
         directory: Directory.Documents,
@@ -218,8 +232,8 @@ export async function autoBackup(now = Date.now()): Promise<boolean> {
           directory: Directory.Documents,
         }).catch(() => undefined);
     } else {
-      await writeFolderFile('backup', name, text);
-      for (const old of backupsToPrune(await listFolder('backup').catch(() => []))) await removeFolderFile('backup', old).catch(() => undefined);
+      await writeFolderFile('sync', name, text);
+      for (const old of backupsToPrune(await listFolder('sync').catch(() => []))) await removeFolderFile('sync', old).catch(() => undefined);
     }
     await settings.update({ lastAutoBackup: now });
     return true;
@@ -302,6 +316,19 @@ export const canPickSyncFolder = canPickFolder;
 
 export function chooseSyncFolder(): Promise<boolean> {
   return pickFolder('sync');
+}
+
+/** Starts syncing: a folder to sync with, then the first sync. False when no folder was chosen. */
+export async function startSync(): Promise<boolean> {
+  if (!(await chooseSyncFolder())) return false;
+  await settings.update({ sync: true });
+  return true;
+}
+
+/** Stops syncing and lets go of the folder. The files in it stay. */
+export async function stopSync(): Promise<void> {
+  await settings.update({ sync: false });
+  await forgetFolder('sync').catch(() => undefined);
 }
 
 /**
@@ -398,6 +425,7 @@ export function syncNow(): Promise<MergeResult | null> {
         await applyMerge(result);
       }
       await writeSync(JSON.stringify(syncFile(await currentBackup(), remote)));
+      await settings.update({ lastSync: Date.now() });
       return result;
     } finally {
       syncing = null;

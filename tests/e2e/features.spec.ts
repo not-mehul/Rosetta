@@ -13,6 +13,15 @@ async function add(page: Page, files: string[], button = '#addFirst') {
   await chooser.setFiles(files.map((f) => (f.startsWith('/') ? f : fixture(f))));
 }
 
+/** Sets a default in Settings, from the library. */
+async function inSettings(page: Page, tab: 'general' | 'reading' | 'listen' | 'data' | 'about', act: () => Promise<void>) {
+  await page.click('#openSettings');
+  await page.click(`#settings-${tab}`);
+  await act();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('dialog.sheet[open]')).toHaveCount(0);
+}
+
 async function showBars(page: Page) {
   if (await page.locator('.reader.chrome-hidden').count()) await page.mouse.click(200, 420);
   await expect(page.locator('.reader.chrome-hidden')).toHaveCount(0);
@@ -75,13 +84,14 @@ test('reads FB2, comic archives, RTF and OpenDocument', async ({ page }) => {
 });
 
 test('pages turn by tap, key and swipe, and the place survives a reload', async ({ page }) => {
+  // How a page turns is set for every book, in Settings → Reading.
+  await inSettings(page, 'reading', () => page.click('#turn-none'));
   await add(page, ['lantern.epub']);
   await expect(page.locator('.reading h1')).toHaveText('The stair');
   await showBars(page);
   await page.click('#openType');
   await page.click('#panel-page');
   await page.click('#modePaged');
-  await page.click('#turn-none');
   await page.keyboard.press('Escape');
 
   const number = page.locator('.page-number');
@@ -111,7 +121,6 @@ test('the page curl follows the finger and turns the page', async ({ page }) => 
   await page.click('#openType');
   await page.click('#panel-page');
   await page.click('#modePaged');
-  await page.click('#turn-curl');
   await page.keyboard.press('Escape');
   await expect(page.locator('.page-number')).toHaveText(/^Page 1 of/);
 
@@ -275,6 +284,7 @@ test('a long book opens and turns within budget', async ({ page }) => {
   const path = join(mkdtempSync(join(tmpdir(), 'rosetta-')), 'long.epub');
   writeFileSync(path, zipSync(files));
 
+  await inSettings(page, 'reading', () => page.click('#turn-none'));
   const started = Date.now();
   await add(page, [path]);
   await expect(page.locator('.reading h1')).toHaveText('Chapter 1', { timeout: 15_000 });
@@ -285,7 +295,6 @@ test('a long book opens and turns within budget', async ({ page }) => {
   await page.click('#openType');
   await page.click('#panel-page');
   await page.click('#modePaged');
-  await page.click('#turn-none');
   await page.keyboard.press('Escape');
   await expect(page.locator('.page-number')).toHaveText(/^Page 1 of/);
   const t0 = Date.now();
@@ -307,6 +316,7 @@ test('hides easter eggs, counts them once, and lists the count in Settings', asy
   await expect(page.locator('.toast[data-kind="celebrate"]')).toHaveText('Every shelf dusted. Easter egg found: 2 of 4.');
 
   await page.click('#openSettings');
+  await page.click('#settings-about');
   await expect(page.locator('#eggCount')).toHaveText('Easter eggs: 2 of 4 found');
 });
 
@@ -367,8 +377,14 @@ test('a daily goal and the reading calendar', async ({ page }) => {
   await page.click('#tab-stats');
   await expect(page.locator('.calendar-day[data-day]')).toHaveCount(18 * 7);
   await expect(page.locator('.calendar-day.is-today')).toHaveCount(1);
+  // Stats shows progress; goals are set in Settings → General, which it opens.
+  await expect(page.locator('#goalStatus')).toHaveCount(0);
+  await page.click('#setGoals');
+  await expect(page.locator('#settings-general')).toHaveAttribute('aria-selected', 'true');
   await page.click('[data-goal="30"]');
+  await page.keyboard.press('Escape');
   await expect(page.locator('#goalStatus')).toHaveText('0 of 30 min today');
+  await expect(page.locator('[data-goal]')).toHaveCount(0);
   await expectAccessible(page, '#view-stats');
 
   // Arrow keys move between days; a picked day shows its time.
@@ -382,23 +398,25 @@ test('a daily goal and the reading calendar', async ({ page }) => {
   await expect(page.locator('#goalToday')).toHaveText('0 of 30 min today');
 });
 
-test('flows a sentence at a time, with visual anchors and a font of your own', async ({ page }) => {
+test('flows a sentence at a time, with visual anchors', async ({ page }) => {
+  // Visual anchors and Flow's speed are set for every book, in Settings → Reading.
+  await inSettings(page, 'reading', async () => {
+    await page.getByRole('switch', { name: /Visual anchors/ }).click();
+    await page.locator('#flowSpeed').fill('10');
+  });
   // A single file opens as it is added.
   await add(page, ['lantern.epub']);
   await expect(page.locator('.reading h1')).toHaveText('The stair');
   await showBars(page);
-  await page.click('#openType');
 
   // Visual anchors bold the start of each word and leave the text alone.
-  await page.getByRole('switch', { name: /Visual anchors/ }).click();
   await expect(page.locator('.reading b.anchor').first()).toHaveText('T');
   await expect(page.locator('.reading p').first()).toContainText('The keeper kept a log');
 
   // Flow: one sentence, revealed letter by letter at the chosen speed (Aa → Page).
+  await page.click('#openType');
   await page.click('#panel-page');
   await page.click('#modeFlow');
-  await expect(page.locator('#flowSpeed')).toBeVisible();
-  await page.locator('#flowSpeed').fill('10');
   await page.keyboard.press('Escape');
   await expect(page.locator('.flow-sentence')).toHaveCount(1);
   await expect(page.locator('.flow-count')).toHaveText(/^1 of \d+/);
@@ -434,21 +452,17 @@ test('flows a sentence at a time, with visual anchors and a font of your own', a
   await page.click('#flowBars');
   await expect(page.locator('.reader.chrome-hidden')).toHaveCount(0);
 
-  // A font file that isn't a font is turned away. (The panel reopens on Page, where it was left.)
+  // The panel reopens on Page, where it was left; typefaces are Serif and Sans.
   await page.click('#openType');
   await expect(page.locator('#panel-page')).toHaveAttribute('aria-selected', 'true');
   await page.click('#panel-text');
-  const dir = mkdtempSync(join(tmpdir(), 'font-'));
-  writeFileSync(join(dir, 'Broken.ttf'), 'not a font');
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#faceCustom')]);
-  await chooser.setFiles(join(dir, 'Broken.ttf'));
-  await expect(page.locator('#toast')).toContainText('isn’t a font');
-  await expect(page.locator('#faceCustom')).toHaveAttribute('aria-checked', 'false');
+  await expect(page.locator('[aria-labelledby=faceLabel] [role=radio]')).toHaveText(['Serif', 'Sans']);
 });
 
 test('OLED turns Dusk to true black, and stays on through a reload', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.click('#openSettings');
+  await page.click('#settings-reading');
   await page.getByRole('switch', { name: /True black/ }).click();
   await expect(page.locator('html')).toHaveAttribute('data-oled', '');
   const black = () => page.evaluate(() => getComputedStyle(document.body).backgroundImage);
@@ -457,6 +471,7 @@ test('OLED turns Dusk to true black, and stays on through a reload', async ({ pa
   await expect(page.locator('html')).toHaveAttribute('data-oled', '');
   // Dawn is left as it is.
   await page.click('#openSettings');
-  await page.locator('.segmented button', { hasText: 'Dawn' }).first().click();
+  await page.click('#settings-general');
+  await page.locator('[data-theme-option=light]').click();
   expect(await black()).not.toContain('rgb(0, 0, 0)');
 });

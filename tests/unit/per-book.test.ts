@@ -14,8 +14,7 @@ describe('settings per book', () => {
     expect(cleanBookSettings(null)).toEqual({});
   });
 
-  it('falls back when the book wants a font file that has been removed', () => {
-    expect(settingsFor({ ...DEFAULT_SETTINGS, customFont: '' }, { typeface: 'custom' }).typeface).toBe('serif');
-    expect(settingsFor({ ...DEFAULT_SETTINGS, customFont: 'Mine.ttf' }, { typeface: 'custom' }).typeface).toBe('custom');
+  it('drops a book\'s own font file, column, anchors and Flow speed: those are set for every book', () => {
+    expect(cleanBookSettings({ typeface: 'custom', measure: 'wide', anchors: true, flowSpeed: 60, fontSize: 20 })).toEqual({ fontSize: 20 });
   });
 });

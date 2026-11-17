@@ -247,7 +247,7 @@
 
   // Type or size changes: keep the same words at the top.
   $effect(() => {
-    void [v.fontSize, v.typeface, v.customFont, v.anchors, v.spacing, v.measure, v.justify, v.spreads, publisher];
+    void [v.fontSize, v.typeface, v.anchors, v.spacing, v.measure, v.justify, v.spreads, publisher];
     const at = untrack(() => reader.location.offset);
     void tick().then(() =>
       requestAnimationFrame(() => {
@@ -606,7 +606,6 @@
       class="reading paged"
       class:spread
       class:sans={v.typeface === 'sans'}
-      class:custom={v.typeface === 'custom' && !!v.customFont}
       class:anchored={v.anchors}
       class:justify={v.justify}
       class:publisher
@@ -626,7 +625,6 @@
   <article
     class="reading"
     class:sans={v.typeface === 'sans'}
-    class:custom={v.typeface === 'custom' && !!v.customFont}
     class:anchored={v.anchors}
     class:justify={v.justify}
     class:publisher

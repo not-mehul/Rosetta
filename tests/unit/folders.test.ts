@@ -44,7 +44,7 @@ const { pickFolder } = await import('../../src/platform/folders');
 beforeEach(async () => {
   folders.clear();
   documents.clear();
-  await settings.update({ sync: true, autoBackup: true, lastAutoBackup: 0 });
+  await settings.update({ sync: true, autoBackup: 'weekly', lastAutoBackup: 0 });
   if (!library.items.length) await library.add(new TextEncoder().encode('# A note\n\nWords.'), 'note.md');
 });
 
@@ -67,16 +67,31 @@ describe('sync and backups through a chosen folder', () => {
     expect(documents.size).toBe(0);
   });
 
-  it('writes the weekly backup to the chosen folder, with settings, keeping five', async () => {
-    await pickFolder('backup');
-    for (let i = 1; i <= 6; i++) folders.get('backup')!.files.set(`rosetta-backup-2026-01-0${i}.json`, '{}');
-    folders.get('backup')!.files.set('notes.txt', 'mine');
+  it('writes the automatic backup to the sync folder, with settings, keeping five', async () => {
+    await pickFolder('sync');
+    for (let i = 1; i <= 6; i++) folders.get('sync')!.files.set(`rosetta-backup-2026-01-0${i}.json`, '{}');
+    folders.get('sync')!.files.set('notes.txt', 'mine');
     expect(await autoBackup(Date.parse('2026-02-01T12:00:00Z'))).toBe(true);
-    const names = [...folders.get('backup')!.files.keys()].sort();
+    const names = [...folders.get('sync')!.files.keys()].sort();
     expect(names).toContain('rosetta-backup-2026-02-01.json');
     expect(names).toContain('notes.txt');
     expect(names.filter((n) => n.startsWith('rosetta-backup')).length).toBe(5);
-    expect(JSON.parse(folders.get('backup')!.files.get('rosetta-backup-2026-02-01.json')!).settings).toBeTruthy();
+    expect(JSON.parse(folders.get('sync')!.files.get('rosetta-backup-2026-02-01.json')!).settings).toBeTruthy();
+  });
+
+  it('backs up as often as asked, and not at all when off', async () => {
+    const { backupDue } = await import('../../src/state/sync');
+    const day = 86_400_000;
+    expect(backupDue('daily', 0, 5 * day)).toBe(true);
+    expect(backupDue('daily', 5 * day, 5.5 * day)).toBe(false);
+    expect(backupDue('daily', 5 * day, 6 * day - 1_800_000)).toBe(true);
+    expect(backupDue('weekly', 5 * day, 10 * day)).toBe(false);
+    expect(backupDue('monthly', 5 * day, 36 * day)).toBe(true);
+    expect(backupDue('off', 0, 99 * day)).toBe(false);
+    await settings.update({ autoBackup: 'off' });
+    expect(await autoBackup(Date.parse('2026-04-01T12:00:00Z'))).toBe(false);
+    // Backing up now writes one whatever the frequency.
+    expect(await autoBackup(Date.parse('2026-04-01T12:00:00Z'), true)).toBe(true);
   });
 
   it('falls back to Documents/Rosetta/backups without a folder', async () => {

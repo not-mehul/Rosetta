@@ -12,11 +12,15 @@
     /** Pinned under the body: the committing buttons. */
     footer?: Snippet;
     wide?: boolean;
-    /** Short, with no dimming behind it, so what it changes stays in view (the reader's Aa panel). */
+    /** No dimming behind it, so what it changes stays in view (the reader's Aa panel). */
     peek?: boolean;
+    /** The same height whatever it holds, so its tabs don't make it jump (Settings, the reader's sheets). */
+    tall?: boolean;
+    /** Icon buttons in the header, before Close. */
+    actions?: Snippet;
   }
 
-  let { title, onclose, children, footer, wide = false, peek = false }: Props = $props();
+  let { title, onclose, children, footer, wide = false, peek = false, tall = false, actions }: Props = $props();
   let dialog: HTMLDialogElement;
   let dragFrom: number | null = null;
   let drag = $state(0);
@@ -54,6 +58,7 @@
   class="sheet"
   class:sheet-wide={wide}
   class:sheet-peek={peek}
+  class:sheet-tall={tall}
   aria-labelledby={titleId}
   style:transform={drag ? `translateY(${drag}px)` : undefined}
   oncancel={(e) => {
@@ -69,6 +74,7 @@
     <div class="sheet-handle" aria-hidden="true"></div>
     <div class="sheet-head">
       <h2 class="sheet-title" id={titleId}>{title}</h2>
+      {#if actions}<div class="sheet-actions">{@render actions()}</div>{/if}
       <button type="button" class="btn btn-muted" onclick={onclose}>{t('action.close')}</button>
     </div>
   </div>
@@ -85,6 +91,18 @@
     touch-action: none;
   }
 
+  /* At large text sizes the title and Close take a line each rather than run off the side. */
+  .sheet-grip :global(.sheet-head) {
+    flex-wrap: wrap;
+  }
+  .sheet-actions {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+  }
+  .sheet-actions + .btn {
+    margin-left: 0;
+  }
   .sheet-foot {
     flex-shrink: 0;
     padding: var(--space-3) var(--space-5) calc(var(--space-3) + var(--inset-bottom));

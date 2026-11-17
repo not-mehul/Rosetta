@@ -19,7 +19,7 @@ async function leave(page: Page) {
 }
 const size = (page: Page) => page.locator('.reading').first().evaluate((el) => getComputedStyle(el).fontSize);
 
-test('each book keeps the type changed while it was open, and can share it', async ({ page }) => {
+test('each book keeps the type changed while it was open, and goes back to the defaults from the header', async ({ page }) => {
   await page.goto('/');
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#addFirst')]);
   await chooser.setFiles([fixture('lantern.epub'), fixture('tide.txt')]);
@@ -31,9 +31,11 @@ test('each book keeps the type changed while it was open, and can share it', asy
   await bars(page);
   await page.click('#openType');
   await page.click('#panel-text');
-  await expect(page.locator('#useForAll')).toHaveCount(0);
+  // No way back until the book has something of its own, and then a small icon in the header.
+  await expect(page.locator('#useDefaults')).toHaveCount(0);
   for (let i = 0; i < 4; i++) await page.click('#larger');
-  await expect(page.locator('#useForAll')).toBeVisible();
+  await expect(page.locator('.sheet-head #useDefaults')).toBeVisible();
+  await expect(page.locator('#useForAll')).toHaveCount(0);
   await page.keyboard.press('Escape');
   const bigger = await size(page);
   expect(parseFloat(bigger)).toBeGreaterThan(parseFloat(before));
@@ -44,16 +46,23 @@ test('each book keeps the type changed while it was open, and can share it', asy
   expect(await size(page)).toBe(before);
   await leave(page);
 
-  // The first remembers its own, and shares it on asking.
+  // The first remembers its own, until it goes back to the defaults.
   await open(page, /^The Lantern Keeper/);
   expect(await size(page)).toBe(bigger);
   await bars(page);
   await page.click('#openType');
-  await page.click('#panel-text');
-  await page.click('#useForAll');
-  await expect(page.locator('#useForAll')).toHaveCount(0);
+  await page.click('#useDefaults');
+  await expect(page.locator('#useDefaults')).toHaveCount(0);
   await page.keyboard.press('Escape');
+  await expect.poll(() => size(page)).toBe(before);
   await leave(page);
+
+  // The defaults themselves are in Settings → Reading, for every book without its own.
+  await page.click('#openSettings');
+  await page.click('#settings-reading');
+  await page.click('#larger');
+  await page.click('#larger');
+  await page.keyboard.press('Escape');
   await open(page, /^Tide/i);
-  expect(await size(page)).toBe(bigger);
+  expect(parseFloat(await size(page))).toBeGreaterThan(parseFloat(before));
 });

@@ -14,6 +14,11 @@ const config: CapacitorConfig = {
     minWebViewVersion: 111,
   },
   plugins: {
+    LocalNotifications: {
+      // The reading reminder (src/platform/reminders.ts): res/drawable/ic_stat_rosetta.xml, in Dusk's --accent-amber.
+      smallIcon: 'ic_stat_rosetta',
+      iconColor: '#d4a574',
+    },
     SystemBars: {
       // index.html opts into edge-to-edge with viewport-fit=cover; the CSS
       // pads the layout with the --inset-* variables (dusk-dawn's components.css).

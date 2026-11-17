@@ -58,7 +58,7 @@
   const memory = { query: '' };
 </script>
 
-<Sheet title={t('search.title')} {onclose}>
+<Sheet title={t('search.title')} {onclose} tall>
   <label class="field">
     <span class="t-field-label">{t('search.label')}</span>
     <input class="input" id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder={t('search.placeholder')} bind:this={input} bind:value={query} />

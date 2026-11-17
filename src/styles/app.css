@@ -1257,3 +1257,13 @@ mark.tts {
   color: var(--text-faint);
   font-style: italic;
 }
+
+/* Tabs in a sheet (Settings, the Aa panel): icon tabs sharing the row
+   evenly (style.md §8.5.1), with only the open tab's word shown under its
+   icon. The other words stay in their tabs, unseen, as their names. */
+.sheet-icon-tabs .icon-tab-word {
+  transition: opacity var(--spring-effects-fast-dur) var(--spring-effects-fast);
+}
+.sheet-icon-tabs [role='tab']:not([aria-selected='true']) .icon-tab-word {
+  opacity: 0;
+}

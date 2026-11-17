@@ -1,8 +1,10 @@
 <script lang="ts">
   // Filtering and arranging the library, out of the way of the books
-  // (style.md §8.11, a sheet for filters): what to show by how far along it
-  // is, covers or a list, the order, which collection and which tag. Every
-  // choice takes effect at once; Close keeps them.
+  // (style.md §8.11, a sheet for filters): one of the three states (not
+  // started, reading, finished; none chosen shows everything), covers or a
+  // list, the order, a tag, and at the bottom a collection. A chosen state,
+  // tag or collection is tapped again to let it go. Every choice takes effect
+  // at once; Close keeps them.
   import { t } from '../../i18n/index.svelte';
   import { library } from '../../state/library.svelte';
   import type { LibraryLayout, LibraryShelf, LibrarySort } from '../../state/settings';
@@ -30,7 +32,7 @@
     ['author', t('library.sortAuthor')],
     ['series', t('library.sortSeries')],
   ]);
-  const SHOWS: LibraryShelf[] = ['all', 'unread', 'reading', 'finished'];
+  const SHOWS: Exclude<LibraryShelf, 'all'>[] = ['unread', 'reading', 'finished'];
   const LAYOUTS = $derived<[LibraryLayout, string][]>([
     ['grid', t('arrange.grid')],
     ['list', t('arrange.list')],
@@ -40,10 +42,10 @@
 <Sheet title={t('arrange.title')} {onclose}>
   <div class="field">
     <span class="t-field-label" id="arrangeShow">{t('arrange.show')}</span>
-    <div class="chip-row" role="radiogroup" aria-labelledby="arrangeShow">
+    <div class="show-row" role="radiogroup" aria-labelledby="arrangeShow">
       {#each SHOWS as id (id)}
-        <button type="button" class="chip show-chip" role="radio" id="show-{id}" aria-checked={v.shelf === id} onclick={() => void settings.update({ shelf: id })}>
-          {#if id !== 'all'}<span class="chip-mark"><StatusMark status={id} /></span>{/if}{t(`status.${id}`)}
+        <button type="button" class="chip show-chip" role="radio" id="show-{id}" aria-checked={v.shelf === id} onclick={() => void settings.update({ shelf: v.shelf === id ? 'all' : id })}>
+          <span class="chip-mark"><StatusMark status={id} /></span><span class="show-word">{t(`status.${id}`)}</span>
         </button>
       {/each}
     </div>
@@ -67,17 +69,6 @@
     </div>
   </div>
 
-  <div class="field">
-    <span class="t-field-label" id="arrangeCollection">{t('collections.title')}</span>
-    <div class="chip-row" role="radiogroup" aria-labelledby="arrangeCollection">
-      <button type="button" class="chip" role="radio" aria-checked={!collection} onclick={() => void settings.update({ collection: '' })}>{t('collections.everything')}</button>
-      {#each library.collections as c (c.id)}
-        <button type="button" class="chip" role="radio" aria-checked={collection === c.id} data-collection={c.name} onclick={() => void settings.update({ collection: c.id })}>{c.name}</button>
-      {/each}
-      <button type="button" class="chip" id="addCollection" onclick={onnewcollection}><Icon name="plus" />{t('collections.new')}</button>
-    </div>
-  </div>
-
   {#if tags.length}
     <div class="field">
       <span class="t-field-label" id="arrangeTags">{t('library.tags')}</span>
@@ -88,15 +79,49 @@
       </div>
     </div>
   {/if}
+
+  <!-- Collections last: dotted until chosen, filled once chosen. -->
+  <div class="field">
+    <span class="t-field-label" id="arrangeCollection">{t('collections.title')}</span>
+    <div class="chip-row" aria-labelledby="arrangeCollection">
+      {#each library.collections as c (c.id)}
+        <button type="button" class="chip collection-chip" aria-pressed={collection === c.id} data-collection={c.name} onclick={() => void settings.update({ collection: collection === c.id ? '' : c.id })}>{c.name}</button>
+      {/each}
+      <button type="button" class="chip" id="addCollection" onclick={onnewcollection}><Icon name="plus" />{t('collections.new')}</button>
+    </div>
+  </div>
 </Sheet>
 
 <style>
+  /* The three states share one row evenly, the mark beside the word. */
+  .show-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .show-chip {
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-1) var(--space-2);
+    text-align: center;
+  }
+  .show-word {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  /* A collection not chosen is dotted; chosen, it fills (the chip's own pressed state). */
+  .collection-chip[aria-pressed='false'] {
+    border-style: dashed;
+    border-color: var(--border);
+    background: none;
+  }
   /* The same mark as on the covers, in the chip. */
   .chip-mark {
     position: relative;
+    flex-shrink: 0;
     width: 18px;
     height: 18px;
-    margin-right: var(--space-1);
   }
   .chip-mark :global(.status-mark) {
     top: 0;

@@ -14,7 +14,6 @@ const ru: Messages = {
   'card.tagline': 'Читать в тишине',
   'card.failed': 'Не удалось сделать карточку с цитатой ({reason}).',
   'collections.title': 'Подборки',
-  'collections.everything': 'Всё',
   'collections.new': 'Новая подборка',
   'collections.newHint': 'Документ может быть в нескольких подборках.',
   'collections.name': 'Название',

@@ -20,7 +20,6 @@ const en = {
 
 
   'collections.title': 'Collections',
-  'collections.everything': 'Everything',
   'collections.new': 'New collection',
   'collections.newHint': 'Documents can be on more than one collection.',
   'collections.name': 'Name',

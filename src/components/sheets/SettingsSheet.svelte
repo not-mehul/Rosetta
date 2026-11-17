@@ -7,7 +7,8 @@
   //   Data     back up and restore, sync with automatic backups, clear everything
   //   About    version, privacy and licences
   import { onMount } from 'svelte';
-  import { Select, Switch, TabRail, TimeField, WavyProgress } from 'dusk-dawn';
+  import { IconTabs, Select, Switch, TimeField, WavyProgress } from 'dusk-dawn';
+  import type { Snippet } from 'svelte';
   import { EGGS, eggsFound } from '../../lib/delight';
   import { LOCALE_NAMES, LOCALES, locale, t, type MessageKey } from '../../i18n/index.svelte';
   import { relativeTime } from '../../lib/format';
@@ -30,6 +31,7 @@
   import PageControls from '../controls/PageControls.svelte';
   import SliderField from '../controls/SliderField.svelte';
   import TextControls from '../controls/TextControls.svelte';
+  import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
@@ -39,14 +41,15 @@
   const year = new Date().getFullYear();
   let busy = $state(false);
 
-  const TABS: { id: SettingsTab; label: MessageKey }[] = [
-    { id: 'general', label: 'settings.general' },
-    { id: 'reading', label: 'settings.reading' },
-    { id: 'listen', label: 'settings.listen' },
-    { id: 'data', label: 'settings.data' },
-    { id: 'about', label: 'settings.about' },
+  // Icons that share the row evenly; only the open tab shows its word.
+  const TABS: { id: SettingsTab; label: MessageKey; icon: Snippet }[] = [
+    { id: 'general', label: 'settings.general', icon: generalIcon },
+    { id: 'reading', label: 'settings.reading', icon: readingIcon },
+    { id: 'listen', label: 'settings.listen', icon: listenIcon },
+    { id: 'data', label: 'settings.data', icon: dataIcon },
+    { id: 'about', label: 'settings.about', icon: aboutIcon },
   ];
-  const tabs = $derived(TABS.map((x) => ({ id: x.id, label: t(x.label), domId: `settings-${x.id}`, controls: 'settingsBody' })));
+  const tabs = $derived(TABS.map((x) => ({ id: x.id, label: t(x.label), icon: x.icon, domId: `settings-${x.id}`, controls: 'settingsBody' })));
 
   // ─── General ───────────────────────────────────────────────
 
@@ -167,9 +170,15 @@
   }
 </script>
 
+{#snippet generalIcon()}<Icon name="settings-2" />{/snippet}
+{#snippet readingIcon()}<Icon name="book-open" />{/snippet}
+{#snippet listenIcon()}<Icon name="headphones" />{/snippet}
+{#snippet dataIcon()}<Icon name="database" />{/snippet}
+{#snippet aboutIcon()}<Icon name="info" />{/snippet}
+
 <Sheet title={t('settings.title')} {onclose} tall>
-  <div class="sheet-tabs">
-    <TabRail {tabs} value={ui.settingsTab} label={t('settings.title')} onselect={(id) => (ui.settingsTab = id)} />
+  <div class="sheet-tabs sheet-icon-tabs">
+    <IconTabs {tabs} value={ui.settingsTab} label={t('settings.title')} onselect={(id) => (ui.settingsTab = id)} />
   </div>
 
   <div class="settings-body" id="settingsBody" role="tabpanel" aria-labelledby="settings-{ui.settingsTab}">

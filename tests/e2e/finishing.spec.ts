@@ -96,8 +96,10 @@ test('Undo on "Finished" sticks until the end is reached again', async ({ page }
   await expect(page.locator('.doc-card')).toHaveCount(0);
 
   // Back in at the end: still not finished. Back a long way, then to the end again: finished.
+  // Tapping the chosen state again lets it go: everything shows.
   await page.click('#arrangeLibrary');
-  await page.click('#show-all');
+  await page.click('#show-finished');
+  await expect(page.locator('#show-finished')).toHaveAttribute('aria-checked', 'false');
   await page.keyboard.press('Escape');
   await page.locator('#resume').click();
   await page.waitForTimeout(800);

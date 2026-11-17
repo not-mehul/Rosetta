@@ -167,9 +167,17 @@ test('collections, tags and series from a document’s details', async ({ page }
   await expect(page.locator('#toast')).toContainText('Details saved');
   await page.keyboard.press('Escape');
 
-  // The collection shows only its documents (chosen in Arrange, named over the shelf).
+  // The collection shows only its documents (chosen at the bottom of the filter, named over the shelf).
   await page.click('#arrangeLibrary');
-  await page.locator('.chip[data-collection="Holiday"]').click();
+  const holiday = page.locator('.chip[data-collection="Holiday"]');
+  // Dotted until chosen, filled once chosen; tapped again, it lets go.
+  await expect(holiday).toHaveCSS('border-top-style', 'dashed');
+  await holiday.click();
+  await expect(holiday).toHaveAttribute('aria-pressed', 'true');
+  await expect(holiday).toHaveCSS('border-top-style', 'solid');
+  await holiday.click();
+  await expect(holiday).toHaveAttribute('aria-pressed', 'false');
+  await holiday.click();
   await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(1);
   await expect(page.locator('.collection-bar')).toContainText('Holiday');

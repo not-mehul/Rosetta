@@ -52,8 +52,8 @@ EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading dire
 
 ### Your data
 
-- **Export and back up.** Every note as Markdown, your places, marks, details and collections as JSON, or the whole library with its files as a zip. On a phone, a dated backup is written each week.
-- **Sync with a folder.** Places and marks merge with a file in a folder you choose, for iCloud Drive, Syncthing or Dropbox.
+- **Export and back up.** Every note as Markdown, your places, marks, details and collections as JSON, or the whole library with its files as a zip. On a phone, a dated backup is written each week, to a folder you can choose.
+- **Sync with a folder.** Places and marks merge with a file in a folder you choose with the system picker, in iCloud Drive or a folder Syncthing or Dropbox shares.
 - **Storage.** See what each file takes, and offload a file while keeping its place and notes.
 - **Four languages.** English, Spanish, French and German.
 - **The other apps.** Log a finished book in BookShelf, tell Nookling you finished it, open an EPUB in Colophon, and let other apps open a document with `rosetta://open?title=…`.

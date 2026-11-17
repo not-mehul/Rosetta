@@ -6,6 +6,8 @@
   import { fileBytes, pickFiles } from '../../lib/pick';
   import { isNative } from '../../platform/native';
   import { saveFile } from '../../platform/output';
+  import { folderStatus, pickFolder } from '../../platform/folders';
+  import { onMount } from 'svelte';
   import { db } from '../../state/db';
   import { library } from '../../state/library.svelte';
   import { settings } from '../../state/settings.svelte';
@@ -75,10 +77,31 @@
     }
   }
 
+  /** The folders sync and the weekly backups use, by name, once chosen. */
+  let syncFolder = $state<string | null>(null);
+  let backupFolder = $state<string | null>(null);
+  async function loadFolders() {
+    if (!canPickSyncFolder) return;
+    syncFolder = (await folderStatus('sync')).name ?? null;
+    if (isNative) backupFolder = (await folderStatus('backup')).name ?? null;
+  }
+  onMount(() => void loadFolders());
+
+  async function chooseFolder(key: 'sync' | 'backup'): Promise<boolean> {
+    const chosen = key === 'sync' ? await chooseSyncFolder() : await pickFolder('backup');
+    await loadFolders();
+    return chosen;
+  }
+
   async function toggleSync(on: boolean) {
-    if (on && canPickSyncFolder && !(await chooseSyncFolder())) return;
+    // A phone keeps working with Documents/Rosetta/sync if the picker is cancelled; a browser needs a folder.
+    if (on && canPickSyncFolder && !syncFolder && !(await chooseFolder('sync')) && !isNative) return;
     await settings.update({ sync: on });
     if (on) await runSync();
+  }
+
+  async function changeSyncFolder() {
+    if (await chooseFolder('sync')) await runSync();
   }
 
   async function runSync() {
@@ -148,15 +171,24 @@
     <div class="settings-list">
       {#if isNative}
         <Switch checked={v.autoBackup} label={t('data.auto')} hint={t('data.autoHint')} onchange={(on) => void toggleAutoBackup(on)} />
+        {#if v.autoBackup}
+          <div class="folder-row">
+            <p class="t-body-small dim" id="backupWhere">{backupFolder ? t('data.autoIn', { name: backupFolder }) : t('data.autoInLegacy')}</p>
+            <button type="button" class="btn btn-muted" id="chooseBackupFolder" onclick={() => void chooseFolder('backup')}>{backupFolder ? t('sync.change') : t('data.chooseBackupFolder')}</button>
+          </div>
+        {/if}
       {/if}
       {#if isNative || canPickSyncFolder}
         <Switch checked={v.sync} label={t('sync.label')} hint={isNative ? t('sync.hintNative') : t('sync.hintWeb')} onchange={(on) => void toggleSync(on)} />
       {/if}
     </div>
     {#if v.sync}
+      {#if canPickSyncFolder}
+        <p class="t-body-small dim" id="syncWhere">{syncFolder ? t('sync.in', { name: syncFolder }) : isNative ? t('sync.inLegacy') : ''}</p>
+      {/if}
       <div class="btn-grid">
         <button type="button" class="btn btn-muted" id="syncNow" disabled={busy} onclick={() => void runSync()}>{t('sync.now')}</button>
-        {#if canPickSyncFolder}<button type="button" class="btn btn-muted" onclick={() => void chooseSyncFolder()}>{t('sync.choose')}</button>{/if}
+        {#if canPickSyncFolder}<button type="button" class="btn btn-muted" id="chooseSyncFolder" onclick={() => void changeSyncFolder()}>{syncFolder ? t('sync.change') : t('sync.choose')}</button>{/if}
       </div>
     {/if}
     <div class="btn-grid">
@@ -180,5 +212,13 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-2);
+  }
+  .folder-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) 0 var(--space-3);
   }
 </style>

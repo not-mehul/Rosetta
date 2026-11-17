@@ -22,6 +22,10 @@
   import PdfView from './PdfView.svelte';
   import SentenceView from './SentenceView.svelte';
   import SpeechBar from './SpeechBar.svelte';
+  import AutoScrollBar from './AutoScrollBar.svelte';
+  import Ruler from './Ruler.svelte';
+  import { autoScroll } from '../../state/autoscroll.svelte';
+  import { SPACING_VALUE } from '../../state/settings';
 
   const doc = $derived(reader.doc!);
   const v = $derived(reader.view);
@@ -80,9 +84,47 @@
 
   // Keep the screen on while reading, when asked.
   $effect(() => {
-    void keepAwake(v.keepAwake || speech.playing);
+    void keepAwake(v.keepAwake || speech.playing || autoScroll.running);
     return () => void keepAwake(false);
   });
+
+  /** One line of the reading text, in pixels: the ruler's height and auto-scroll's step. */
+  const lineHeight = $derived.by(() => {
+    void v.fontSize;
+    const rem = typeof document === 'undefined' ? 16 : parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return v.fontSize * (rem / 16) * SPACING_VALUE[v.spacing];
+  });
+  /** Words laid out in the column (not pictures, a fixed layout, a PDF's pages or Flow): what the ruler and auto-scroll are for. */
+  const columnText = $derived(reader.content?.kind === 'flow' && !reader.content.pictures && !reader.content.fixed && !flowing);
+  const scrolling = $derived(columnText && v.readingMode === 'scroll');
+
+  // Auto-scroll runs with the bars out of the way, only in scroll mode, and ends with the book.
+  $effect(() => {
+    autoScroll.lineHeight = lineHeight;
+  });
+  $effect(() => {
+    if (autoScroll.running) reader.chrome = false;
+  });
+  $effect(() => {
+    if (!scrolling) autoScroll.stop();
+  });
+  $effect(() => () => autoScroll.stop());
+  // Scrolling by hand takes over from it.
+  $effect(() => {
+    if (!autoScroll.running) return;
+    const takeOver = () => autoScroll.pause();
+    addEventListener('wheel', takeOver, { passive: true });
+    addEventListener('touchmove', takeOver, { passive: true });
+    return () => {
+      removeEventListener('wheel', takeOver);
+      removeEventListener('touchmove', takeOver);
+    };
+  });
+  /** A tap on the page pauses it, and another goes on (the bars come and go with it). */
+  function tapWhileScrolling(e: PointerEvent) {
+    if (!autoScroll.active || (e.target as Element).closest('a, button, mark')) return;
+    autoScroll.toggle();
+  }
 
   // Volume keys turn pages (Android), when asked.
   $effect(() => {
@@ -141,7 +183,7 @@
     </div>
   </header>
 
-  <main class="reader-page">
+  <main class="reader-page" onpointerdowncapture={tapWhileScrolling}>
     {#if reader.loading || !reader.content}
       <OpeningBook {doc} />
     {:else if reader.content.kind === 'flow' && reader.content.fixed}
@@ -158,6 +200,7 @@
   {#if reader.content}
     <footer class="reader-foot">
       {#if speech.active}<SpeechBar />{/if}
+      {#if autoScroll.active}<AutoScrollBar />{/if}
       <div class="meter" role="meter" aria-label={t('reader.read')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(progress * 100)}>
         <div class="meter-fill" style:transform="scaleX({progress})"></div>
         <!-- Chapters cut the line into lengths, so the place reads against them. -->
@@ -177,6 +220,10 @@
     </footer>
   {/if}
 </div>
+
+{#if v.ruler && columnText && reader.content}
+  <Ruler {lineHeight} />
+{/if}
 
 {#if v.dim > 0 || v.warmth > 0}
   <div class="night-veil" aria-hidden="true" style:--dim={v.dim} style:--warmth={v.warmth}></div>

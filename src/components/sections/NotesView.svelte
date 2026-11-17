@@ -4,6 +4,9 @@
   import { t } from '../../i18n/index.svelte';
   import { relativeDay } from '../../lib/format';
   import { shareQuote } from '../../lib/quote';
+  import { allNotesMarkdown } from '../../lib/export';
+  import { saveFile } from '../../platform/output';
+  import { ui } from '../../state/ui.svelte';
   import { db, type HighlightColour, type Mark } from '../../state/db';
   import { library } from '../../state/library.svelte';
   import { reader } from '../../state/reader.svelte';
@@ -27,6 +30,17 @@
     const q = query.trim().toLowerCase();
     return marks.filter((m) => (!colour || m.colour === colour) && (!q || `${m.text} ${m.note} ${library.get(m.docId)?.title ?? ''}`.toLowerCase().includes(q)));
   });
+
+  /** The notes shown (by colour and search), as one Markdown file. */
+  async function exportShown() {
+    const ids = new Set(shown.map((m) => m.docId));
+    const md = allNotesMarkdown(
+      library.items.filter((d) => ids.has(d.id)).map((d) => ({ ...d, note: '' })),
+      shown,
+    );
+    const out = await saveFile({ name: `rosetta-notes-${new Date().toISOString().slice(0, 10)}.md`, data: new TextEncoder().encode(md), mime: 'text/markdown' });
+    ui.notify(t('saved.to', { where: out.label }), 'success');
+  }
 
   async function go(m: Mark) {
     const doc = library.get(m.docId);
@@ -52,6 +66,10 @@
       </div>
     </div>
     {#if shown.length}
+      <div class="notes-count">
+        <span class="t-data-small faint tabular">{t('notes.count', { count: shown.length })}</span>
+        <button type="button" class="btn btn-muted" id="exportNotes" onclick={() => void exportShown()}><Icon name="file-down" />{t('notes.export')}</button>
+      </div>
       <ul class="row-list dd-stagger" id="allNotes">
         {#each shown as m (m.id)}
           {@const doc = library.get(m.docId)}
@@ -97,5 +115,12 @@
     flex-direction: column;
     gap: var(--space-3);
     margin-bottom: var(--space-3);
+  }
+  .notes-count {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
   }
 </style>

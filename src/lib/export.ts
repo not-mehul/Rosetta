@@ -6,9 +6,10 @@ import type { Settings } from '../state/settings';
 import type { Collection, Mark, StoredDoc } from '../state/db';
 import { t } from '../i18n/index.svelte';
 
-export function notesMarkdown(doc: Pick<StoredDoc, 'title' | 'author'>, marks: readonly Mark[]): string {
+export function notesMarkdown(doc: Pick<StoredDoc, 'title' | 'author'> & Partial<Pick<StoredDoc, 'note'>>, marks: readonly Mark[]): string {
   const lines = [`# ${doc.title}`, ''];
   if (doc.author) lines.push(`*${doc.author}*`, '');
+  if (doc.note?.trim()) lines.push(doc.note.trim(), '');
   const highlights = marks.filter((m) => m.kind === 'highlight').sort((a, b) => a.section - b.section || a.start - b.start);
   let where = '';
   for (const h of highlights) {
@@ -28,6 +29,28 @@ export function notesMarkdown(doc: Pick<StoredDoc, 'title' | 'author'>, marks: r
   return lines.join('\n');
 }
 
+/** Every document's notes in one Markdown file, documents in the order given, apart by rules. */
+export function allNotesMarkdown(docs: readonly (Pick<StoredDoc, 'id' | 'title' | 'author'> & Partial<Pick<StoredDoc, 'note'>>)[], marks: readonly Mark[]): string {
+  return docs
+    .filter((d) => d.note?.trim() || marks.some((m) => m.docId === d.id && m.kind === 'highlight'))
+    .map((d) =>
+      notesMarkdown(
+        d,
+        marks.filter((m) => m.docId === d.id),
+      ),
+    )
+    .join('\n---\n\n');
+}
+
+/** The highlight for a day: the same one all day, a different one tomorrow. */
+export function lineOfTheDay<T extends Pick<Mark, 'id'>>(highlights: readonly T[], day: string): T | null {
+  if (!highlights.length) return null;
+  let h = 0;
+  for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const sorted = [...highlights].sort((a, b) => (a.id < b.id ? -1 : 1));
+  return sorted[h % sorted.length]!;
+}
+
 export const slug = (s: string) =>
   s
     .normalize('NFKD')
@@ -38,7 +61,7 @@ export const slug = (s: string) =>
     .slice(0, 60) || 'notes';
 
 type BackedUpDoc = Pick<StoredDoc, 'id' | 'title' | 'author' | 'fileName' | 'location' | 'progress' | 'finishedAt' | 'openedAt'> &
-  Partial<Pick<StoredDoc, 'format' | 'size' | 'addedAt' | 'tags' | 'collections' | 'series' | 'seriesIndex' | 'updatedAt' | 'reading'>> & { marks: Mark[] };
+  Partial<Pick<StoredDoc, 'format' | 'size' | 'addedAt' | 'tags' | 'collections' | 'series' | 'seriesIndex' | 'updatedAt' | 'reading' | 'note'>> & { marks: Mark[] };
 
 export interface Backup {
   app: 'rosetta';
@@ -79,6 +102,7 @@ export function makeBackup(docs: readonly StoredDoc[], marks: readonly Mark[], n
       seriesIndex: d.seriesIndex,
       updatedAt: d.updatedAt,
       ...(d.reading && Object.keys(d.reading).length ? { reading: d.reading } : {}),
+      ...(d.note ? { note: d.note } : {}),
       marks: marks.filter((m) => m.docId === d.id),
     })),
   };

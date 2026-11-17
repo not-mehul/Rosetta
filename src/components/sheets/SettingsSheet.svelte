@@ -2,7 +2,7 @@
   // Settings (style.md §8.17): appearance and reading, the library, your data, about.
   import { EGGS, eggsFound } from '../../lib/delight';
   import { t } from '../../i18n/index.svelte';
-  import { notesMarkdown } from '../../lib/export';
+  import { allNotesMarkdown } from '../../lib/export';
   import { fileBytes, pickFiles } from '../../lib/pick';
   import { isNative } from '../../platform/native';
   import { saveFile } from '../../platform/output';
@@ -25,13 +25,11 @@
   let busy = $state(false);
 
   async function exportAllNotes() {
-    const marks = await db.marks.toArray();
-    const withMarks = library.items.filter((d) => marks.some((m) => m.docId === d.id && m.kind === 'highlight'));
-    if (!withMarks.length) {
+    const md = allNotesMarkdown(library.items, await db.marks.toArray());
+    if (!md) {
       ui.notify(t('data.noHighlights'), 'info');
       return;
     }
-    const md = withMarks.map((d) => notesMarkdown(d, marks.filter((m) => m.docId === d.id))).join('\n---\n\n');
     const out = await saveFile({ name: `rosetta-notes-${today()}.md`, data: new TextEncoder().encode(md), mime: 'text/markdown' });
     ui.notify(t('saved.to', { where: out.label }), 'success');
   }

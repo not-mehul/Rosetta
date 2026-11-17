@@ -14,6 +14,12 @@ export const daysBefore = (day: string, n = 1) => {
 };
 const dayBefore = (day: string) => daysBefore(day);
 
+/** The Monday of the week holding `t`, as a YYYY-MM-DD key. */
+export const weekStart = (t: number | Date = Date.now()) => {
+  const d = new Date(t);
+  return dayKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7), 12));
+};
+
 /** The longest run of consecutive days among these. */
 export function longestRun(days: Iterable<string>): number {
   const set = new Set(days);

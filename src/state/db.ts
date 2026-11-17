@@ -37,6 +37,8 @@ export interface StoredDoc {
   password?: string;
   /** Last change to place, progress or details, for sync. */
   updatedAt: number;
+  /** A note on the whole document, not tied to a passage: a review, questions for a reading group. */
+  note?: string;
   /** Reading settings changed while this document was open, over the defaults (see BOOK_KEYS). */
   reading?: BookSettings;
 }

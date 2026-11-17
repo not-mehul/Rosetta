@@ -104,6 +104,7 @@ export function merge(local: Local, remote: Backup): MergeResult {
           series: r.series ?? mine.series,
           seriesIndex: r.seriesIndex ?? mine.seriesIndex,
           ...(r.reading ? { reading: cleanBookSettings(r.reading) } : {}),
+          ...(typeof r.note === 'string' ? { note: r.note } : {}),
         });
       out.docs.push({ id: r.id, patch });
     }

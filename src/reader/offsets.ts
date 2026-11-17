@@ -152,16 +152,25 @@ export function firstVisibleOffset(root: Element, top: number): number {
 
 /** A short excerpt around [start, end) of `text`, with the match split out. */
 export function excerpt(text: string, start: number, end: number, around = 48, breaks: readonly number[] = []): { before: string; match: string; after: string } {
-  const from = Math.max(0, start - around);
-  const to = Math.min(text.length, end + around);
+  // Cut at word boundaries, so an excerpt never opens on half a word ("…een cloth").
+  let from = Math.max(0, start - around);
+  let to = Math.min(text.length, end + around);
+  if (from > 0 && !/\s/.test(text[from - 1]!)) {
+    const space = text.slice(from, start).search(/\s/);
+    if (space >= 0) from += space + 1;
+  }
+  if (to < text.length && !/\s/.test(text[to]!)) {
+    const space = text.slice(end, to).search(/\s\S*$/);
+    if (space >= 0) to = end + space;
+  }
   const squash = (s: string) => s.replace(/\s+/g, ' ');
-  /** The text from a to b, with a space where one block (a paragraph, a heading) ends and the next begins. */
+  /** The text from a to b, with a mid-dot where one block (a paragraph, a heading) ends and the next begins, so a heading doesn't read into the paragraph under it. */
   const cut = (a: number, b: number) => {
     let out = '';
     let at = a;
     for (const k of breaks) {
       if (k <= a || k > b) continue;
-      out += text.slice(at, k) + ' ';
+      out += text.slice(at, k) + ' · ';
       at = k;
     }
     return out + text.slice(at, b);

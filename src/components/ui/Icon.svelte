@@ -18,6 +18,7 @@
   role={label ? 'img' : undefined}
   aria-label={label}
   aria-hidden={label ? undefined : 'true'}
+  data-icon={name}
 >
   <!-- Trusted, inlined Lucide markup (icons.ts), never external data. -->
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->

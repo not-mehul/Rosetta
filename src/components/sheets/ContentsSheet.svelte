@@ -60,7 +60,7 @@
   <div id="contents-panel" role="tabpanel" aria-labelledby="tab-{view}">
     {#if view === 'contents'}
       {#if content.toc.length}
-        <ul class="row-list toc-list" {@attach showCurrent}>
+        <ul class="row-list toc-list dd-stagger" {@attach showCurrent}>
           {#each content.toc as entry, i (i)}
             <li>
               <button type="button" class="row toc-row" class:current={i === currentEntry} class:read={i < currentEntry} aria-current={i === currentEntry ? 'location' : undefined} style:--depth={Math.min(entry.depth, 4)} onclick={() => go(entry.section, 0, entry.anchor)}>
@@ -122,3 +122,9 @@
 {#if editing}
   <MarkModal id={editing} onclose={() => (editing = null)} />
 {/if}
+
+<style>
+  .toc-row {
+    padding-left: calc(var(--space-2) + var(--depth, 0) * 1.25rem);
+  }
+</style>

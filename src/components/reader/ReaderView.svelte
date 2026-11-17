@@ -26,6 +26,13 @@
   const doc = $derived(reader.doc!);
   const v = $derived(settings.value);
   const where = $derived(reader.content ? reader.whereIs(reader.location.section, reader.location.offset) : '');
+  /** The bar's title: the chapter a reader would name (a PDF's from its outline), or nothing, and then the book's own title. */
+  const chapter = $derived.by(() => {
+    const c = reader.content;
+    if (!c) return '';
+    if (c.kind === 'pdf') return c.toc.filter((e) => e.section <= reader.location.section).at(-1)?.label ?? '';
+    return where;
+  });
   const progress = $derived(reader.progress);
   /** The figures the footer can show for this document; a tap on it moves to the next. */
   const shows = $derived.by<FooterShows[]>(() => {
@@ -106,21 +113,16 @@
 <div class="reader" class:chrome-hidden={!reader.chrome} class:is-paged={paged || flowing} class:is-flowing={flowing} data-format={doc.format}>
   <header class="reader-bar" aria-label={t('reader.label')}>
     <button type="button" class="btn-icon" id="closeReader" aria-label={t('reader.back')} onclick={() => reader.leave()}><Icon name="arrow-left" /></button>
+    <!-- The chapter is the title, the book its eyebrow; a document without chapters shows its own title. Read aloud starts from Aa → Listen. -->
     <div class="reader-bar-text">
-      <h1 class="reader-title ellipsis">{doc.title}</h1>
-      {#if where && where !== doc.title}<p class="t-data-small dim ellipsis">{where}</p>{/if}
+      {#if chapter && chapter !== doc.title}
+        <p class="reader-book ellipsis">{doc.title}</p>
+        <h1 class="reader-title ellipsis">{chapter}</h1>
+      {:else}
+        <h1 class="reader-title ellipsis">{doc.title}</h1>
+      {/if}
     </div>
     <div class="reader-bar-actions">
-      <button
-        type="button"
-        class="btn-icon"
-        id="readAloud"
-        class:amber={speech.active}
-        aria-label={speech.active ? t('speech.stop') : t('speech.start')}
-        aria-pressed={speech.active}
-        disabled={!reader.content || !!(reader.content.kind === 'flow' && (reader.content.pictures || reader.content.fixed))}
-        onclick={() => (speech.active ? speech.stop() : void speech.start())}><Icon name="volume-2" /></button
-      >
       <button type="button" class="btn-icon" id="openSearch" aria-label={t('reader.search')} disabled={!reader.content} onclick={() => ui.open('search')}><Icon name="search" /></button>
       <button type="button" class="btn-icon" id="openContents" aria-label={t('reader.contents')} disabled={!reader.content} onclick={() => ui.open('contents')}><Icon name="list" /></button>
       <button
@@ -189,3 +191,156 @@
 {#if image}
   <ImageViewer src={image.src} alt={image.alt} onclose={() => (image = null)} />
 {/if}
+
+<style>
+  /* ─── The reader ─────────────────────────────────────────────── */
+
+  .reader-bar,
+  .reader-foot {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: var(--modal-bg);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition:
+      transform var(--spring-spatial-default-dur) var(--spring-spatial-default),
+      opacity var(--spring-effects-default-dur) var(--spring-effects-default);
+  }
+  .reader-bar {
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: calc(var(--space-2) + var(--inset-top)) calc(var(--space-2) + var(--inset-right)) var(--space-2) calc(var(--space-2) + var(--inset-left));
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .reader-bar-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .reader-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+    color: var(--text-heading);
+  }
+  /* The book, as an eyebrow over the chapter (style.md §5.2). */
+  .reader-book {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .reader-bar-text {
+    container: bar / inline-size;
+  }
+  /* At large text the chapter needs the room: the eyebrow goes. */
+  @container bar (max-width: 7rem) {
+    .reader-book {
+      display: none;
+    }
+  }
+  .reader-bar-actions {
+    display: flex;
+    align-items: center;
+  }
+  .reader-foot {
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: 0 calc(var(--space-5) + var(--inset-right)) calc(var(--space-2) + var(--inset-bottom)) calc(var(--space-5) + var(--inset-left));
+    border-top: 1px solid var(--border-soft);
+  }
+  .reader-foot-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: 24px;
+    align-items: center;
+  }
+  .reader-foot-row > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  /* A chapter boundary: a cut in the line, in the page colour. */
+  .meter-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--sheet-bg);
+    pointer-events: none;
+  }
+  /* The footer's figure changes on a tap; the target is taller than it looks (§14). */
+  .foot-figure {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin: -10px 0;
+    padding: 0;
+    text-align: left;
+    color: var(--text-dim);
+    border-radius: var(--radius);
+    transition: color var(--dur-hover);
+  }
+  .foot-figure:hover {
+    color: var(--text-heading);
+  }
+  /* The way back after a jump: one quiet amber action. */
+  .return-to {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 55%;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 44px;
+    margin: -10px 0;
+    padding: 0 var(--space-2);
+    color: var(--accent-amber);
+    border-radius: var(--radius);
+    animation: fade-in var(--spring-effects-default-dur) var(--spring-effects-default);
+    transition: background-color var(--dur-hover);
+  }
+  .return-to:hover {
+    background: var(--hover-bg);
+  }
+  .return-to :global(svg) {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+  .chrome-hidden .reader-bar {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .chrome-hidden .reader-foot {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .reader-page {
+    position: relative;
+    z-index: 1;
+    padding: calc(5rem + var(--inset-top)) calc(1.25rem + var(--inset-right)) calc(6rem + var(--inset-bottom)) calc(1.25rem + var(--inset-left));
+  }
+  .night-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    pointer-events: none;
+    background: linear-gradient(rgba(var(--accent-amber-rgb), calc(var(--warmth) * 0.22)), rgba(var(--accent-amber-rgb), calc(var(--warmth) * 0.22))), rgba(var(--shadow-rgb), var(--dim));
+    mix-blend-mode: multiply;
+  }
+</style>

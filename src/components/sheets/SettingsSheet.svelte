@@ -12,8 +12,10 @@
   import { autoBackup, canPickSyncFolder, chooseSyncFolder, currentBackup, makeArchive, restoreArchive, restoreBackup, syncNow, type MergeResult } from '../../state/sync';
   import { ui } from '../../state/ui.svelte';
   import Sheet from '../ui/Sheet.svelte';
-  import Switch from '../ui/Switch.svelte';
-  import ReadingControls from './ReadingControls.svelte';
+  import { Select, Switch, WavyProgress } from 'dusk-dawn';
+  import { LOCALE_NAMES, LOCALES } from '../../i18n/index.svelte';
+  import type { Settings } from '../../state/settings';
+  import ThemeControls from './ThemeControls.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
   const v = $derived(settings.value);
@@ -107,14 +109,29 @@
 <Sheet title={t('settings.title')} {onclose}>
   <section class="settings-group">
     <h3 class="t-section-label">{t('settings.appearance')}</h3>
-    <ReadingControls />
+    <ThemeControls />
+    <label class="field">
+      <span class="t-field-label">{t('type.language')}</span>
+      <Select
+        id="language"
+        value={v.locale}
+        options={[{ value: 'system' as Settings['locale'], label: t('type.system') }, ...LOCALES.map((l) => ({ value: l as Settings['locale'], label: LOCALE_NAMES[l] }))]}
+        onchange={(locale) => void settings.update({ locale })}
+      />
+    </label>
+    {#if isNative}
+      <div class="settings-list">
+        <Switch checked={v.haptics} label={t('type.haptics')} hint={t('type.hapticsHint')} onchange={(on) => void settings.update({ haptics: on })} />
+      </div>
+    {/if}
+    <!-- Type, page and read-aloud settings live in a book, under Aa, where you can see them work. -->
+    <p class="field-hint">{t('settings.readingWhere')}</p>
   </section>
 
   <section class="settings-group">
     <h3 class="t-section-label">{t('settings.library')}</h3>
     <div class="btn-grid">
       <button type="button" class="btn btn-secondary" id="openStorage" onclick={() => ui.open('storage')}>{t('storage.title')}</button>
-      <button type="button" class="btn btn-secondary" onclick={() => ui.open('catalog')}>{t('catalog.title')}</button>
     </div>
   </section>
 
@@ -127,6 +144,7 @@
       <button type="button" class="btn btn-secondary" id="archive" disabled={busy || !library.items.length} onclick={() => void archive()}>{t('data.archive')}</button>
       <button type="button" class="btn btn-muted" id="restore" disabled={busy} onclick={() => void restore()}>{t('data.restore')}</button>
     </div>
+    {#if busy}<WavyProgress label={t('data.working')} />{/if}
     <div class="settings-list">
       {#if isNative}
         <Switch checked={v.autoBackup} label={t('data.auto')} hint={t('data.autoHint')} onchange={(on) => void toggleAutoBackup(on)} />
@@ -153,3 +171,14 @@
     <p class="t-hint"><em>{t('about.privateTerm')}</em> {t('about.private')}</p>
   </section>
 </Sheet>
+
+<style>
+  /* Groups of actions (details, settings): two equal columns, so the buttons
+     line up instead of wrapping to ragged rows. A lone last button takes the
+     whole row, and a long label wraps inside its button. */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+</style>

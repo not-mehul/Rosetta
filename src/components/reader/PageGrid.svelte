@@ -37,3 +37,32 @@
     </li>
   {/each}
 </ul>
+
+<style>
+  .page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: var(--space-3);
+    list-style: none;
+    margin: var(--space-4) 0 0;
+    padding: 0;
+  }
+  .page-thumb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    width: 100%;
+    min-height: 44px;
+    padding: var(--space-1);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    background: var(--panel-bg-faint);
+    color: var(--text-dim);
+  }
+  .page-thumb canvas {
+    width: 100%;
+    height: auto;
+    background: var(--chip-bg);
+  }
+</style>

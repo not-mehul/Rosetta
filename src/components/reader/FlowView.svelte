@@ -10,6 +10,7 @@
   import { Curl } from '../../reader/curl';
   import { isNoteRef, noteHtml } from '../../reader/notes';
   import { firstVisibleOffset, paint, rangeAt, unpaint, type Paint } from '../../reader/offsets';
+  import { keyTurn, linkTarget, swipeCommits, swipeDirection, tapTurn } from '../../reader/gestures';
   import { findPage, firstOffsetOnPage, pageCount, pageOfOffset, pageOfRect, TextIndex, type Columns } from '../../reader/paging';
   import { watchSelection, type PageSelection } from '../../reader/selection.svelte';
   import type { HighlightColour } from '../../state/db';
@@ -84,7 +85,9 @@
     if (!paged || !root || !pager) return;
     const w = pager.clientWidth;
     const h = pager.clientHeight;
-    const measure = parseFloat(MEASURE_VALUE[v.measure]) * v.fontSize;
+    // The text is sized in rem, so it follows the phone's text size; the column follows with it.
+    const rootScale = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
+    const measure = parseFloat(MEASURE_VALUE[v.measure]) * v.fontSize * rootScale;
     pageW = Math.floor(Math.min(w - 2 * SIDE, measure));
     side = Math.floor((w - pageW) / 2);
     stride = w;
@@ -106,7 +109,7 @@
     page = Math.max(0, Math.min(pages - 1, p));
     tx = (rtl ? 1 : -1) * page * stride;
     if (!root) return;
-    root.style.transition = animate ? 'transform var(--dur-settle) var(--ease-settle)' : 'none';
+    root.style.transition = animate ? 'transform var(--spring-spatial-calm-dur) var(--spring-spatial-calm)' : 'none';
     root.style.transform = `translateX(${tx}px)`;
   }
 
@@ -367,9 +370,8 @@
     const dy = e.clientY - g.y;
     const r = pager!.getBoundingClientRect();
     if (!g.dir) {
-      if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.2 || getSelection()?.isCollapsed === false) return;
-      const forward = (dx < 0) !== rtl;
-      const dir: 1 | -1 = forward ? 1 : -1;
+      const dir = swipeDirection(dx, dy, rtl, getSelection()?.isCollapsed === false);
+      if (!dir) return;
       if (!canTurn(dir)) {
         gesture = null;
         return;
@@ -402,11 +404,7 @@
     if (!g.dir) return;
     // Swallow the click that follows a swipe.
     swiped = performance.now();
-    const dx = e.clientX - g.x;
-    const speed = Math.abs(dx) / Math.max(1, performance.now() - g.t);
-    const far = Math.abs(dx) > (pager?.clientWidth ?? 360) * 0.22 || speed > 0.45;
-    const sameWay = g.dir === 1 ? (dx < 0) !== rtl : (dx > 0) !== rtl;
-    const commit = far && sameWay;
+    const commit = swipeCommits(g.dir, e.clientX - g.x, performance.now() - g.t, pager?.clientWidth ?? 360, rtl);
     if (g.curl) {
       turning = true;
       const c = g.curl;
@@ -442,8 +440,7 @@
   // ─── Taps, links, notes and pictures ───────────────────────
 
   function targetOf(to: string): { section: number; anchor: string | undefined; el: Element | null } {
-    const [part, anchor] = to.split('#');
-    const at = part === '' ? index : Number(part);
+    const { section: at, anchor } = linkTarget(to, index);
     let el: Element | null = null;
     if (anchor && Number.isFinite(at)) {
       if (at === index) el = root!.querySelector(`#${CSS.escape(anchor)}`);
@@ -453,7 +450,7 @@
         el = t.content.getElementById(anchor);
       }
     }
-    return { section: at, anchor: anchor || undefined, el };
+    return { section: at, anchor, el };
   }
 
   function onclick(e: MouseEvent) {
@@ -488,10 +485,9 @@
     if (paged && pager) {
       // Tap zones: the outer thirds turn the page; the middle shows the bars.
       const r = pager.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width;
-      if (x < 0.3 || x > 0.7) {
-        const forward = (x > 0.7) !== rtl;
-        void turn(forward ? 1 : -1);
+      const dir = tapTurn((e.clientX - r.left) / r.width, rtl);
+      if (dir) {
+        void turn(dir);
         reader.chrome = false;
         return;
       }
@@ -507,15 +503,10 @@
   function onkeydown(e: KeyboardEvent) {
     if (!paged || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || document.querySelector('dialog[open]')) return;
     if ((e.target as Element)?.closest?.('input, textarea, select, [contenteditable]')) return;
-    const next = ['ArrowRight', 'PageDown', ' '].includes(e.key) ? (rtl ? -1 : 1) : ['ArrowLeft', 'PageUp'].includes(e.key) ? (rtl ? 1 : -1) : 0;
-    if (e.key === ' ' && e.shiftKey) {
+    const dir = keyTurn(e.key, e.shiftKey, rtl);
+    if (dir) {
       e.preventDefault();
-      void turn(-1);
-      return;
-    }
-    if (next) {
-      e.preventDefault();
-      void turn(next as 1 | -1);
+      void turn(dir);
     }
   }
 
@@ -618,7 +609,7 @@
       class:pictures={content.pictures}
       lang={content.lang}
       dir={content.dir}
-      style:--read-size="{v.fontSize}px"
+      style:--read-size="{v.fontSize / 16}rem"
       style:--read-leading={SPACING_VALUE[v.spacing]}
       style:--read-measure={MEASURE_VALUE[v.measure]}
       bind:this={root}
@@ -638,7 +629,7 @@
     class:pictures={content.pictures}
     lang={content.lang}
     dir={content.dir}
-    style:--read-size="{v.fontSize}px"
+    style:--read-size="{v.fontSize / 16}rem"
     style:--read-leading={SPACING_VALUE[v.spacing]}
     style:--read-measure={MEASURE_VALUE[v.measure]}
     bind:this={root}
@@ -672,3 +663,37 @@
 {#if selection}
   <SelectionBar rect={selection.rect} text={selection.text} onhighlight={(c, n) => void highlight(c, n)} />
 {/if}
+
+<style>
+  .section-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    max-width: 38em;
+    margin: var(--space-7) auto 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border-soft);
+  }
+  .section-end {
+    align-self: center;
+    text-align: right;
+  }
+  .next-title {
+    max-width: 38em;
+    margin: var(--space-3) auto 0;
+    text-align: right;
+  }
+
+  /* After the last page: the next volume in the series. */
+  .next-volume {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    max-width: var(--read-measure, 38em);
+    margin: var(--space-6) auto 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border-soft);
+    text-align: center;
+  }
+</style>

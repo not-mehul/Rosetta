@@ -12,9 +12,11 @@
     /** Pinned under the body: the committing buttons. */
     footer?: Snippet;
     wide?: boolean;
+    /** Short, with no dimming behind it, so what it changes stays in view (the reader's Aa panel). */
+    peek?: boolean;
   }
 
-  let { title, onclose, children, footer, wide = false }: Props = $props();
+  let { title, onclose, children, footer, wide = false, peek = false }: Props = $props();
   let dialog: HTMLDialogElement;
   let dragFrom: number | null = null;
   let drag = $state(0);
@@ -51,6 +53,7 @@
   bind:this={dialog}
   class="sheet"
   class:sheet-wide={wide}
+  class:sheet-peek={peek}
   aria-labelledby={titleId}
   style:transform={drag ? `translateY(${drag}px)` : undefined}
   oncancel={(e) => {
@@ -80,5 +83,11 @@
 <style>
   .sheet-grip {
     touch-action: none;
+  }
+
+  .sheet-foot {
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-5) calc(var(--space-3) + var(--inset-bottom));
+    border-top: 1px solid var(--border-faint);
   }
 </style>

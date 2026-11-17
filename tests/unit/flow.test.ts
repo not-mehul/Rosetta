@@ -66,7 +66,7 @@ describe('audit fixes', () => {
     const text = 'Every ship.Paragraph one.';
     const at = text.indexOf('Paragraph');
     const e = excerpt(text, at, at + 9, 48, blockBreaks(html));
-    expect(e.before + e.match + e.after).toBe('Every ship. Paragraph one.');
+    expect(e.before + e.match + e.after).toBe('Every ship. · Paragraph one.');
   });
 
   it('gives large sizes in GB', async () => {

@@ -49,3 +49,22 @@
     </div>
   </Modal>
 {/if}
+
+<style>
+  /* Colour swatches: 2px squares, like every other control (§6.4). */
+  .swatches {
+    display: flex;
+    gap: var(--space-3);
+  }
+  .mark-quote {
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--text-heading);
+    border-radius: var(--radius);
+    max-height: 10rem;
+    overflow-y: auto;
+  }
+</style>

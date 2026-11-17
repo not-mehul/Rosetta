@@ -5,19 +5,16 @@
   import { ui } from './state/ui.svelte';
   import { addFiles } from './state/intake';
   import IdleStone from './components/IdleStone.svelte';
-  import LibraryView from './components/LibraryView.svelte';
+  import Home from './components/Home.svelte';
   import IdleDock from './components/ui/IdleDock.svelte';
   import ReaderView from './components/reader/ReaderView.svelte';
-  import CatalogSheet from './components/sheets/CatalogSheet.svelte';
   import ContentsSheet from './components/sheets/ContentsSheet.svelte';
   import DetailsSheet from './components/sheets/DetailsSheet.svelte';
   import EditSheet from './components/sheets/EditSheet.svelte';
-  import NotesSheet from './components/sheets/NotesSheet.svelte';
   import SearchSheet from './components/sheets/SearchSheet.svelte';
   import SettingsSheet from './components/sheets/SettingsSheet.svelte';
-  import StatsSheet from './components/sheets/StatsSheet.svelte';
   import StorageSheet from './components/sheets/StorageSheet.svelte';
-  import TypeSheet from './components/sheets/TypeSheet.svelte';
+  import ReadingPanel from './components/sheets/ReadingPanel.svelte';
   import ConfirmModal from './components/ui/ConfirmModal.svelte';
   import PromptModal from './components/ui/PromptModal.svelte';
   import { setLocale, t } from './i18n/index.svelte';
@@ -57,7 +54,7 @@
 {#if reader.doc}
   <ReaderView />
 {:else}
-  <LibraryView />
+  <Home />
 {/if}
 
 {#if dropping}
@@ -70,16 +67,10 @@
   <DetailsSheet id={ui.detailsId} onclose={close} />
 {:else if ui.overlay === 'edit' && ui.detailsId}
   <EditSheet id={ui.detailsId} onclose={() => ui.open('details')} />
-{:else if ui.overlay === 'notes'}
-  <NotesSheet onclose={close} />
-{:else if ui.overlay === 'stats'}
-  <StatsSheet onclose={close} />
-{:else if ui.overlay === 'catalog'}
-  <CatalogSheet onclose={close} />
 {:else if ui.overlay === 'storage'}
   <StorageSheet onclose={close} />
 {:else if ui.overlay === 'type'}
-  <TypeSheet onclose={close} />
+  <ReadingPanel onclose={close} />
 {:else if reader.content}
   {#if ui.overlay === 'contents'}
     <ContentsSheet onclose={close} />
@@ -88,9 +79,24 @@
   {/if}
 {/if}
 
-<IdleDock label={t('idle.label')} disabled={!!reader.doc || !!ui.overlay}><IdleStone /></IdleDock>
+<IdleDock label={t('idle.label')} disabled={!!reader.doc || !!ui.overlay || ui.section !== 'library'}><IdleStone /></IdleDock>
 
 <ConfirmModal />
 <PromptModal />
 
 <Toast toast={ui.toast} onpause={() => ui.pauseToast()} onresume={() => ui.resumeToast()} onaction={() => ui.actOnToast()} />
+
+<style>
+  /* Dropping a file on the page */
+  .drop-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: grid;
+    place-items: center;
+    background: var(--modal-backdrop);
+    border: 2px dashed var(--accent-amber);
+    pointer-events: none;
+    animation: fade-in var(--dur-enter);
+  }
+</style>

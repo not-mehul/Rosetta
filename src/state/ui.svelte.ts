@@ -41,7 +41,13 @@ export interface PromptRequest {
 }
 
 /** Overlays the app opens; one at a time per kind. */
-export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | 'edit' | 'stats' | 'notes' | 'catalog' | 'storage' | null;
+export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | 'edit' | 'storage' | null;
+
+/** The reader's Aa panel tabs. */
+export type PanelTab = 'text' | 'page' | 'light' | 'listen';
+
+/** The top-level sections, under the header as icon tabs (style.md §8.5.1). */
+export type Section = 'library' | 'notes' | 'stats' | 'catalogs';
 
 /** How long a toast stays (style.md §8.12): longer when it offers an action. */
 export const TOAST_MS = 4000;
@@ -51,6 +57,10 @@ const TOAST_EXIT_MS = 160;
 
 class UiState {
   overlay = $state<Overlay>(null);
+  /** The top-level section on screen; the library is home. */
+  section = $state<Section>('library');
+  /** The Aa panel's tab last used, so it opens where it was left. */
+  panelTab = $state<PanelTab>('text');
   /** The document the details sheet is about. */
   detailsId = $state<string | null>(null);
   toast = $state.raw<Toast | null>(null);
@@ -135,6 +145,13 @@ class UiState {
     });
   }
 
+  /** Goes to a top-level section, closing any sheet over the one before. */
+  go(section: Section): void {
+    this.overlay = null;
+    this.section = section;
+    globalThis.scrollTo?.({ top: 0 });
+  }
+
   open(overlay: Exclude<Overlay, null>): void {
     this.overlay = overlay;
   }
@@ -153,7 +170,8 @@ class UiState {
 
   /**
    * Android back (style.md §14): the topmost overlay first, then out of the
-   * reader to the library. False when the app should exit.
+   * reader, then from another section home to the library. False when the
+   * app should exit.
    */
   back(): boolean {
     const close = this.closers.at(-1);
@@ -161,7 +179,12 @@ class UiState {
       close();
       return true;
     }
-    return this.onBack?.() ?? false;
+    if (this.onBack?.()) return true;
+    if (this.section !== 'library') {
+      this.go('library');
+      return true;
+    }
+    return false;
   }
 }
 

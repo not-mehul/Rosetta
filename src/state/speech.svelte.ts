@@ -165,7 +165,7 @@ class SpeechState {
       } catch (err) {
         if (run !== this.run) return;
         this.playing = false;
-        ui.notify(t('speech.stopped', { reason: err instanceof Error ? err.message : String(err) }), 'error');
+        ui.notify(speechFailure(err), 'error');
         return;
       }
     }
@@ -219,3 +219,16 @@ class SpeechState {
 }
 
 export const speech = new SpeechState();
+
+/** The browser's reasons that mean no voice could speak (SpeechSynthesisErrorEvent.error). */
+const NO_VOICE = new Set(['synthesis-unavailable', 'synthesis-failed', 'voice-unavailable', 'language-unavailable', 'audio-hardware', 'not-allowed']);
+
+/** What to tell the reader when speaking fails: never an "[object …]". */
+export function speechFailure(err: unknown): string {
+  const code = (err as { error?: unknown } | null)?.error;
+  if (typeof code === 'string' && NO_VOICE.has(code)) return t('speech.noVoice');
+  const reason = err instanceof Error ? err.message : typeof code === 'string' ? code : typeof err === 'string' ? err : '';
+  // Android's engine says so in words ("not initialized", "no engine") when nothing is installed.
+  if (!reason || /^\[object /.test(reason) || /not (yet )?initiali[sz]ed|no (tts )?engine|unsupported|not available/i.test(reason)) return t('speech.noVoice');
+  return t('speech.stopped', { reason });
+}

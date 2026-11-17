@@ -79,6 +79,7 @@ test('pages turn by tap, key and swipe, and the place survives a reload', async 
   await expect(page.locator('.reading h1')).toHaveText('The stair');
   await showBars(page);
   await page.click('#openType');
+  await page.click('#panel-page');
   await page.click('#modePaged');
   await page.click('#turn-none');
   await page.keyboard.press('Escape');
@@ -108,6 +109,7 @@ test('the page curl follows the finger and turns the page', async ({ page }) => 
   await add(page, ['lantern.epub']);
   await showBars(page);
   await page.click('#openType');
+  await page.click('#panel-page');
   await page.click('#modePaged');
   await page.click('#turn-curl');
   await page.keyboard.press('Escape');
@@ -156,17 +158,24 @@ test('collections, tags and series from a document’s details', async ({ page }
   await expect(page.locator('#toast')).toContainText('Details saved');
   await page.keyboard.press('Escape');
 
-  // The collection shows only its documents.
+  // The collection shows only its documents (chosen in Arrange, named over the shelf).
+  await page.click('#arrangeLibrary');
   await page.locator('.chip[data-collection="Holiday"]').click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(1);
-  await page.getByRole('radio', { name: 'Everything' }).click();
+  await expect(page.locator('.collection-bar')).toContainText('Holiday');
+  await page.getByRole('button', { name: 'Show everything' }).click();
   await expect(page.locator('.doc-card')).toHaveCount(3);
 
   // #tags filter, and series sort puts volume 1 before volume 2.
+  await page.click('#arrangeLibrary');
   await page.getByRole('button', { name: '#sea' }).click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(1);
-  await page.fill('#libraryFilter', '');
+  await page.click('#searchLibrary');
+  await page.click('#arrangeLibrary');
   await page.getByRole('radio', { name: 'Series' }).click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card').nth(0)).toContainText('The Lantern Keeper');
   await expect(page.locator('.doc-card').nth(1)).toContainText('The Salt Road');
 });
@@ -186,7 +195,7 @@ test('all notes gather in one place and search', async ({ page }) => {
   await page.getByRole('button', { name: 'Highlight in Amber' }).click();
   await page.click('#closeReader');
 
-  await page.click('#openNotes');
+  await page.click('#tab-notes');
   await expect(page.locator('#allNotes li')).toHaveCount(1);
   await expect(page.locator('#allNotes')).toContainText('Paragraph 1');
   await page.fill('#notesSearch', 'albatross');
@@ -274,6 +283,7 @@ test('a long book opens and turns within budget', async ({ page }) => {
 
   await showBars(page);
   await page.click('#openType');
+  await page.click('#panel-page');
   await page.click('#modePaged');
   await page.click('#turn-none');
   await page.keyboard.press('Escape');
@@ -354,12 +364,12 @@ test('the way back after a jump, the footer’s figures and chapter ticks', asyn
 test('a daily goal and the reading calendar', async ({ page }) => {
   await add(page, ['lantern.epub']);
   await page.click('#closeReader');
-  await page.click('#openStats');
+  await page.click('#tab-stats');
   await expect(page.locator('.calendar-day[data-day]')).toHaveCount(18 * 7);
   await expect(page.locator('.calendar-day.is-today')).toHaveCount(1);
   await page.click('[data-goal="30"]');
   await expect(page.locator('#goalStatus')).toHaveText('0 of 30 min today');
-  await expectAccessible(page, '.sheet');
+  await expectAccessible(page, '#view-stats');
 
   // Arrow keys move between days; a picked day shows its time.
   await page.locator('.calendar-day.is-today').focus();
@@ -367,7 +377,7 @@ test('a daily goal and the reading calendar', async ({ page }) => {
   await expect(page.locator('.calendar-day[aria-pressed=true]')).not.toHaveClass(/is-today/);
   await expect(page.locator('#calendarPicked')).toContainText('0 min');
 
-  // The goal shows beside Continue reading.
+  // The goal shows beside Continue reading. Escape, like Android's Back, goes home to the library.
   await page.keyboard.press('Escape');
   await expect(page.locator('#goalToday')).toHaveText('0 of 30 min today');
 });
@@ -384,7 +394,8 @@ test('flows a sentence at a time, with visual anchors and a font of your own', a
   await expect(page.locator('.reading b.anchor').first()).toHaveText('T');
   await expect(page.locator('.reading p').first()).toContainText('The keeper kept a log');
 
-  // Flow: one sentence, revealed letter by letter at the chosen speed.
+  // Flow: one sentence, revealed letter by letter at the chosen speed (Aa → Page).
+  await page.click('#panel-page');
   await page.click('#modeFlow');
   await expect(page.locator('#flowSpeed')).toBeVisible();
   await page.locator('#flowSpeed').fill('10');
@@ -423,8 +434,10 @@ test('flows a sentence at a time, with visual anchors and a font of your own', a
   await page.click('#flowBars');
   await expect(page.locator('.reader.chrome-hidden')).toHaveCount(0);
 
-  // A font file that isn't a font is turned away.
+  // A font file that isn't a font is turned away. (The panel reopens on Page, where it was left.)
   await page.click('#openType');
+  await expect(page.locator('#panel-page')).toHaveAttribute('aria-selected', 'true');
+  await page.click('#panel-text');
   const dir = mkdtempSync(join(tmpdir(), 'font-'));
   writeFileSync(join(dir, 'Broken.ttf'), 'not a font');
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#faceCustom')]);

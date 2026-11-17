@@ -36,6 +36,7 @@ test('scrolling to the end finishes a document', async ({ page }) => {
 test('turning to the last page finishes a document', async ({ page }) => {
   await addLong(page);
   await page.click('#openType');
+  await page.click('#panel-page');
   await page.click('#modePaged');
   await page.keyboard.press('Escape');
   let last = '';

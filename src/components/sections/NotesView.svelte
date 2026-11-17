@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Every highlight in the library in one list: filter by colour, search the
+  // The Notes section: every highlight in the library in one list: filter by colour, search the
   // words and notes, and go to any of them.
   import { t } from '../../i18n/index.svelte';
   import { relativeDay } from '../../lib/format';
@@ -10,9 +10,7 @@
   import { COLOURS } from '../reader/colours';
   import EmptyState from '../ui/EmptyState.svelte';
   import Icon from '../ui/Icon.svelte';
-  import Sheet from '../ui/Sheet.svelte';
 
-  let { onclose }: { onclose: () => void } = $props();
   let marks = $state.raw<Mark[]>([]);
   let loaded = $state(false);
   let colour = $state<HighlightColour | ''>('');
@@ -31,13 +29,12 @@
   });
 
   async function go(m: Mark) {
-    onclose();
     const doc = library.get(m.docId);
     await reader.openAt(m.docId, { section: m.section, offset: doc?.format === 'pdf' ? 0 : m.start }, { start: m.start, end: m.end });
   }
 </script>
 
-<Sheet title={t('notes.title')} {onclose}>
+<div class="section-view" id="view-notes" role="tabpanel" aria-labelledby="tab-notes">
   {#if loaded && !marks.length}
     <EmptyState icon="highlighter" title={t('notes.emptyTitle')} text={t('notes.emptyText')} />
   {:else}
@@ -55,7 +52,7 @@
       </div>
     </div>
     {#if shown.length}
-      <ul class="row-list" id="allNotes">
+      <ul class="row-list dd-stagger" id="allNotes">
         {#each shown as m (m.id)}
           {@const doc = library.get(m.docId)}
           <li class="row-with-action">
@@ -85,4 +82,20 @@
       </div>
     {/if}
   {/if}
-</Sheet>
+</div>
+
+<style>
+  .hl-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: var(--space-1);
+  }
+  .notes-tools {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+</style>

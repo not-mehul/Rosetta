@@ -16,7 +16,7 @@ Rosetta is a quiet place to read. It keeps your books, papers and notes on this 
 - **Comic archives** (`.cbz`), one picture after another.
 - **Markdown**, **HTML** and **plain text**, set in the same type as everything else.
 
-Add files with the **+** button, a whole folder at once, drop them on the window, or choose _Open with Rosetta_ from another app. Adding the same file twice keeps one copy. The **Catalogs** tab has free books from Project Gutenberg and Standard Ebooks, and can add a Calibre server or a library's catalog.
+Add files with the **+** button, a whole folder at once, drop them on the window, or choose _Open with Rosetta_ from another app. Adding the same file twice keeps one copy. The **Catalogs** tab has free books from Project Gutenberg and Standard Ebooks, and can add a Calibre server or a library's catalog (OPDS 1 or 2). A catalog's own choices, such as language or order, show as chips above its books, and a book you already have says _In your library_.
 
 Books bought with DRM can't be opened here. Read them in the app they were bought for, or look for a DRM-free copy.
 

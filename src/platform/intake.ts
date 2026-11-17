@@ -5,6 +5,7 @@
 import { App } from '@capacitor/app';
 import { Filesystem } from '@capacitor/filesystem';
 import { base64ToBytes } from '../lib/base64';
+import { safeDecode } from '../lib/uri';
 import { isNative } from './native';
 
 export interface Incoming {
@@ -14,7 +15,7 @@ export interface Incoming {
 
 /** The last path segment; Android content URIs often end in an opaque id, which the format sniffer copes with. */
 export function nameFrom(url: string): string {
-  return decodeURIComponent(url.split(/[?#]/)[0]!.split('/').pop() ?? '') || 'Opened document';
+  return safeDecode(url.split(/[?#]/)[0]!.split('/').pop() ?? '') || 'Opened document';
 }
 
 async function read(url: string): Promise<Incoming | null> {

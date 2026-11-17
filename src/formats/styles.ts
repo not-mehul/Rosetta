@@ -4,7 +4,7 @@
 // reaches the network is dropped, and the properties the reader controls
 // (colour, typeface, line spacing, position) are left to the reader.
 
-import { ID_PREFIX, offlineCss } from './sanitize';
+import { declarations, ID_PREFIX, offlineCss, offlineValue } from './sanitize';
 
 /** Properties a book may not set over the reader's theme and type. */
 const READER_OWNS =
@@ -37,27 +37,21 @@ function scopeSelector(selector: string, scope: string): string {
 }
 
 function filterDeclarations(block: string, options: ScopeOptions): string {
-  return block
-    .split(';')
-    .map((d) => d.trim())
-    .filter(Boolean)
+  return declarations(block)
     .map((d) => {
       const colon = d.indexOf(':');
       if (colon < 1) return '';
       const prop = d.slice(0, colon).trim();
-      let value = d
+      const value = d
         .slice(colon + 1)
         .replace(/!important/gi, '')
         .trim();
       if (!options.keepAll && READER_OWNS.test(prop)) return '';
       // Fixed font sizes would ignore the reader's size; relative ones scale with it.
       if (!options.keepAll && /^font-size$/i.test(prop) && /\d(px|pt|cm|mm|in|pc)\b/i.test(value)) return '';
-      value = value.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (m, _q, url: string) => {
-        if (/^data:/i.test(url)) return m;
-        const resolved = options.resolveUrl?.(url.trim());
-        return resolved ? `url("${resolved}")` : 'none';
-      });
-      return `${prop}: ${value}`;
+      // Every url() must name a file in the book; anything that could reach the network goes.
+      const safe = offlineValue(value, options.resolveUrl);
+      return safe === null ? '' : `${prop}: ${safe}`;
     })
     .filter(Boolean)
     .join('; ');

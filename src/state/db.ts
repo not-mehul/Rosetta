@@ -80,6 +80,13 @@ export interface PdfTextCache {
   pages: (string | null)[];
 }
 
+/** A document's words, for searching the whole library (state/fulltext.ts). */
+export interface TextIndex {
+  id: string;
+  /** Each section's (or PDF page's) title and text, offsets as the reader's. */
+  sections: { title: string; text: string }[];
+}
+
 export type HighlightColour = 'amber' | 'sage' | 'bright';
 
 export interface Mark {
@@ -115,6 +122,7 @@ export const db = new Dexie('rosetta') as Dexie & {
   sessions: EntityTable<ReadingSession, 'id'>;
   tombstones: EntityTable<Tombstone, 'id'>;
   pdfText: EntityTable<PdfTextCache, 'id'>;
+  texts: EntityTable<TextIndex, 'id'>;
 };
 
 db.version(1).stores({
@@ -145,6 +153,8 @@ db.version(2)
         d.updatedAt ??= d.openedAt ?? d.addedAt ?? Date.now();
       }),
   );
+
+db.version(3).stores({ texts: 'id' });
 
 /** Fills fields added after a document was stored (backups, sync, old rows). */
 export function withDefaults(d: Partial<StoredDoc> & Pick<StoredDoc, 'id'>): StoredDoc {

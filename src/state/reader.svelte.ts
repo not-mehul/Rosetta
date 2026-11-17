@@ -257,6 +257,8 @@ class ReaderState {
         return;
       }
       if (content.kind === 'pdf') this.cacheText(id, content);
+      // Keep the words for searching the whole library (a PDF's once its pages are read).
+      if (content.kind === 'flow') void import('./fulltext').then((m) => m.rememberText(id, content));
       if (this.doc?.id !== id) {
         content.dispose();
         return;

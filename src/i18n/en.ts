@@ -233,6 +233,13 @@ const en = {
   'library.documents': 'Documents',
   'library.count': { one: '{count} document', other: '{count} documents' },
   'library.noMatch': 'Nothing matches that.',
+  'library.inside': 'Inside the books',
+  'library.readingBooks': 'Reading {done} of {total} books',
+  'library.matches': {
+    one: '{count} place',
+    other: '{count} places',
+  },
+  'library.insideNone': 'No book has those words.',
   'library.clearFilter': 'Clear filter',
   'library.emptyReading': 'Nothing in progress. Open a document and it will wait here.',
   'library.emptyFinished': 'Nothing finished yet.',

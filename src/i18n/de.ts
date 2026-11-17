@@ -232,6 +232,13 @@ const de: Messages = {
   'library.documents': 'Dokumente',
   'library.count': { one: '{count} Dokument', other: '{count} Dokumente' },
   'library.noMatch': 'Nichts passt dazu.',
+  'library.inside': 'In den Büchern',
+  'library.readingBooks': '{done} von {total} Büchern gelesen',
+  'library.matches': {
+    one: '{count} Stelle',
+    other: '{count} Stellen',
+  },
+  'library.insideNone': 'Kein Buch enthält diese Wörter.',
   'library.clearFilter': 'Filter löschen',
   'library.emptyReading': 'Nichts angefangen. Öffne ein Dokument, und es wartet hier auf dich.',
   'library.emptyFinished': 'Noch nichts beendet.',

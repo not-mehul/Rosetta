@@ -157,22 +157,38 @@ test('resumes where reading stopped and keeps the place through type changes', a
   await expect(page.locator('#progressLabel')).toHaveText(before!);
 });
 
-test('the library: shelves, details, finishing and removing with undo', async ({ page }) => {
+test('the library: marks for how far along, the filter, details, finishing and removing with undo', async ({ page }) => {
   await add(page, ['garden.md']);
   await page.click('#closeReader');
   await add(page, ['tide.txt', 'field-notes.docx'], '#addDocs');
   await expect(page.locator('#toast')).toContainText('Added 2 documents');
   await expect(page.locator('#resume')).toContainText('Garden Diary');
 
-  await page.click('#shelf-reading');
+  // Each document carries a mark for how far along it is.
+  await expect(page.locator('.doc-card', { hasText: 'Garden Diary' }).locator('.status-mark')).toHaveAttribute('data-status', 'reading');
+  await expect(page.locator('.doc-card', { hasText: 'Tide' }).locator('.status-mark')).toHaveAttribute('data-status', 'unread');
+  await expect(page.getByRole('button', { name: /^Garden Diary\W+Reading/ })).toBeVisible();
+  // The filter shows one kind, says so above the shelf, and lets go of it.
+  await page.click('#arrangeLibrary');
+  await page.click('#show-reading');
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(1);
-  await page.click('#shelf-all');
+  await expect(page.locator('#showingBar')).toContainText('Reading');
+  await expect(page.locator('#arrangeLibrary')).toHaveClass(/is-set/);
+  await page.click('#arrangeLibrary');
+  await page.click('#show-unread');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.doc-card')).toHaveCount(2);
+  await page.locator('#showingBar').getByRole('button', { name: 'Show everything' }).click();
+  await expect(page.locator('.doc-card')).toHaveCount(3);
 
   await page.getByRole('button', { name: 'Details for Garden Diary' }).click();
   await page.click('#toggleFinished');
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.click('#shelf-finished');
-  await expect(page.locator('.doc-card')).toContainText('Finished');
+  await page.click('#arrangeLibrary');
+  await page.click('#show-finished');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.doc-card .status-mark')).toHaveAttribute('data-status', 'finished');
 
   await page.getByRole('button', { name: 'Details for Garden Diary' }).click();
   await page.click('#removeDoc');
@@ -186,6 +202,7 @@ test('the guide opens from the empty library, and the theme can be set', async (
   await expect(page.locator('.reading h1')).toHaveText('A short guide to Rosetta');
   await page.click('#closeReader');
   await page.click('#openSettings');
+  await page.click('#settings-general');
   await page.getByRole('radio', { name: 'Dawn' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.getByRole('radio', { name: 'Dusk' }).click();

@@ -5,13 +5,15 @@
   import { t } from '../i18n/index.svelte';
   import { relativeDay } from '../lib/format';
   import type { StoredDoc } from '../state/db';
+  import { docStatus } from '../state/library.svelte';
   import { reader } from '../state/reader.svelte';
   import { ui } from '../state/ui.svelte';
   import Cover from './ui/Cover.svelte';
   import Icon from './ui/Icon.svelte';
+  import StatusMark from './ui/StatusMark.svelte';
 
   let { doc }: { doc: StoredDoc } = $props();
-  const status = $derived(doc.finishedAt ? 'finished' : doc.openedAt ? 'reading' : 'unread');
+  const status = $derived(docStatus(doc));
 
   function details() {
     ui.detailsId = doc.id;
@@ -21,17 +23,15 @@
 
 <div class="doc-card doc-tile dd-lift">
   <button type="button" class="doc-open dd-pressable" data-doc={doc.id} onclick={() => void reader.open(doc.id)}>
-    <span class="doc-thumb tile-cover" aria-hidden="true"><Cover {doc} /></span>
+    <span class="doc-thumb tile-cover" aria-hidden="true"><Cover {doc} /><StatusMark {status} /></span>
     {#if status === 'reading'}
       <span class="meter tile-meter" aria-hidden="true"><span class="meter-fill" style:transform="scaleX({doc.progress})"></span></span>
     {/if}
     <span class="tile-text">
-      <span class="tile-title ellipsis-2">{doc.title}</span>
+      <span class="tile-title ellipsis-2">{doc.title}</span><span class="visually-hidden">, {t(`status.${status}`)}</span>
       {#if doc.author}<span class="doc-author ellipsis">{doc.author}</span>{/if}
       {#if status === 'reading'}
         <span class="t-data-small tabular"><span class="amber">{Math.floor(doc.progress * 100)}%</span> <span class="faint">· {relativeDay(doc.openedAt!)}</span></span>
-      {:else if status === 'finished'}
-        <span class="chip-status is-done">{t('library.finishedChip')}</span>
       {:else if doc.series}
         <span class="t-data-small faint ellipsis">{doc.series}{doc.seriesIndex !== null ? ` ${doc.seriesIndex}` : ''}</span>
       {/if}

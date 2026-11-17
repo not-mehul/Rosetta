@@ -90,11 +90,15 @@ test('Undo on "Finished" sticks until the end is reached again', async ({ page }
   await page.keyboard.press('Escape');
   await page.waitForTimeout(800);
   await expect(page.locator('#toast', { hasText: 'Finished' })).toHaveCount(0);
-  await page.click('#shelf-finished');
+  await page.click('#arrangeLibrary');
+  await page.click('#show-finished');
+  await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(0);
 
   // Back in at the end: still not finished. Back a long way, then to the end again: finished.
-  await page.click('#shelf-all');
+  await page.click('#arrangeLibrary');
+  await page.click('#show-all');
+  await page.keyboard.press('Escape');
   await page.locator('#resume').click();
   await page.waitForTimeout(800);
   await expect(page.locator('#toast', { hasText: 'Finished' })).toHaveCount(0);

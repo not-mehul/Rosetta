@@ -213,6 +213,11 @@ export const library = new LibraryState();
 
 export const isFinished = (d: StoredDoc) => d.finishedAt !== null;
 export const isReading = (d: StoredDoc) => !isFinished(d) && d.openedAt !== null;
+export const isUnread = (d: StoredDoc) => !isFinished(d) && d.openedAt === null;
+
+/** How far along a document is: what its mark on the shelf shows. */
+export type DocStatus = 'unread' | 'reading' | 'finished';
+export const docStatus = (d: StoredDoc): DocStatus => (isFinished(d) ? 'finished' : isReading(d) ? 'reading' : 'unread');
 
 /** IndexedDB keeps a Blob as a file rather than inside the database row. */
 function storable(bytes: Uint8Array): Blob | Uint8Array {
@@ -229,7 +234,7 @@ export function matches(d: StoredDoc, filter: string): boolean {
 
 export function shelve(items: readonly StoredDoc[], shelf: LibraryShelf, sort: LibrarySort, filter = '', collection = ''): StoredDoc[] {
   const out = items.filter(
-    (d) => (shelf === 'all' ? true : shelf === 'finished' ? isFinished(d) : isReading(d)) && (!collection || d.collections?.includes(collection)) && matches(withDefaults(d), filter),
+    (d) => (shelf === 'all' || docStatus(d) === shelf) && (!collection || d.collections?.includes(collection)) && matches(withDefaults(d), filter),
   );
   const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
   const surname = (author: string) => author.split(',')[0]!.trim().split(/\s+/).pop() ?? '';

@@ -10,7 +10,6 @@ test('the library search looks inside every book and opens the place', async ({ 
   await chooser.setFiles([fixture('lantern.epub'), fixture('tide.txt'), fixture('harbour.pdf')]);
   await expect(page.locator('.doc-card')).toHaveCount(3);
 
-  await page.click('#searchLibrary');
   await page.fill('#libraryFilter', 'green cloth');
   // No title has the words, but a book does.
   await expect(page.locator('#textResults .text-book')).toHaveCount(1, { timeout: 20000 });

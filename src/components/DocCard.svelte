@@ -42,8 +42,6 @@
       {:else if status === 'reading'}
         <span class="t-data amber tabular">{Math.floor(doc.progress * 100)}%</span>
         <span class="t-data-small faint doc-when">{relativeDay(doc.openedAt!)}</span>
-      {:else}
-        <span class="chip-status">{t('library.new')}</span>
       {/if}
     </span>
   </button>

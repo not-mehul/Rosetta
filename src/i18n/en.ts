@@ -166,6 +166,7 @@ const en = {
   'error.cardDraw': 'The card couldn’t be drawn.',
   'error.speechDone': 'Finished reading aloud.',
   'speech.stopped': 'Reading aloud stopped ({reason}). Try again, or choose another voice in Type and theme.',
+  'speech.noVoice': 'Reading aloud needs a text-to-speech voice, and none answered. Install one in your phone’s text-to-speech settings, then try again.',
   'error.fileMissing': 'the file is missing from the library',
   'error.docx': 'This Word document couldn’t be read ({reason}).',
   'error.pdf': 'This PDF couldn’t be read ({reason}).',
@@ -238,7 +239,6 @@ const en = {
   },
   'library.drop': 'Drop to add to the library',
   'library.finishedChip': 'Finished',
-  'library.new': 'New',
   'library.detailsFor': 'Details for {title}',
   'library.upNext': 'Up next',
   'library.upNextAfter': 'Next in {series}, after {title}',
@@ -402,6 +402,7 @@ const en = {
   'time.minutes': { one: '{count} min', other: '{count} min' },
   'time.hours': { one: '{count} h', other: '{count} h' },
   'time.hoursMinutes': '{h} h {m} min',
+  'time.underMinute': 'Under a minute',
 
   'type.flow': 'Flow',
   'type.flowHint': 'One sentence at a time, letter by letter. Tap to show the rest, tap again for the next. Tap the left edge to go back.',

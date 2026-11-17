@@ -70,7 +70,7 @@
       <div class="stat-tile"><span class="stat-value" id="statStreak">{t('stats.days', { count: summary.streak })}</span><span class="t-field-label">{t('stats.streak')}</span></div>
       <div class="stat-tile"><span class="stat-value" id="statLongest">{t('stats.days', { count: Math.max(summary.longest, summary.streak) })}</span><span class="t-field-label">{t('stats.longest')}</span></div>
       <div class="stat-tile"><span class="stat-value">{finishedThisYear.length}</span><span class="t-field-label">{t('stats.finishedYear', { year })}</span></div>
-      <div class="stat-tile"><span class="stat-value">{Math.round(summary.pace / 6)}</span><span class="t-field-label">{t('stats.pace')}</span></div>
+      <div class="stat-tile"><span class="stat-value">{summary.paceMeasured ? Math.round(summary.pace / 6) : '—'}</span><span class="t-field-label">{t('stats.pace')}</span></div>
       <div class="stat-tile"><span class="stat-value">{duration(summary.totalMs)}</span><span class="t-field-label">{t('stats.allTime')}</span></div>
     </div>
 

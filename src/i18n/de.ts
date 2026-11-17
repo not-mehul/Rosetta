@@ -165,6 +165,7 @@ const de: Messages = {
   'error.cardDraw': 'Die Karte konnte nicht gezeichnet werden.',
   'error.speechDone': 'Vorlesen beendet.',
   'speech.stopped': 'Das Vorlesen wurde beendet ({reason}). Versuche es erneut oder wähle unter Schrift und Thema eine andere Stimme.',
+  'speech.noVoice': 'Zum Vorlesen braucht es eine Sprachausgabe-Stimme, und keine hat geantwortet. Installiere eine in den Sprachausgabe-Einstellungen des Telefons und versuche es erneut.',
   'error.fileMissing': 'die Datei fehlt in der Bibliothek',
   'error.docx': 'Dieses Word-Dokument konnte nicht gelesen werden ({reason}).',
   'error.pdf': 'Dieses PDF konnte nicht gelesen werden ({reason}).',
@@ -237,7 +238,6 @@ const de: Messages = {
   },
   'library.drop': 'Ablegen, um zur Bibliothek hinzuzufügen',
   'library.finishedChip': 'Beendet',
-  'library.new': 'Neu',
   'library.detailsFor': 'Details zu {title}',
   'library.upNext': 'Als Nächstes',
   'library.upNextAfter': 'Weiter in {series}, nach {title}',
@@ -402,6 +402,7 @@ const de: Messages = {
   'time.minutes': { one: '{count} Min.', other: '{count} Min.' },
   'time.hours': { one: '{count} Std.', other: '{count} Std.' },
   'time.hoursMinutes': '{h} Std. {m} Min.',
+  'time.underMinute': 'Unter einer Minute',
 
   'type.flow': 'Fluss',
   'type.flowHint': 'Ein Satz nach dem anderen, Buchstabe für Buchstabe. Tippen zeigt den Rest, erneutes Tippen den nächsten. Der linke Rand geht zurück.',

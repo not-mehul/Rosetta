@@ -1,6 +1,7 @@
 // The library: every document added, with its cover, place and progress.
 
-import { FormatError, readInfo } from '../formats';
+import { FormatError, PasswordError, readInfo, type DocInfo } from '../formats';
+import { titleFromName } from '../formats/sniff';
 import { db, hashBytes, toBytes, withDefaults, type Collection, type Mark, type StoredDoc } from './db';
 import type { LibraryShelf, LibrarySort } from './settings';
 
@@ -42,7 +43,15 @@ class LibraryState {
         return { doc: this.get(id)!, added: false };
       }
       if (existing) return { doc: withDefaults(existing), added: false };
-      const info = await readInfo(bytes, fileName, extra.password);
+      let info: DocInfo;
+      try {
+        info = await readInfo(bytes, fileName, extra.password);
+      } catch (err) {
+        // A locked PDF goes in as it is: the reader asks for its password when
+        // it's opened, then fills in its title and cover (reader.svelte.ts).
+        if (!(err instanceof PasswordError) || extra.password) throw err;
+        info = { format: 'pdf', title: titleFromName(fileName), author: '', cover: null };
+      }
       const doc: StoredDoc = {
         id,
         fileName,

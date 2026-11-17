@@ -5,7 +5,7 @@
 
 import { clean } from './sanitize';
 import { FormatError, type DocInfo, type FlowDoc, type Section, type TocEntry } from './types';
-import { decodeText } from './flow';
+import { decodeText } from './text';
 import { t } from '../i18n/index.svelte';
 
 const byLocal = (root: Document | Element, name: string) => [...root.getElementsByTagNameNS('*', name)];
@@ -15,15 +15,8 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const href = (el: Element) => el.getAttribute('l:href') ?? el.getAttribute('xlink:href') ?? el.getAttributeNS('http://www.w3.org/1999/xlink', 'href') ?? el.getAttribute('href') ?? '';
 
 function parse(bytes: Uint8Array): Document {
-  // FB2 declares its encoding; most are UTF-8, older Russian ones windows-1251.
-  const head = new TextDecoder('latin1').decode(bytes.subarray(0, 200));
-  const encoding = /encoding=["']([\w-]+)["']/i.exec(head)?.[1]?.toLowerCase() ?? 'utf-8';
-  let source: string;
-  try {
-    source = encoding === 'utf-8' ? decodeText(bytes) : new TextDecoder(encoding).decode(bytes);
-  } catch {
-    source = decodeText(bytes);
-  }
+  // FB2 declares its encoding; most are UTF-8, older Russian ones windows-1251 (text.ts reads either).
+  const source = decodeText(bytes);
   const doc = new DOMParser().parseFromString(source, 'application/xml');
   if (doc.getElementsByTagName('parsererror').length || doc.documentElement.localName !== 'FictionBook') throw new FormatError(t('error.fb2Xml'));
   return doc;

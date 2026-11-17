@@ -32,11 +32,11 @@ ol {
   z-index: 1;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 2.5rem 1.25rem 6rem;
+  padding: 1.5rem 1.25rem 6rem;
 }
 @media (min-width: 640px) {
   .container {
-    padding: 4rem 1.5rem 6rem;
+    padding: 2.5rem 1.5rem 6rem;
   }
 }
 
@@ -67,11 +67,6 @@ ol {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-}
-.site-title .eyebrow {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .section-view {
   display: flex;

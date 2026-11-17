@@ -6,7 +6,6 @@ import { isComicArchive } from '../../src/formats/cbz';
 import { rtfToHtml } from '../../src/formats/rtf';
 import { scopeCss } from '../../src/formats/styles';
 import type { FlowDoc } from '../../src/formats/types';
-import { fillSearch, parseFeed, searchTemplate } from '../../src/lib/opds';
 import type { Backup } from '../../src/lib/export';
 import { bookShelfUrl, parseRosettaUrl } from '../../src/platform/handoff';
 import { clipHalfPlane, constrain, fold, reflect, type Pt } from '../../src/reader/curl-geometry';
@@ -299,38 +298,7 @@ describe('publisher styles', () => {
   });
 });
 
-// ─── Catalogs and the sibling apps ───────────────────────────
-
-describe('OPDS catalogs', () => {
-  const feed = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>Popular</title>
-<link rel="next" href="?page=2" type="application/atom+xml;profile=opds-catalog"/>
-<link rel="search" href="/search.xml" type="application/opensearchdescription+xml"/>
-<entry><id>urn:1</id><title>Moby Dick</title><author><name>Herman Melville</name></author><summary>A whale.</summary>
-<link rel="http://opds-spec.org/acquisition" href="/1.pdf" type="application/pdf"/>
-<link rel="http://opds-spec.org/acquisition/open-access" href="/1.epub" type="application/epub+zip"/>
-<link rel="http://opds-spec.org/acquisition/buy" href="/buy" type="application/epub+zip"/>
-<link rel="http://opds-spec.org/image/thumbnail" href="/1.jpg" type="image/jpeg"/></entry>
-<entry><id>urn:shelf</id><title>Sea stories</title><link rel="subsection" href="/sea" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/></entry>
-</feed>`;
-
-  it('reads entries, the best download first, and the way to more', () => {
-    const f = parseFeed(feed, 'https://books.example/opds/');
-    expect(f.title).toBe('Popular');
-    expect(f.next).toBe('https://books.example/opds/?page=2');
-    expect(f.search).toBe('https://books.example/search.xml');
-    const [book, shelf] = f.entries;
-    expect(book).toMatchObject({ title: 'Moby Dick', author: 'Herman Melville', thumbnail: 'https://books.example/1.jpg', feed: null });
-    expect(book!.downloads.map((d) => d.href)).toEqual(['https://books.example/1.epub', 'https://books.example/1.pdf']);
-    expect(shelf!.feed?.href).toBe('https://books.example/sea');
-    expect(() => parseFeed('<html/>', 'https://x/')).toThrow();
-  });
-
-  it('fills a search template', () => {
-    const xml = '<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"><Url type="application/atom+xml" template="/q?s={searchTerms}&amp;p={startPage?}"/></OpenSearchDescription>';
-    const template = searchTemplate(xml, 'https://books.example/search.xml')!;
-    expect(fillSearch(template, 'sea & sky')).toBe('https://books.example/q?s=sea%20%26%20sky&p=');
-  });
-});
+// ─── The sibling apps ────────────────────────────────────────
 
 describe('hand-off links', () => {
   it('logs a finished book in BookShelf', () => {

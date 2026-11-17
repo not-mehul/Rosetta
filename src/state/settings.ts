@@ -80,14 +80,6 @@ export interface Settings {
   /** The collection the library shows, or '' for every document. */
   collection: string;
   locale: LocaleSetting;
-  /** OPDS catalogs the reader added (the built-in ones aren't stored). */
-  catalogs: {
-    id: string;
-    name: string;
-    url: string;
-    user?: string;
-    password?: string;
-  }[];
   /** When the last automatic backup was written. */
   lastAutoBackup: number;
   sort: LibrarySort;
@@ -142,7 +134,6 @@ export const DEFAULT_SETTINGS: Settings = {
   sync: false,
   collection: '',
   locale: 'system',
-  catalogs: [],
   lastAutoBackup: 0,
   sort: 'recent',
   shelf: 'all',
@@ -216,21 +207,14 @@ export function settingsFor(defaults: Settings, own: BookSettings | undefined): 
 /** Kept to this device: what a backup leaves out of the settings it carries. */
 const DEVICE_ONLY = ['lastAutoBackup', 'lastDocId', 'customFont', 'sync', 'recapSeen'] as const satisfies readonly (keyof Settings)[];
 
-/** The settings a backup carries: everything but what belongs to this device, and no catalog passwords. */
+/** The settings a backup carries: everything but what belongs to this device. */
 export function portableSettings(s: Settings): Partial<Settings> {
-  const out: Partial<Settings> = {
-    ...s,
-    catalogs: s.catalogs.map((c) => {
-      const copy = { ...c };
-      delete copy.password;
-      return copy;
-    }),
-  };
+  const out: Partial<Settings> = { ...s };
   for (const key of DEVICE_ONLY) delete out[key];
   return out;
 }
 
-/** Settings restored from a backup over the ones in use. Catalogs join by address, keeping passwords saved here. */
+/** Settings restored from a backup over the ones in use. */
 export function restoredSettings(current: Settings, backedUp: unknown): Settings {
   if (!backedUp || typeof backedUp !== 'object') return current;
   const given = backedUp as Partial<Record<keyof Settings, unknown>>;
@@ -238,12 +222,10 @@ export function restoredSettings(current: Settings, backedUp: unknown): Settings
   const out: Settings = { ...current };
   const writable = out as unknown as Record<string, unknown>;
   for (const key of Object.keys(given) as (keyof Settings)[]) {
-    if ((DEVICE_ONLY as readonly string[]).includes(key) || key === 'catalogs' || !(key in DEFAULT_SETTINGS)) continue;
+    if ((DEVICE_ONLY as readonly string[]).includes(key) || !(key in DEFAULT_SETTINGS)) continue;
     // A value that doesn't fit leaves the one in use alone.
     if (JSON.stringify(incoming[key]) === JSON.stringify(given[key])) writable[key] = incoming[key];
   }
-  const known = new Set(current.catalogs.map((c) => c.url));
-  out.catalogs = [...current.catalogs, ...incoming.catalogs.filter((c) => !known.has(c.url))];
   return out;
 }
 
@@ -261,8 +243,6 @@ export function mergeSettings(stored: Partial<Record<keyof Settings, unknown>> |
     } else if (RANGES[key]) {
       const [min, max] = RANGES[key]!;
       if (typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max) writable[key] = key === 'fontSize' ? Math.round(value) : value;
-    } else if (key === 'catalogs') {
-      if (Array.isArray(value)) out.catalogs = value.filter((c) => c && typeof c.url === 'string' && typeof c.name === 'string' && typeof c.id === 'string');
     } else if (key === 'lastDocId') {
       if (value === null || typeof value === 'string') out.lastDocId = value;
     } else if (typeof value === typeof DEFAULT_SETTINGS[key]) {

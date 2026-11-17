@@ -1,41 +1,34 @@
 <script lang="ts">
-  // Home: the editorial header (style.md §8.8) and the four top-level
-  // sections as icon tabs under it (§8.5.1), as in Ledger and Mise:
-  // Library, Notes, Stats and Catalogs. Settings is a sheet from the header.
-  import { IconTabs, ThemeToggle, konami, play, secretTaps } from 'dusk-dawn';
+  // Home: Rosetta's name with a line under it about the section on screen,
+  // Settings at the top right, and the three sections as icon tabs under
+  // them (style.md §8.5.1): Library, Notes and Stats.
+  import { IconTabs, konami, play, secretTaps } from 'dusk-dawn';
   import type { Snippet } from 'svelte';
   import { t, type MessageKey } from '../i18n/index.svelte';
   import { hatch } from '../lib/delight';
-  import { shown, toggledTheme } from '../platform/theme.svelte';
-  import { library } from '../state/library.svelte';
-  import { settings } from '../state/settings.svelte';
   import { ui, type Section } from '../state/ui.svelte';
   import LibraryView from './LibraryView.svelte';
-  import CatalogView from './sections/CatalogView.svelte';
   import NotesView from './sections/NotesView.svelte';
   import StatsView from './sections/StatsView.svelte';
   import Icon from './ui/Icon.svelte';
 
-  /** Each section's header: eyebrow, a title with one italic word, and a tagline. */
-  const HEAD: Record<Section, { eyebrow: MessageKey; before: MessageKey; em: MessageKey; after: MessageKey; tagline: MessageKey }> = {
-    library: { eyebrow: 'library.eyebrow', before: 'library.titleBefore', em: 'library.titleEm', after: 'library.titleAfter', tagline: 'library.tagline' },
-    notes: { eyebrow: 'notes.eyebrow', before: 'notes.titleBefore', em: 'notes.titleEm', after: 'notes.titleAfter', tagline: 'notes.tagline' },
-    stats: { eyebrow: 'stats.eyebrow', before: 'stats.titleBefore', em: 'stats.titleEm', after: 'stats.titleAfter', tagline: 'stats.tagline' },
-    catalogs: { eyebrow: 'catalog.eyebrow', before: 'catalog.titleBefore', em: 'catalog.titleEm', after: 'catalog.titleAfter', tagline: 'catalog.intro' },
+  /** The line under the name: what the section on screen holds. */
+  const TAGLINE: Record<Section, MessageKey> = {
+    library: 'library.tagline',
+    notes: 'notes.tagline',
+    stats: 'stats.tagline',
   };
-  const head = $derived(HEAD[ui.section]);
 
   const TABS: { id: Section; label: MessageKey; icon: Snippet }[] = [
     { id: 'library', label: 'sections.library', icon: libraryIcon },
     { id: 'notes', label: 'sections.notes', icon: notesIcon },
     { id: 'stats', label: 'sections.stats', icon: statsIcon },
-    { id: 'catalogs', label: 'sections.catalogs', icon: catalogsIcon },
   ];
   const tabs = $derived(TABS.map((tab) => ({ id: tab.id, label: t(tab.label), icon: tab.icon, domId: `tab-${tab.id}`, controls: `view-${tab.id}` })));
 
-  // Easter eggs (style.md §11.3). The Konami code reads the title's word off
-  // the stone in Greek and Latin before coming home; seven taps on the title
-  // dust the shelves.
+  // Easter eggs (style.md §11.3). The Konami code reads the name off the
+  // stone in Greek and Latin before coming home; seven taps on the name dust
+  // the shelves.
   let script = $state<string | null>(null);
   let scriptWord = $state<HTMLElement>();
   $effect(() =>
@@ -53,7 +46,7 @@
   );
   function dust() {
     if (ui.section !== 'library') return;
-    for (const [i, el] of [...document.querySelectorAll('.doc-list > li')].slice(0, 24).entries()) setTimeout(() => play(el, 'jelly'), 50 * i);
+    for (const [i, el] of [...document.querySelectorAll('.doc-list > li, .doc-grid > li')].slice(0, 24).entries()) setTimeout(() => play(el, 'jelly'), 50 * i);
     hatch('title', t('egg.title'));
   }
 </script>
@@ -61,22 +54,14 @@
 {#snippet libraryIcon()}<Icon name="library" />{/snippet}
 {#snippet notesIcon()}<Icon name="highlighter" />{/snippet}
 {#snippet statsIcon()}<Icon name="chart-column" />{/snippet}
-{#snippet catalogsIcon()}<Icon name="globe" />{/snippet}
 
 <div class="container">
   <header class="site-header">
     <div class="site-title">
-      <p class="eyebrow">{t(head.eyebrow)}</p>
-      <h1 class="t-page-title" use:secretTaps={{ count: 7, onunlock: dust }}>
-        {t(head.before)}<em class="script-word" bind:this={scriptWord}>{ui.section === 'library' ? (script ?? t(head.em)) : t(head.em)}</em>{t(head.after)}
-      </h1>
-      <!-- The library's tagline says what Rosetta is; once there are books, the books say it. -->
-      {#if ui.section !== 'library' || !library.items.length}<p class="t-tagline">{t(head.tagline)}</p>{/if}
+      <h1 class="t-page-title" use:secretTaps={{ count: 7, onunlock: dust }}><span class="script-word" bind:this={scriptWord}>{script ?? 'Rosetta'}</span></h1>
+      <p class="t-tagline" id="sectionTagline">{t(TAGLINE[ui.section])}</p>
     </div>
-    <div class="header-tools">
-      <button type="button" class="btn-icon" id="openSettings" aria-label={t('settings.title')} onclick={() => ui.open('settings')}><Icon name="settings" /></button>
-      <ThemeToggle dawn={!shown.dark} label={t('library.dawn')} ontoggle={() => void settings.update({ theme: toggledTheme() })} />
-    </div>
+    <button type="button" class="btn-icon" id="openSettings" aria-label={t('settings.title')} onclick={() => ui.open('settings')}><Icon name="settings" /></button>
   </header>
 
   <nav class="app-tabs" aria-label={t('sections.label')}>
@@ -87,65 +72,46 @@
     <LibraryView />
   {:else if ui.section === 'notes'}
     <NotesView />
-  {:else if ui.section === 'stats'}
-    <StatsView />
   {:else}
-    <CatalogView />
+    <StatsView />
   {/if}
 </div>
 
 <style>
-  /* ─── Header and the edition bar ─────────────────────────────── */
+  /* ─── Header ─────────────────────────────────────────────────── */
 
-  /* On a phone the header stacks (style.md §15): Settings and the theme toggle
-     make one row across the top, at its right (§8.8), and the eyebrow, title
-     and tagline get the full width under it. From 640px they sit side by side.
-     The section tabs sit under the header (§8.5.1). */
+  /* The name and its line on the left, Settings on the right of the name's
+     row (style.md §8.8). The section tabs sit under it (§8.5.1). */
   .site-header {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-5);
-    margin-bottom: var(--space-7);
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
   }
   .site-title {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--space-2);
     min-width: 0;
   }
-  .header-tools {
-    order: -1;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--space-2);
-    padding-bottom: var(--space-3);
-    border-bottom: 1px solid var(--border-soft);
+  .site-title h1 {
+    margin: 0;
   }
-  @media (min-width: 640px) {
-    .site-header {
-      flex-direction: row;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--space-4);
-    }
-    .header-tools {
-      order: 0;
-      justify-content: flex-end;
-      padding-bottom: 0;
-      border-bottom: 0;
-    }
+  .site-title .t-tagline {
+    margin: 0;
+  }
+  /* Level with the name's cap height rather than the top of its line box. */
+  .site-header > .btn-icon {
+    flex-shrink: 0;
+    margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2)) 0 0;
   }
 
   .app-tabs {
     margin-bottom: var(--space-6);
   }
-  /* The section tabs mark the header's end, so the gap above them is the smaller one (style.md §6.1). */
-  .site-header:has(+ .app-tabs) {
-    margin-bottom: var(--space-5);
-  }
 
-  /* The title word that reads off the stone (an easter egg): flips in place. */
+  /* The name that reads off the stone (an easter egg): flips in place. */
   .script-word {
     display: inline-block;
   }

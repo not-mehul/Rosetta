@@ -11,16 +11,13 @@ const mine: Settings = {
   sync: true,
   lastDocId: 'abc',
   lastAutoBackup: 99,
-  catalogs: [{ id: 'c1', name: 'Home', url: 'http://calibre.local/opds', user: 'me', password: 'secret' }],
 };
 
 describe('settings in backups', () => {
-  it('carries the settings without passwords or what belongs to this device', () => {
+  it('carries the settings without what belongs to this device', () => {
     const p = portableSettings(mine);
     expect(p.theme).toBe('light');
     expect(p.dailyGoal).toBe(30);
-    expect(p.catalogs?.[0]).toEqual({ id: 'c1', name: 'Home', url: 'http://calibre.local/opds', user: 'me' });
-    expect(JSON.stringify(p)).not.toContain('secret');
     for (const key of ['customFont', 'sync', 'lastDocId', 'lastAutoBackup']) expect(p).not.toHaveProperty(key);
   });
 
@@ -30,14 +27,12 @@ describe('settings in backups', () => {
     expect(makeBackup([], [])).not.toHaveProperty('settings');
   });
 
-  it('restores over the settings in use, joining catalogs and keeping passwords here', () => {
-    const here: Settings = { ...DEFAULT_SETTINGS, customFont: 'Here.ttf', catalogs: [{ id: 'c9', name: 'Home', url: 'http://calibre.local/opds', password: 'kept' }] };
-    const back = restoredSettings(here, { ...portableSettings(mine), catalogs: [...portableSettings(mine).catalogs!, { id: 'c2', name: 'Gutenberg', url: 'https://gutenberg.org/opds' }] });
+  it('restores over the settings in use, keeping what belongs to this device', () => {
+    const here: Settings = { ...DEFAULT_SETTINGS, customFont: 'Here.ttf' };
+    const back = restoredSettings(here, portableSettings(mine));
     expect(back.theme).toBe('light');
     expect(back.fontSize).toBe(21);
     expect(back.customFont).toBe('Here.ttf');
-    expect(back.catalogs.map((c) => c.url)).toEqual(['http://calibre.local/opds', 'https://gutenberg.org/opds']);
-    expect(back.catalogs[0]?.password).toBe('kept');
   });
 
   it('ignores values that do not fit', () => {

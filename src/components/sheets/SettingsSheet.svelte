@@ -35,26 +35,6 @@
     ui.notify(t('saved.to', { where: out.label }), 'success');
   }
 
-  /** Highlights from a Kindle's My Clippings.txt, onto the same books here. */
-  async function kindle() {
-    const [file] = await pickFiles('.txt,text/plain', false);
-    if (!file) return;
-    busy = true;
-    try {
-      const { importKindle } = await import('../../state/kindle');
-      const r = await importKindle(new TextDecoder().decode(await fileBytes(file)));
-      if (!r.placed && !r.kept && !r.missing.length) ui.notify(t('kindle.none'), 'info');
-      else {
-        const missing = r.missing.length ? ` ${t('kindle.missing', { count: r.missing.length, titles: r.missing.slice(0, 3).join(', ') + (r.missing.length > 3 ? ', …' : '') })}` : '';
-        ui.notify(`${t('kindle.done', { placed: r.placed, kept: r.kept })}${missing}`, r.placed || r.kept ? 'success' : 'info');
-      }
-    } catch (err) {
-      ui.notify(t('kindle.failed', { reason: err instanceof Error ? err.message : String(err) }), 'error');
-    } finally {
-      busy = false;
-    }
-  }
-
   async function backUp() {
     const out = await saveFile({ name: `rosetta-backup-${today()}.json`, data: new TextEncoder().encode(JSON.stringify(await currentBackup(new Date(), true), null, 2)), mime: 'application/json' });
     ui.notify(t('data.backupSaved', { where: out.label }), 'success');
@@ -186,9 +166,7 @@
       <button type="button" class="btn btn-secondary" id="archive" disabled={busy || !library.items.length} onclick={() => void archive()}>{t('data.archive')}</button>
       <button type="button" class="btn btn-muted" id="restore" disabled={busy} onclick={() => void restore()}>{t('data.restore')}</button>
       {#if isNative || canPickFolder}<button type="button" class="btn btn-muted" id="addFolder" disabled={busy} onclick={() => void addFolder()}>{t('library.addFolder')}</button>{/if}
-      <button type="button" class="btn btn-muted" id="importKindle" disabled={busy || !library.items.length} onclick={() => void kindle()}>{t('data.kindle')}</button>
     </div>
-    <p class="t-hint">{t('data.kindleHint')}</p>
     {#if busy}<WavyProgress label={t('data.working')} />{/if}
     <div class="settings-list">
       {#if isNative}

@@ -1,4 +1,4 @@
-// Kindle highlights brought over, and a Calibre library folder added with its details.
+// A Calibre library folder added with its details.
 import { expect, test } from '@playwright/test';
 import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -6,58 +6,6 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const fixture = (n: string) => fileURLToPath(new URL(`../fixtures/${n}`, import.meta.url));
-
-const CLIPPINGS = `The Lantern Keeper (Ada Marlow)
-- Your Highlight on page 3 | Location 40-41 | Added on Monday, 3 March 2025 10:00:00
-
-climbed the stair each evening and counted the ships
-==========
-The Lantern Keeper (Ada Marlow)
-- Your Note on page 3 | Location 41 | Added on Monday, 3 March 2025 10:01:00
-
-Every night.
-==========
-The Lantern Keeper (Ada Marlow)
-- Your Highlight on page 9 | Location 99-100 | Added on Monday, 3 March 2025 10:05:00
-
-Words from another edition entirely.
-==========
-Moby-Dick (Herman Melville)
-- Your Highlight on page 1 | Location 5-6 | Added on Monday, 3 March 2025 11:00:00
-
-Call me Ishmael.
-==========
-`;
-
-test('Kindle highlights land on the same words, and the rest are kept in the book note', async ({ page }) => {
-  await page.goto('/');
-  const [first] = await Promise.all([page.waitForEvent('filechooser'), page.click('#addFirst')]);
-  await first.setFiles(fixture('lantern.epub'));
-  await expect(page.locator('.reader')).toBeVisible();
-  await page.keyboard.press('Escape');
-
-  await page.click('#openSettings');
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#importKindle')]);
-  await chooser.setFiles({ name: 'My Clippings.txt', mimeType: 'text/plain', buffer: Buffer.from(CLIPPINGS) });
-  await expect(page.locator('#toast')).toContainText('1 highlights placed, 1 kept in book notes.');
-  await expect(page.locator('#toast')).toContainText('Moby-Dick');
-  await page.keyboard.press('Escape');
-
-  await page.click('#tab-notes');
-  await expect(page.locator('#allNotes .highlight-row')).toHaveCount(1);
-  await expect(page.locator('#allNotes')).toContainText('climbed the stair each evening and counted the ships');
-  await expect(page.locator('#allNotes')).toContainText('Every night.');
-  await page.click('#tab-library');
-  await page.locator('.doc-more').first().click();
-  await expect(page.locator('#bookNote')).toHaveValue(/Words from another edition entirely/);
-  await page.keyboard.press('Escape');
-
-  // Importing the same file again adds nothing twice.
-  await page.click('#openSettings');
-  const [again] = await Promise.all([page.waitForEvent('filechooser'), page.click('#importKindle')]);
-  await again.setFiles({ name: 'My Clippings.txt', mimeType: 'text/plain', buffer: Buffer.from(CLIPPINGS) });
-  await expect(page.locator('#toast')).toContainText('0 highlights placed, 0 kept');
-});
 
 test.describe('in a browser that picks folders', () => {
   test.use({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36' });

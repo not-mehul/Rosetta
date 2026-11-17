@@ -52,7 +52,7 @@
       </div>
     </div>
     {#if shown.length}
-      <ul class="row-list" id="allNotes">
+      <ul class="row-list dd-stagger" id="allNotes">
         {#each shown as m (m.id)}
           {@const doc = library.get(m.docId)}
           <li class="row-with-action">

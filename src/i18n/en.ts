@@ -521,6 +521,8 @@ const en = {
   'panel.listenHint': 'Reads from the top of the page, a sentence at a time, and carries on with the screen off.',
   'settings.readingWhere': 'Type, page and read-aloud settings are in a book, under Aa, where you can see them change the page.',
   'details.title': 'Details',
+  'library.addingOf': 'Adding {done} of {total}',
+  'data.working': 'Working on the library',
 };
 
 export default en;

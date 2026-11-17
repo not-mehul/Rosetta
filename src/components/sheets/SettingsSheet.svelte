@@ -13,7 +13,7 @@
   import { ui } from '../../state/ui.svelte';
   import Sheet from '../ui/Sheet.svelte';
   import Switch from '../ui/Switch.svelte';
-  import { Select } from 'dusk-dawn';
+  import { Select, WavyProgress } from 'dusk-dawn';
   import { LOCALE_NAMES, LOCALES } from '../../i18n/index.svelte';
   import type { Settings } from '../../state/settings';
   import ThemeControls from './ThemeControls.svelte';
@@ -145,6 +145,7 @@
       <button type="button" class="btn btn-secondary" id="archive" disabled={busy || !library.items.length} onclick={() => void archive()}>{t('data.archive')}</button>
       <button type="button" class="btn btn-muted" id="restore" disabled={busy} onclick={() => void restore()}>{t('data.restore')}</button>
     </div>
+    {#if busy}<WavyProgress label={t('data.working')} />{/if}
     <div class="settings-list">
       {#if isNative}
         <Switch checked={v.autoBackup} label={t('data.auto')} hint={t('data.autoHint')} onchange={(on) => void toggleAutoBackup(on)} />

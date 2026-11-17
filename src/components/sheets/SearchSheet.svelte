@@ -36,6 +36,17 @@
     };
   });
 
+  /** The shown hits in runs by chapter, in reading order. */
+  const groups = $derived.by(() => {
+    const out: { where: string; hits: Hit[] }[] = [];
+    for (const hit of hits.slice(0, SHOWN)) {
+      const where = reader.whereIs(hit.section, hit.start) || t('search.title');
+      if (out.at(-1)?.where === where) out.at(-1)!.hits.push(hit);
+      else out.push({ where, hits: [hit] });
+    }
+    return out;
+  });
+
   function go(hit: Hit) {
     onclose();
     reader.goTo({ section: hit.section, offset: reader.isPdf ? 0 : hit.start }, { start: hit.start, end: hit.end }, undefined, true);
@@ -55,19 +66,24 @@
   {#if query.trim().length >= 2}
     <p class="t-data-small dim" role="status">{done ? (hits.length ? t('search.matches', { count: hits.length }) : t('search.none')) : t('search.searching', { count: hits.length })}</p>
     {#if hits.length}
-      <ul class="row-list" id="searchResults">
-        {#each hits.slice(0, SHOWN) as hit, i (i)}
-          {@const ex = excerpts.get(hit)}
-          <li>
-            <button type="button" class="row" onclick={() => go(hit)}>
-              <span class="row-main">
-                <span class="t-data-small faint">{reader.whereIs(hit.section, hit.start)}</span>
-                {#if ex}<span class="row-sub">{ex.before}<mark class="search-match">{ex.match}</mark>{ex.after}</span>{/if}
-              </span>
-            </button>
-          </li>
+      <!-- Grouped by chapter, each with its count, so the chapter isn't repeated on every row. -->
+      <div id="searchResults" class="search-groups">
+        {#each groups as group, g (g)}
+          <section class="search-group">
+            <h3 class="t-section-label search-group-head"><span class="ellipsis">{group.where}</span><span class="tabular faint">{group.hits.length}</span></h3>
+            <ul class="row-list">
+              {#each group.hits as hit, i (i)}
+                {@const ex = excerpts.get(hit)}
+                <li>
+                  <button type="button" class="row" onclick={() => go(hit)}>
+                    {#if ex}<span class="row-sub search-excerpt">{ex.before}<mark class="search-match">{ex.match}</mark>{ex.after}</span>{/if}
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          </section>
         {/each}
-      </ul>
+      </div>
       {#if hits.length > SHOWN}<p class="t-hint">{t('search.capped', { count: SHOWN })}</p>{/if}
     {/if}
   {/if}

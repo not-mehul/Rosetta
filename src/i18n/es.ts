@@ -524,6 +524,8 @@ const es: Messages = {
   'panel.listenHint': 'Lee desde lo alto de la página, frase a frase, y sigue con la pantalla apagada.',
   'settings.readingWhere': 'Los ajustes de letra, página y lectura en voz alta están en cada libro, en Aa, donde se ve cómo cambian la página.',
   'details.title': 'Detalles',
+  'library.addingOf': 'Añadiendo {done} de {total}',
+  'data.working': 'Trabajando en la biblioteca',
 };
 
 export default es;

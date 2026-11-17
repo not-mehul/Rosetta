@@ -556,6 +556,8 @@
         layout();
         scrollToOffset(reader.location.offset);
       }
+      // Tell the reader what is on screen before any scroll, so a short note shows its whole length.
+      track();
     });
     return () => {
       stopSelection();
@@ -658,6 +660,11 @@
       <button type="button" class="btn btn-secondary" id="nextVolume" onclick={() => void reader.open(following.id)}>{following.title}<Icon name="chevron-right" /></button>
     </div>
   {/if}
+  {#if !next && reader.doc && reader.doc.finishedAt === null}
+    <div class="finish-here">
+      <button type="button" class="btn btn-secondary" id="finishHere" onclick={() => reader.finish()}><Icon name="check" />{t('details.markFinished')}</button>
+    </div>
+  {/if}
 {/if}
 
 {#if selection}
@@ -682,6 +689,12 @@
     max-width: 38em;
     margin: var(--space-3) auto 0;
     text-align: right;
+  }
+
+  .finish-here {
+    display: flex;
+    justify-content: center;
+    margin: var(--space-5) auto 0;
   }
 
   /* After the last page: the next volume in the series. */

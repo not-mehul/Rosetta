@@ -280,6 +280,7 @@ const fr: Messages = {
   'reader.previous': 'Précédent',
   'reader.next': 'Suivant',
   'reader.theEnd': 'Fin.',
+  'reader.allOnScreen': 'Tout à l’écran',
   'reader.nextTitle': 'Suivant : {title}',
   'reader.bookmarked': 'Signet ajouté.',
   'reader.bookmarkRemoved': 'Signet retiré.',

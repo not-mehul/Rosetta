@@ -160,6 +160,40 @@ const RANGES: Partial<Record<keyof Settings, readonly [number, number]>> = {
   flowSpeed: [FLOW_SPEED.min, FLOW_SPEED.max],
 };
 
+/** Kept to this device: what a backup leaves out of the settings it carries. */
+const DEVICE_ONLY = ['lastAutoBackup', 'lastDocId', 'customFont', 'sync'] as const satisfies readonly (keyof Settings)[];
+
+/** The settings a backup carries: everything but what belongs to this device, and no catalog passwords. */
+export function portableSettings(s: Settings): Partial<Settings> {
+  const out: Partial<Settings> = {
+    ...s,
+    catalogs: s.catalogs.map((c) => {
+      const copy = { ...c };
+      delete copy.password;
+      return copy;
+    }),
+  };
+  for (const key of DEVICE_ONLY) delete out[key];
+  return out;
+}
+
+/** Settings restored from a backup over the ones in use. Catalogs join by address, keeping passwords saved here. */
+export function restoredSettings(current: Settings, backedUp: unknown): Settings {
+  if (!backedUp || typeof backedUp !== 'object') return current;
+  const given = backedUp as Partial<Record<keyof Settings, unknown>>;
+  const incoming = mergeSettings(given);
+  const out: Settings = { ...current };
+  const writable = out as unknown as Record<string, unknown>;
+  for (const key of Object.keys(given) as (keyof Settings)[]) {
+    if ((DEVICE_ONLY as readonly string[]).includes(key) || key === 'catalogs' || !(key in DEFAULT_SETTINGS)) continue;
+    // A value that doesn't fit leaves the one in use alone.
+    if (JSON.stringify(incoming[key]) === JSON.stringify(given[key])) writable[key] = incoming[key];
+  }
+  const known = new Set(current.catalogs.map((c) => c.url));
+  out.catalogs = [...current.catalogs, ...incoming.catalogs.filter((c) => !known.has(c.url))];
+  return out;
+}
+
 /** Stored settings over the defaults, dropping anything that doesn't fit. */
 export function mergeSettings(stored: Partial<Record<keyof Settings, unknown>> | undefined): Settings {
   const out: Settings = { ...DEFAULT_SETTINGS };

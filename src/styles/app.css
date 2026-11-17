@@ -803,7 +803,7 @@ ol {
   background: var(--hover-bg);
 }
 /* A trailing chevron means "opens a screen", quietly (style.md §7.2). */
-.row > svg:last-child {
+.row > svg[data-icon='chevron-right'] {
   flex-shrink: 0;
   width: 16px;
   height: 16px;
@@ -892,33 +892,64 @@ ol {
 }
 
 /* Details */
-.details {
+/* Book details (DetailsSheet): cover and how far through, the one button to
+   read it, the facts, then the rest as rows and Remove alone at the end. */
+.details-head {
   display: flex;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  align-items: flex-start;
 }
 .details-cover {
   flex-shrink: 0;
   width: 96px;
   aspect-ratio: 2 / 3;
-  display: grid;
-  place-items: center;
-  background: var(--panel-bg-faint);
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius);
-  color: var(--text-faint);
+  border-radius: var(--corner-sm);
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-strength)));
 }
 .details-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.details-facts {
+.details-name {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-1);
+}
+.details-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.375rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-heading);
+  overflow-wrap: anywhere;
+}
+.details-author {
+  margin: 0;
+  color: var(--text-body);
+}
+.details-state {
+  margin: var(--space-1) 0 0;
+}
+.details-name .meter {
+  margin-top: var(--space-1);
+}
+.details-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+  gap: var(--space-2);
+}
+.details-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
 }
 .details-facts dd {
   margin: 2px 0 0;
@@ -926,6 +957,21 @@ ol {
 }
 .details-file {
   margin-top: calc(-1 * var(--space-2));
+}
+.details-rows .row > svg:first-child,
+.row-danger > svg:first-child {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--text-dim);
+}
+.row-label {
+  flex: 1;
+  min-width: 0;
+}
+.row-danger,
+.row-danger > svg:first-child {
+  color: var(--danger);
 }
 
 /* Type controls */

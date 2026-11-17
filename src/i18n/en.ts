@@ -115,9 +115,9 @@ const en = {
   'details.startOver': 'Start over',
   'details.startedOver': 'Back to the beginning.',
   'details.shareFile': 'Share file',
-  'details.toBookShelf': 'Log in BookShelf',
+  'details.toBookShelf': 'Send to BookShelf',
   'details.noBookShelf': 'BookShelf isn’t installed here, so the title went to the share sheet instead.',
-  'details.toNookling': 'Tell Nookling',
+  'details.toNookling': 'Send to Nookling',
   'details.noNookling': 'Nookling isn’t installed here.',
   'details.toColophon': 'Open in Colophon',
   'details.offload': 'Offload',
@@ -520,6 +520,7 @@ const en = {
   'panel.rate': 'Speed',
   'panel.listenHint': 'Reads from the top of the page, a sentence at a time, and carries on with the screen off.',
   'settings.readingWhere': 'Type, page and read-aloud settings are in a book, under Aa, where you can see them change the page.',
+  'details.title': 'Details',
 };
 
 export default en;

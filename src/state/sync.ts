@@ -18,6 +18,7 @@ import { FOLDER } from '../platform/output';
 import { db, toBytes, type Collection, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
 import { settings } from './settings.svelte';
+import { portableSettings, restoredSettings } from './settings';
 import { t } from '../i18n/index.svelte';
 import { ui } from './ui.svelte';
 
@@ -26,9 +27,9 @@ export const KEEP_BACKUPS = 5;
 const BACKUP_DIR = `${FOLDER}/backups`;
 const SYNC_PATH = `${FOLDER}/sync/rosetta-sync.json`;
 
-export async function currentBackup(now = new Date()): Promise<Backup> {
+export async function currentBackup(now = new Date(), withSettings = false): Promise<Backup> {
   const [marks, deleted] = await Promise.all([db.marks.toArray(), db.tombstones.toArray()]);
-  return makeBackup(library.items, marks, now, library.collections, deleted);
+  return makeBackup(library.items, marks, now, library.collections, deleted, withSettings ? portableSettings(settings.value) : undefined);
 }
 
 // ─── Merge ───────────────────────────────────────────────────
@@ -167,7 +168,13 @@ export async function restoreBackup(text: string): Promise<MergeResult> {
   };
   const result = merge(local, remote);
   await applyMerge(result);
+  await restoreSettings(remote);
   return result;
+}
+
+/** A backup's settings, over the ones in use: restoring is asking for them back. */
+async function restoreSettings(backup: Backup): Promise<void> {
+  if (backup.settings) await settings.update(restoredSettings(settings.value, backup.settings));
 }
 
 // ─── Automatic backups (native) ──────────────────────────────
@@ -188,7 +195,7 @@ export async function autoBackup(now = Date.now()): Promise<boolean> {
   if (!isNative || !settings.value.autoBackup || !library.items.length) return false;
   if (now - settings.value.lastAutoBackup < WEEK) return false;
   try {
-    const backup = await currentBackup(new Date(now));
+    const backup = await currentBackup(new Date(now), true);
     await Filesystem.writeFile({
       path: `${BACKUP_DIR}/${backupName(new Date(now))}`,
       directory: Directory.Documents,
@@ -216,7 +223,7 @@ export async function autoBackup(now = Date.now()): Promise<boolean> {
 
 /** Every file and the backup in one zip. Files are stored, not recompressed: EPUB and PDF already are. */
 export async function makeArchive(): Promise<Uint8Array> {
-  const backup = await currentBackup();
+  const backup = await currentBackup(new Date(), true);
   const entries: Record<string, Uint8Array | [Uint8Array, { level: 0 }]> = {
     'rosetta-backup.json': strToU8(JSON.stringify(backup, null, 2)),
   };
@@ -271,6 +278,7 @@ export async function restoreArchive(bytes: Uint8Array): Promise<{ added: number
     backup,
   );
   await applyMerge(result);
+  await restoreSettings(backup);
   return { added, result };
 }
 

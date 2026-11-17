@@ -108,6 +108,11 @@ class ReaderState {
     return !!c && endInView(c.kind, this.lengths, this.sectionCount, this.location, this.visibleEnd);
   }
 
+  /** The whole document is on one screen: its start and its end. */
+  get allInView(): boolean {
+    return this.sectionCount === 1 && this.location.section === 0 && this.location.offset === 0 && this.atEnd;
+  }
+
   /** Characters after the reader's place, for the time left. */
   get charsLeft(): number {
     if (this.content?.kind !== 'flow') return 0;
@@ -462,6 +467,20 @@ class ReaderState {
       cheer(null, { count: 80 });
       void this.finishedMessage(doc.id).then((message) => this.notifyFinished(doc, finished, message));
     }
+  }
+
+  /** Marks the open document finished by hand: a note read on one screen, or a finish that was undone. */
+  finish(): void {
+    const doc = this.doc;
+    if (!doc || doc.finishedAt !== null) return;
+    const patch: Partial<StoredDoc> = { location: $state.snapshot(this.location), progress: 1, finishedAt: Date.now() };
+    this.dirty = false;
+    this.finishDeclined = false;
+    void library.update(doc.id, patch);
+    const finished = { ...doc, ...patch };
+    this.doc = finished;
+    cheer(null, { count: 80 });
+    void this.finishedMessage(doc.id).then((message) => this.notifyFinished(doc, finished, message));
   }
 
   /** "Finished after 6 h 10 min over 9 days", from the reading kept for it. */

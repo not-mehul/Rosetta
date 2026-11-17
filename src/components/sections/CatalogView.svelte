@@ -140,7 +140,7 @@
     </div>
     {#if template}
       <form
-        class="filter-field"
+        class="filter-field catalog-search"
         onsubmit={(e) => {
           e.preventDefault();
           if (query.trim() && template) void load(fillSearch(template, query.trim()));
@@ -202,6 +202,10 @@
     align-items: center;
     gap: var(--space-2);
     min-width: 0;
+  }
+  /* In a column, the shared field's flex basis would become its height. */
+  .catalog-search {
+    flex: none;
   }
   .catalog-entry {
     padding: var(--space-2) 0;

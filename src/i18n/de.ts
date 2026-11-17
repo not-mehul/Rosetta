@@ -280,6 +280,7 @@ const de: Messages = {
   'reader.previous': 'Zurück',
   'reader.next': 'Weiter',
   'reader.theEnd': 'Ende.',
+  'reader.allOnScreen': 'Alles auf dem Bildschirm',
   'reader.nextTitle': 'Weiter: {title}',
   'reader.bookmarked': 'Lesezeichen gesetzt.',
   'reader.bookmarkRemoved': 'Lesezeichen entfernt.',

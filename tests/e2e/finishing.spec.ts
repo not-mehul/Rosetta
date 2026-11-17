@@ -68,6 +68,11 @@ test('a note that fits on one screen is not finished by opening it', async ({ pa
   await expect(page.locator('.reading h1').first()).toBeVisible();
   await page.waitForTimeout(1500);
   await expect(page.locator('#toast', { hasText: 'Finished' })).toHaveCount(0);
+  // It says it's all on screen rather than 0%, and can be finished from its end.
+  await expect(page.locator('#progressLabel')).toHaveText('All on screen');
+  await page.click('#finishHere');
+  await expect(page.locator('#toast', { hasText: 'Finished' })).toBeVisible();
+  await expect(page.locator('#finishHere')).toHaveCount(0);
 });
 
 test('Undo on "Finished" sticks until the end is reached again', async ({ page }) => {

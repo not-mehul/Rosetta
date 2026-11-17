@@ -35,7 +35,7 @@
   }
 
   async function backUp() {
-    const out = await saveFile({ name: `rosetta-backup-${today()}.json`, data: new TextEncoder().encode(JSON.stringify(await currentBackup(), null, 2)), mime: 'application/json' });
+    const out = await saveFile({ name: `rosetta-backup-${today()}.json`, data: new TextEncoder().encode(JSON.stringify(await currentBackup(new Date(), true), null, 2)), mime: 'application/json' });
     ui.notify(t('data.backupSaved', { where: out.label }), 'success');
   }
 

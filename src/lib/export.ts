@@ -2,6 +2,7 @@
 // bookmarks and highlights, not the files themselves; on restore they rejoin
 // the documents already in the library by their fingerprint.
 
+import type { Settings } from '../state/settings';
 import type { Collection, Mark, StoredDoc } from '../state/db';
 import { t } from '../i18n/index.svelte';
 
@@ -48,12 +49,15 @@ export interface Backup {
   collections?: Collection[];
   /** Marks deleted, so a merge deletes them too. */
   deleted?: { id: string; deletedAt: number }[];
+  /** The app's settings, in backups and archives (never the sync file): see portableSettings. */
+  settings?: Partial<Settings>;
 }
 
-export function makeBackup(docs: readonly StoredDoc[], marks: readonly Mark[], now = new Date(), collections: readonly Collection[] = [], deleted: { id: string; deletedAt: number }[] = []): Backup {
+export function makeBackup(docs: readonly StoredDoc[], marks: readonly Mark[], now = new Date(), collections: readonly Collection[] = [], deleted: { id: string; deletedAt: number }[] = [], withSettings?: Partial<Settings>): Backup {
   return {
     app: 'rosetta',
     version: 2,
+    ...(withSettings ? { settings: withSettings } : {}),
     exportedAt: now.toISOString(),
     collections: [...collections],
     deleted,

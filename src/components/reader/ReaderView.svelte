@@ -172,7 +172,7 @@
         {#if backLabel}
           <button type="button" class="return-to t-data-small" id="returnTo" onclick={() => reader.goBack()}><Icon name="undo-2" /><span class="ellipsis">{backLabel}</span></button>
         {/if}
-        <span class="t-data-small amber tabular" id="progressLabel">{percent(progress)}</span>
+        <span class="t-data-small amber tabular" id="progressLabel">{reader.allInView ? t('reader.allOnScreen') : percent(progress)}</span>
       </div>
     </footer>
   {/if}

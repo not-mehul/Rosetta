@@ -281,6 +281,7 @@ const en = {
   'reader.previous': 'Previous',
   'reader.next': 'Next',
   'reader.theEnd': 'The end.',
+  'reader.allOnScreen': 'All on screen',
   'reader.nextTitle': 'Next: {title}',
   'reader.bookmarked': 'Bookmarked.',
   'reader.bookmarkRemoved': 'Bookmark removed.',

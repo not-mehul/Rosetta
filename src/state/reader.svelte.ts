@@ -111,9 +111,20 @@ class ReaderState {
   }
 
   /** The settings the open document reads with: the defaults, under its own. */
+  /**
+   * The settings the open document reads with. The same object while its
+   * values are the same: saving the place replaces the document, and a new
+   * object each time would make every view that reads it lay itself out
+   * again (a whole section after each page turn).
+   */
   get view(): Settings {
-    return settingsFor(settings.value, this.doc?.reading);
+    const next = settingsFor(settings.value, this.doc?.reading);
+    const last = this.lastView;
+    if (last && (Object.keys(next) as (keyof Settings)[]).every((k) => next[k] === last[k])) return last;
+    this.lastView = next;
+    return next;
   }
+  private lastView: Settings | null = null;
 
   /** The open document has settings of its own that differ from the defaults. */
   get ownView(): boolean {

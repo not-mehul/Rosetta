@@ -4,6 +4,7 @@
   // the sentence at once; the next tap clears it and starts the next one. A tap
   // on the left edge, or the left arrow, goes back a sentence; a tap along the
   // top, or on the count at the bottom of the screen, shows and hides the bars.
+  // Holding a sentence highlights it, or opens the highlight it already has.
   import { onMount, untrack } from 'svelte';
   import type { FlowDoc } from '../../formats/types';
   import { t } from '../../i18n/index.svelte';
@@ -12,7 +13,7 @@
   import { reader } from '../../state/reader.svelte';
   import { MEASURE_VALUE } from '../../state/settings';
 
-  let { content }: { content: FlowDoc } = $props();
+  let { content, onedit }: { content: FlowDoc; onedit: (id: string) => void } = $props();
 
   const v = $derived(reader.view);
   const index = $derived(reader.section);
@@ -31,6 +32,8 @@
   let fresh = $state(true);
 
   const beat = $derived(list[at]);
+  /** The highlight over the sentence on screen, if any. */
+  const marked = $derived(beat && !beat.heading ? reader.highlights.find((m) => m.section === index && m.start < beat.end && m.end > beat.start) : undefined);
   const full = $derived(!beat || shown >= beat.text.length);
   const atEnd = $derived(at >= list.length - 1 && index >= content.sections.length - 1);
 
@@ -127,7 +130,51 @@
     });
   });
 
+  // ─── Holding a sentence ─────────────────────────────────────
+
+  const HOLD_MS = 500;
+  let holdTimer: ReturnType<typeof setTimeout> | undefined;
+  let holdFrom: { x: number; y: number } | null = null;
+  /** A hold just happened: the click that ends it is not a tap. */
+  let held = false;
+
+  function onpointerdown(e: PointerEvent) {
+    // A touch that is held often ends without a click: the next press starts afresh.
+    held = false;
+    if (e.button !== 0 || (e.target as Element).closest('button, a') || !(e.target as Element).closest('.flow-sentence')) return;
+    holdFrom = { x: e.clientX, y: e.clientY };
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      holdFrom = null;
+      held = true;
+      void hold();
+    }, HOLD_MS);
+  }
+  function onpointermove(e: PointerEvent) {
+    if (holdFrom && Math.hypot(e.clientX - holdFrom.x, e.clientY - holdFrom.y) > 10) endHold();
+  }
+  function endHold() {
+    clearTimeout(holdTimer);
+    holdFrom = null;
+  }
+
+  /** Highlights the sentence on screen, then opens it for a colour or a note; one already highlighted just opens. */
+  async function hold() {
+    const b = beat;
+    if (!b || b.heading) return;
+    cancelAnimationFrame(frame);
+    shown = b.text.length;
+    if (marked) return onedit(marked.id);
+    const words = section.text.slice(b.start, b.end).replace(/\s+/g, ' ').trim();
+    const mark = await reader.highlight(index, b.start, b.end, words, 'amber');
+    if (mark) onedit(mark.id);
+  }
+
   function onclick(e: MouseEvent) {
+    if (held) {
+      held = false;
+      return;
+    }
     if ((e.target as Element).closest('button, a')) return;
     const r = stage!.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width;
@@ -157,6 +204,7 @@
   onMount(() => {
     reader.turner = (dir) => (dir === 1 ? forward() : back());
     return () => {
+      clearTimeout(holdTimer);
       cancelAnimationFrame(frame);
       if (reader.turner) reader.turner = null;
     };
@@ -167,7 +215,17 @@
 
 <!-- The stage takes taps: the left edge goes back, the top shows the bars, anywhere else goes on. Keys do the same. -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="flow-stage" bind:this={stage} {onclick}>
+<div
+  class="flow-stage"
+  bind:this={stage}
+  {onclick}
+  {onpointerdown}
+  {onpointermove}
+  onpointerup={endHold}
+  onpointercancel={endHold}
+  onpointerleave={endHold}
+  oncontextmenu={(e) => e.preventDefault()}
+>
   <div class="flow-column" style:--read-measure={MEASURE_VALUE[v.measure]}>
     {#if beat}
       {#key `${index}:${at}`}
@@ -181,8 +239,8 @@
           style:--read-size="{v.fontSize / 16}rem"
           aria-live="polite"
         >
-          <span class="visually-hidden">{beat.text}</span><span aria-hidden="true"
-            >{#each pieces as p, i (i)}{#if p.anchor}<b class="anchor" class:veiled={p.veiled}>{p.text}</b>{:else}<span class:veiled={p.veiled}>{p.text}</span>{/if}{/each}</span
+          <span class="visually-hidden">{beat.text}</span><span aria-hidden="true" data-mark={marked?.id}
+            >{#each pieces as p, i (i)}{@const wash = marked && !p.veiled ? `flow-marked hl-${marked.colour}${marked.note ? ' has-note' : ''}` : ''}{#if p.anchor}<b class="anchor {wash}" class:veiled={p.veiled}>{p.text}</b>{:else}<span class={wash} class:veiled={p.veiled}>{p.text}</span>{/if}{/each}</span
           >
         </p>
       {/key}
@@ -275,6 +333,16 @@
   }
   .flow-hint {
     margin: 0;
+  }
+  /* A highlighted sentence: the same wash as on the page, a little rounder. */
+  .flow-marked {
+    border-radius: var(--corner-xs);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .flow-marked.has-note {
+    text-decoration: underline dotted rgba(var(--accent-amber-rgb), 0.9);
+    text-underline-offset: 0.25em;
   }
   .flow-count {
     min-height: 44px;

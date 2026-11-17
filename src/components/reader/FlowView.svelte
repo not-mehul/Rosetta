@@ -249,9 +249,14 @@
   // run: opening lays the section out and goes to its place (or to the jump
   // that opened it, a highlight in Notes), and going back to where the book
   // was left a moment later would undo that.
+  // The settings as one string: saving the place gives the book a new
+  // settings object with the same values, which mustn't lay the section out
+  // again (that cost a full layout after every page turn, and could move the
+  // page back mid-turn).
+  const typeKey = $derived([v.fontSize, v.typeface, v.anchors, v.spacing, v.measure, v.justify, v.spreads, publisher].join('|'));
   let typeSet = false;
   $effect(() => {
-    void [v.fontSize, v.typeface, v.anchors, v.spacing, v.measure, v.justify, v.spreads, publisher];
+    void typeKey;
     if (!typeSet) {
       typeSet = true;
       return;
@@ -272,6 +277,8 @@
     const copy = root!.cloneNode(true) as HTMLElement;
     for (const el of copy.querySelectorAll('[id]')) el.removeAttribute('id');
     copy.style.transition = 'none';
+    // The page's own will-change would make the whole section's copy one huge layer, repainted under every frame's clip.
+    copy.style.willChange = 'auto';
     return copy;
   }
 
@@ -313,8 +320,13 @@
 
   const canTurn = (dir: 1 | -1) => (dir === 1 ? page < pages - 1 || index < content.sections.length - 1 : page > 0 || index > 0);
 
-  /** Moves the content to the next or previous page, crossing into the next section when needed. */
-  async function step(dir: 1 | -1) {
+  /**
+   * Moves the content to the next or previous page, crossing into the next
+   * section when needed. A curl puts off saying where the reader is until it
+   * lands (report = false), so the footer and the place aren't worked out
+   * while the page is moving.
+   */
+  async function step(dir: 1 | -1, report = true) {
     if (dir === 1 && page < pages - 1) place(page + 1);
     else if (dir === -1 && page > 0) place(page - 1);
     else if (dir === 1) {
@@ -327,7 +339,7 @@
       await tick();
       return;
     }
-    reportPage();
+    if (report) reportPage();
   }
 
   /** A turn from a tap, a key or a volume key. */
@@ -345,8 +357,9 @@
       const y = c.corner;
       if (dir === 1) {
         c.set({ x: w, y });
-        await step(1);
+        await step(1, false);
         await c.animate({ x: -w, y }, 520, c.height * 0.12);
+        reportPage();
       } else {
         c.set({ x: -w, y });
         await c.animate({ x: w, y }, 520, c.height * 0.12);
@@ -390,26 +403,41 @@
       if (turnStyle === 'curl' && (dir === 1 || page > 0)) {
         g.curl = curlOver(dir === 1 ? page : page - 1, g.y - r.top < r.height / 2 ? 'top' : 'bottom');
         if (dir === 1) {
-          void step(1);
+          void step(1, false);
           g.curl.set({ x: g.curl.width, y: g.curl.corner });
         } else g.curl.set({ x: -g.curl.width, y: g.curl.corner });
       }
     }
     if (g.curl) {
+      // Touch moves come faster than frames: the curl follows the latest, once a frame.
       const w = g.curl.width;
       const travel = (rtl ? -dx : dx) * 2;
       const x = g.dir === 1 ? w + travel : -w + travel;
-      g.curl.set({ x: Math.max(-w, Math.min(w, x)), y: g.curl.corner + dy * 0.6 });
+      const to = { x: Math.max(-w, Math.min(w, x)), y: g.curl.corner + dy * 0.6 };
+      const c = g.curl;
+      if (!followFrame)
+        followFrame = requestAnimationFrame(() => {
+          followFrame = 0;
+          if (gesture?.curl === c && followTo) c.set(followTo);
+        });
+      followTo = to;
     } else if (turnStyle === 'slide' && root) {
       root.style.transition = 'none';
       root.style.transform = `translateX(${g.startTx + dx}px)`;
     }
   }
 
+  let followFrame = 0;
+  let followTo: { x: number; y: number } | null = null;
+
   async function pointerup(e: PointerEvent) {
     const g = gesture;
     if (!g || e.pointerId !== g.id) return;
     gesture = null;
+    cancelAnimationFrame(followFrame);
+    followFrame = 0;
+    if (g.curl && followTo) g.curl.set(followTo);
+    followTo = null;
     if (!g.dir) return;
     // Swallow the click that follows a swipe.
     swiped = performance.now();
@@ -422,7 +450,9 @@
       const over = { x: -w, y: c.corner };
       if (g.dir === 1) {
         await c.animate(commit ? over : flat, commit ? 320 : 260);
-        if (!commit) await step(-1);
+        // The page beneath moved on when the curl began; it stays only if the turn went through.
+        if (commit) reportPage();
+        else await step(-1, false);
       } else {
         await c.animate(commit ? flat : over, commit ? 320 : 260);
         if (commit) await step(-1);

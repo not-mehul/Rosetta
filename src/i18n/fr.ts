@@ -209,7 +209,6 @@ const fr: Messages = {
   'mark.note': 'Note',
   'mark.notePlaceholder': 'Ce que cela vous a inspiré',
   'mark.share': 'Partager en carte',
-  'mark.toBookShelf': 'BookShelf',
 
   'note.title': 'Note',
   'note.goTo': 'Aller à la note',
@@ -373,7 +372,7 @@ const fr: Messages = {
   'time.underMinute': 'Moins d’une minute',
 
   'type.flow': 'Flux',
-  'type.flowHint': 'Une phrase à la fois, lettre par lettre. Touchez pour tout afficher, puis encore pour la suivante. Touchez le bord gauche pour revenir.',
+  'type.flowHint': 'Une phrase à la fois, lettre par lettre. Touchez pour voir la suite, encore pour la suivante, maintenez pour surligner. Touchez le bord gauche pour revenir.',
   'type.flowSpeed': 'Vitesse du flux',
   'type.slower': 'Plus lent',
   'type.faster': 'Plus rapide',
@@ -395,7 +394,7 @@ const fr: Messages = {
   'flow.empty': 'Rien à lire sur cette page.',
   'flow.bars': 'Afficher ou masquer les barres',
   'flow.count': '{at} sur {count}',
-  'flow.hint': 'Touchez pour tout afficher, puis encore pour la phrase suivante.',
+  'flow.hint': 'Touchez pour tout afficher, puis encore pour la phrase suivante. Maintenez une phrase pour la surligner.',
   'reader.openingLabel': 'Ouverture',
   'type.oled': 'Noir pur (OLED)',
   'type.oledHint': 'En Crépuscule, tous les fonds sont d’un noir pur : plus profond la nuit, et plus léger pour la batterie d’un écran OLED.',
@@ -561,6 +560,7 @@ const fr: Messages = {
   'notes.show': 'Afficher',
   'notes.bookmark': 'Signet',
   'notes.bookmarkCount': { one: '{count} signet', other: '{count} signets' },
+  'mark.remove': 'Supprimer le surlignage',
 };
 
 export default fr;

@@ -20,8 +20,10 @@
   }
 
   async function remove() {
+    // Taken before closing: once closed, the modal's id is the parent's, which is cleared.
+    const gone = id;
     onclose();
-    await reader.removeMark(id);
+    await reader.removeMark(gone);
   }
 
   // BookShelf keeps quotes; offered when it's here to take one.
@@ -57,16 +59,34 @@
       <span class="t-field-label">{t('mark.note')}</span>
       <textarea class="textarea" id="noteText" rows="4" placeholder={t('mark.notePlaceholder')} enterkeyhint="done" bind:value={note}></textarea>
     </label>
-    <div class="btn-row">
-      <button type="button" class="btn btn-danger" onclick={() => void remove()}>{t('action.remove')}</button>
-      {#if reader.doc}<button type="button" class="btn btn-muted" id="shareQuote" onclick={() => void shareQuote(mark, reader.doc!)}><Icon name="share-2" />{t('mark.share')}</button>{/if}
-      {#if bookShelf}<button type="button" class="btn btn-muted" id="quoteToBookShelf" aria-label={t('details.toBookShelf')} onclick={() => void toBookShelf()}><Icon name="library" />{t('mark.toBookShelf')}</button>{/if}
-      <button type="button" class="btn btn-primary" id="saveNote" onclick={() => void done()}>{t('action.done')}</button>
+    <!-- Icons for the lesser actions, so nothing crowds on a phone; Done commits. -->
+    <div class="mark-actions">
+      <div class="mark-tools">
+        <button type="button" class="btn-icon mark-remove" id="removeMark" aria-label={t('mark.remove')} title={t('mark.remove')} onclick={() => void remove()}><Icon name="trash-2" /></button>
+        {#if reader.doc}<button type="button" class="btn-icon" id="shareQuote" aria-label={t('mark.share')} title={t('mark.share')} onclick={() => void shareQuote(mark, reader.doc!)}><Icon name="share-2" /></button>{/if}
+        {#if bookShelf}<button type="button" class="btn-icon" id="quoteToBookShelf" aria-label={t('details.toBookShelf')} title={t('details.toBookShelf')} onclick={() => void toBookShelf()}><Icon name="library" /></button>{/if}
+      </div>
+      <button type="button" class="btn btn-primary" id="saveNote" onclick={() => void done()}><Icon name="check" />{t('action.done')}</button>
     </div>
   </Modal>
 {/if}
 
 <style>
+  .mark-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .mark-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-left: calc(-1 * var(--space-2));
+  }
+  .mark-remove {
+    color: var(--danger);
+  }
   /* Colour swatches: 2px squares, like every other control (§6.4). */
   .swatches {
     display: flex;

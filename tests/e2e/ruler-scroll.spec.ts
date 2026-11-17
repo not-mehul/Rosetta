@@ -15,11 +15,14 @@ test('the ruler veils all but a line, and moves', async ({ page }) => {
   await chooser.setFiles(fixture('lantern.epub'));
   await expect(page.locator('.reading h1').first()).toBeVisible();
   await expect(page.locator('.ruler')).toHaveCount(0);
+  // Off to begin with; turned on in Settings → Reading → Advanced.
   await bars(page);
-  await page.click('#openType');
-  await page.click('#panel-text');
+  await page.click('#closeReader');
+  await page.click('#openSettings');
+  await page.click('#settings-reading');
   await page.getByRole('switch', { name: /Reading ruler/ }).click();
   await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /^The Lantern Keeper/ }).first().click();
   await expect(page.locator('.ruler-band')).toBeVisible();
   const before = (await page.locator('.ruler-band').boundingBox())!;
   await page.locator('#rulerGrip').focus();

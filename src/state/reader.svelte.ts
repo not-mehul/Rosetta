@@ -143,12 +143,6 @@ class ReaderState {
     if (switching) await this.switchPdfView(view);
   }
 
-  /** The open document's settings become the defaults, for every document without its own. */
-  async useForAll(): Promise<void> {
-    const own = cleanBookSettings(this.doc?.reading);
-    if (Object.keys(own).length) await settings.update(own);
-  }
-
   /** The open document goes back to reading with the defaults. */
   async useDefaults(): Promise<void> {
     const doc = this.doc;
@@ -634,7 +628,20 @@ class ReaderState {
       return;
     }
     const { section, offset } = this.location;
-    const text = this.content.kind === 'flow' ? this.content.sections[section]!.text.slice(offset, offset + 160) : await this.content.pageText(section).then((t) => t.slice(0, 160));
+    let text: string;
+    if (this.content.kind === 'flow') {
+      // The first words after the place, with a space where a heading or paragraph ends, so they don't run together.
+      const s = this.content.sections[section]!;
+      let breaks = this.breaks.get(s);
+      if (!breaks) this.breaks.set(s, (breaks = blockBreaks(s.html)));
+      let at = offset;
+      text = '';
+      for (const k of breaks.filter((k) => k > offset && k < offset + 160)) {
+        text += s.text.slice(at, k) + ' ';
+        at = k;
+      }
+      text += s.text.slice(at, offset + 160);
+    } else text = await this.content.pageText(section).then((t) => t.slice(0, 160));
     await this.putMark({
       id: crypto.randomUUID(),
       docId: doc.id,

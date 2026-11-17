@@ -1,12 +1,14 @@
 <script lang="ts">
-  // The Library section: what you are reading, everything, and what you've
-  // finished, on every collection or one; search by title, author, series or #tag.
+  // The Library section: every document, each with a mark for how far along
+  // it is; one search field (title, author, series or #tag, and the words
+  // inside the books) and one filter (what to show, the order, a collection,
+  // covers or a list).
   import { ACCEPT } from '../formats/sniff';
   import { t } from '../i18n/index.svelte';
   import { canPickFolder, pickFiles } from '../lib/pick';
   import { isNative } from '../platform/native';
   import { addFiles, addFolder as addBooksFolder } from '../state/intake';
-  import { isFinished, isReading, library, shelve, upNext } from '../state/library.svelte';
+  import { isReading, library, shelve, upNext } from '../state/library.svelte';
   import { stats } from '../state/stats.svelte';
   import { duration } from '../lib/format';
   import { reader } from '../state/reader.svelte';
@@ -20,48 +22,26 @@
   import Cover from './ui/Cover.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
-  import { TabRail, WavyProgress } from 'dusk-dawn';
+  import { WavyProgress } from 'dusk-dawn';
   import TextResults from './TextResults.svelte';
   import LibraryCards from './LibraryCards.svelte';
-  import { tick } from 'svelte';
   import { hatch } from '../lib/delight';
 
   let filter = $state('');
   const v = $derived(settings.value);
   const collection = $derived(library.collections.some((c) => c.id === v.collection) ? v.collection : '');
-  const inCollection = $derived(collection ? library.items.filter((d) => d.collections.includes(collection)) : library.items);
-  const reading = $derived(inCollection.filter(isReading));
-  const finished = $derived(inCollection.filter(isFinished));
-  const shelves = $derived([
-    { id: 'reading' as const, label: t('library.reading'), badge: reading.length || undefined, domId: 'shelf-reading', controls: 'shelf' },
-    { id: 'all' as const, label: t('library.all'), badge: inCollection.length || undefined, domId: 'shelf-all', controls: 'shelf' },
-    { id: 'finished' as const, label: t('library.finished'), badge: finished.length || undefined, domId: 'shelf-finished', controls: 'shelf' },
-  ]);
   const docs = $derived(shelve(library.items, v.shelf, v.sort, filter, collection));
   /** The document read most recently and not finished: the one to go back to. */
   const current = $derived(shelve(library.items.filter(isReading), 'reading', 'recent')[0]);
   /** With nothing in progress: the next volume of a series just finished. */
   const next = $derived(current ? undefined : upNext(library.items));
   const goal = $derived(v.dailyGoal ? { done: Math.floor(stats.todayMs / 60_000), goal: v.dailyGoal } : null);
-  /** The search field opens under the shelves when asked for, and stays while it holds words. */
-  let searchOpen = $state(false);
-  const searching = $derived(searchOpen || !!filter);
-  let filterInput = $state<HTMLInputElement>();
-  async function toggleSearch() {
-    if (searching) {
-      filter = '';
-      searchOpen = false;
-      return;
-    }
-    searchOpen = true;
-    await tick();
-    filterInput?.focus();
-  }
+  const searching = $derived(!!filter.trim());
 
   /** The Arrange sheet: collection, tag, order and layout, out of the way of the books. */
   let arranging = $state(false);
-  /** Something other than the defaults is arranging the shelf, so the button says so. */
-  const arranged = $derived(!!collection || v.sort !== 'recent' || filter.trim().startsWith('#'));
+  /** Something other than the defaults is filtering or ordering the shelf, so the button says so. */
+  const arranged = $derived(!!collection || v.shelf !== 'all' || v.sort !== 'recent' || filter.trim().startsWith('#'));
   const collectionName = $derived(library.collections.find((c) => c.id === collection)?.name ?? '');
 
   // New documents land on the collection being shown.
@@ -103,6 +83,7 @@
 
   const EMPTY = $derived<Record<LibraryShelf, string>>({
     reading: t('library.emptyReading'),
+    unread: t('library.emptyUnread'),
     all: collection ? t('library.emptyCollection') : t('library.noMatch'),
     finished: t('library.emptyFinished'),
   });
@@ -157,21 +138,20 @@
         </section>
       {/if}
 
-      <!-- One row of controls: the shelves, then search and Arrange as icons. -->
-      <div class="shelf-row">
-        <nav class="shelf-tabs" aria-label={t('library.shelves')}>
-          <TabRail tabs={shelves} value={v.shelf} label={t('library.shelves')} onselect={(id) => void settings.update({ shelf: id })} />
-        </nav>
-        <button type="button" class="btn-icon" class:amber={searching} id="searchLibrary" aria-label={t('library.filter')} aria-expanded={searching} aria-controls="libraryFilter" onclick={toggleSearch}><Icon name="search" /></button>
+      <!-- One row of controls: the search field and the filter. -->
+      <div class="library-tools">
+        <label class="filter-field">
+          <span class="visually-hidden">{t('library.filter')}</span>
+          <Icon name="search" />
+          <input class="input" type="search" id="libraryFilter" placeholder={t('library.filterPlaceholder')} enterkeyhint="search" autocomplete="off" bind:value={filter} />
+        </label>
         <button type="button" class="btn-icon arrange-button" class:is-set={arranged} id="arrangeLibrary" aria-label={t('arrange.open')} aria-haspopup="dialog" onclick={() => (arranging = true)}><Icon name="sliders-horizontal" /></button>
       </div>
-      {#if searching}
-        <div class="library-tools">
-          <label class="filter-field">
-            <span class="visually-hidden">{t('library.filter')}</span>
-            <Icon name="search" />
-            <input class="input" type="search" id="libraryFilter" placeholder={t('library.filterPlaceholder')} enterkeyhint="search" autocomplete="off" bind:value={filter} bind:this={filterInput} onkeydown={(e) => e.key === 'Escape' && !filter && toggleSearch()} />
-          </label>
+      {#if v.shelf !== 'all'}
+        <div class="collection-bar" id="showingBar">
+          <span class="t-data-small dim">{t('arrange.showing')}</span>
+          <span class="t-card-title collection-name ellipsis">{t(`status.${v.shelf}`)}</span>
+          <button type="button" class="btn-icon" aria-label={t('arrange.showEverything')} onclick={() => void settings.update({ shelf: 'all' })}><Icon name="x" /></button>
         </div>
       {/if}
       {#if collection}
@@ -184,7 +164,7 @@
         </div>
       {/if}
 
-      <div id="shelf" role="tabpanel" aria-labelledby="shelf-{v.shelf}">
+      <div id="shelf">
         {#if docs.length && v.layout === 'grid'}
           <ul class="doc-grid dd-stagger" aria-label={t('library.documents')}>
             {#each docs as doc (doc.id)}
@@ -238,16 +218,6 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-  }
-  .shelf-row {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--space-1);
-    margin-bottom: var(--space-5);
-  }
-  .shelf-row > .shelf-tabs {
-    flex: 1;
-    min-width: 0;
   }
   .library-tools {
     display: flex;

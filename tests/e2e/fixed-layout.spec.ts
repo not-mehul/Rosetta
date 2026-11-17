@@ -75,12 +75,15 @@ test.describe('on a tablet held sideways', () => {
       return { left: xs.some((r) => r.right < innerWidth / 2), right: xs.some((r) => r.left > innerWidth / 2) };
     });
     expect(halves).toEqual({ left: true, right: true });
-    // Turned off, one column again.
+    // Turned off in Settings → Reading → Advanced, one column again.
     if (await page.locator('.reader.chrome-hidden').count()) await page.mouse.click(590, 400);
-    await page.click('#openType');
-    await page.click('#panel-page');
+    await page.click('#closeReader');
+    await page.click('#openSettings');
+    await page.click('#settings-reading');
     await page.getByRole('switch', { name: /Two pages side by side/ }).click();
     await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^The Lantern Keeper/ }).first().click();
+    await expect(page.locator('.reading.paged').first()).toBeVisible();
     await expect(page.locator('.reading.paged.spread')).toHaveCount(0);
   });
 });

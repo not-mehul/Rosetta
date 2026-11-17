@@ -55,7 +55,7 @@
   }
 </script>
 
-<Sheet title={reader.doc?.title ?? t('contents.contents')} {onclose} wide={view === 'pages'}>
+<Sheet title={reader.doc?.title ?? t('contents.contents')} {onclose} wide={view === 'pages'} tall>
   <TabRail {tabs} value={view} label={t('contents.lists')} onselect={(id) => (view = id)} />
   <div id="contents-panel" role="tabpanel" aria-labelledby="tab-{view}">
     {#if view === 'contents'}

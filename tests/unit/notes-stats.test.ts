@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allNotesMarkdown, lineOfTheDay, notesMarkdown } from '../../src/lib/export';
+import { lineOfTheDay, notesMarkdown } from '../../src/lib/export';
 import { weekStart } from '../../src/lib/calendar';
 import { lastWeek } from '../../src/state/stats.svelte';
 import type { Mark, ReadingSession } from '../../src/state/db';
@@ -31,19 +31,6 @@ describe('notes', () => {
   it('puts the note on the book first in its notes', () => {
     const md = notesMarkdown({ title: 'Moby-Dick', author: 'Herman Melville', note: 'Too many whales.' }, [mark({})]);
     expect(md).toBe('# Moby-Dick\n\n*Herman Melville*\n\nToo many whales.\n\n## Loomings\n\n> Call me Ishmael.\n');
-  });
-
-  it('exports every book with notes or highlights, and none without', () => {
-    const docs = [
-      { id: 'a', title: 'A', author: '' },
-      { id: 'b', title: 'B', author: '', note: 'Only a note.' },
-      { id: 'c', title: 'C', author: '' },
-    ];
-    const md = allNotesMarkdown(docs, [mark({ docId: 'a' }), mark({ id: 'bm', docId: 'c', kind: 'bookmark' })]);
-    expect(md).toContain('# A');
-    expect(md).toContain('# B\n\nOnly a note.');
-    expect(md).not.toContain('# C');
-    expect(allNotesMarkdown(docs.slice(2), [])).toBe('');
   });
 
   it('keeps the same line all day, and moves on the next', () => {

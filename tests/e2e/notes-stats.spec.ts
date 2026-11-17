@@ -1,7 +1,6 @@
 // A note on the whole book, a line from your notes on the library, last
-// week's recap, the Notes tab's export, and a goal for books this year.
+// week's recap, the Notes tab, and a goal for books this year.
 import { expect, test, type Page } from '@playwright/test';
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const fixture = (n: string) => fileURLToPath(new URL(`../fixtures/${n}`, import.meta.url));
@@ -86,16 +85,16 @@ test('a book note, a line from your notes, the weekly recap and the yearly goal'
   await expect(page.locator('.doc-card')).toHaveCount(1);
   await expect(page.locator('#weekRecap')).toHaveCount(0);
 
-  // The Notes tab exports what it shows.
+  // The Notes tab lists it, and exports nothing.
   await page.click('#tab-notes');
   await expect(page.locator('.notes-count')).toContainText('1 highlight');
-  const [download] = await Promise.all([page.waitForEvent('download'), page.click('#exportNotes')]);
-  const md = readFileSync((await download.path())!, 'utf8');
-  expect(md).toContain('# The Lantern Keeper');
-  expect(md).toContain('> Paragraph 1 about stairs. The');
+  await expect(page.locator('#exportNotes')).toHaveCount(0);
 
-  // A goal of books this year, with the one finished.
-  await page.click('#tab-stats');
+  // A goal of books this year, set in Settings, with the one finished in Stats.
+  await page.click('#openSettings');
+  await page.click('#settings-general');
   await page.click('[data-year-goal="12"]');
+  await page.keyboard.press('Escape');
+  await page.click('#tab-stats');
   await expect(page.locator('#yearGoalStatus')).toContainText('1 of 12 so far');
 });

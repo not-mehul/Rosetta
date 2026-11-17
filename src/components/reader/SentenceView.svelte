@@ -175,7 +175,6 @@
           class="flow-sentence"
           class:heading={beat.heading}
           class:sans={v.typeface === 'sans'}
-          class:custom={v.typeface === 'custom' && !!v.customFont}
           class:still={reduceMotion}
           lang={content.lang}
           dir={content.dir}

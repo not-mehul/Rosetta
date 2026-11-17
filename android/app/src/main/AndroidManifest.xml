@@ -95,6 +95,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The reading reminder: Local Notifications adds POST_NOTIFICATIONS,
+         asked for only when the reminder is turned on in Settings, and
+         RECEIVE_BOOT_COMPLETED, so a set reminder survives a restart. -->
     <!-- Reading aloud with the screen off (ReadAloudService). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />

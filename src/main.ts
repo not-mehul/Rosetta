@@ -8,7 +8,6 @@ import { mount } from 'svelte';
 import App from './App.svelte';
 import { setLocale, t } from './i18n/index.svelte';
 import { canOpen, parseRosettaUrl, sendToBookShelf } from './platform/handoff';
-import { loadCustomFont } from './platform/fonts';
 import { listenForFiles } from './platform/intake';
 import { listenForSharedText, sharedDocument } from './platform/shared';
 import { isNative } from './platform/native';
@@ -19,6 +18,8 @@ import { reader } from './state/reader.svelte';
 import { settings } from './state/settings.svelte';
 import { stats } from './state/stats.svelte';
 import { autoBackup, syncNow, whenMerged } from './state/sync';
+import { db } from './state/db';
+import { refreshReminders } from './state/reminders';
 import { ui } from './state/ui.svelte';
 import { followForWidget } from './state/widget.svelte';
 import './styles/app.css';
@@ -26,17 +27,16 @@ import './styles/app.css';
 async function start(): Promise<void> {
   await Promise.all([settings.load(), library.load(), stats.load()]).catch((err) => console.error('Loading saved data failed:', err));
   applyTheme(settings.value.theme, settings.value.oled);
-  // The reader's own font, if they added one; a lost file falls back to serif.
-  const font = await loadCustomFont();
-  if (font !== settings.value.customFont || (!font && settings.value.typeface === 'custom')) {
-    await settings.update({ customFont: font, ...(!font && settings.value.typeface === 'custom' ? { typeface: 'serif' as const } : {}) });
-  }
+  // A font file of one's own was kept here before typefaces became Serif and Sans.
+  void db.settings.delete('customFont' as 'settings').catch(() => undefined);
   await setLocale(settings.value.locale).catch(() => undefined);
   // A sync that brings the open document a newer place lets the reader follow it.
   whenMerged((result) => {
     for (const { id, patch } of result.docs) reader.followRemote(id, patch);
   });
   await syncNow().catch((err) => console.warn('Sync failed:', err));
+  // A backup when one is due: into the sync folder, or Documents/Rosetta/backups on a phone.
+  void autoBackup();
 
   mount(App, { target: document.getElementById('app')! });
 
@@ -73,8 +73,13 @@ async function start(): Promise<void> {
     void CapacitorApp.addListener('pause', () => {
       reader.flush();
       void syncNow().catch(() => undefined);
+      void refreshReminders();
     });
-    void CapacitorApp.addListener('resume', () => void syncNow().catch(() => undefined));
+    void CapacitorApp.addListener('resume', () => {
+      void syncNow().catch(() => undefined);
+      void autoBackup();
+      void refreshReminders();
+    });
     void listenForFiles(
       (file) => void addFiles([file], { openSingle: true }),
       (err) => ui.notify(t('intake.openFailed', { reason: err instanceof Error ? err.message : String(err) }), 'error'),
@@ -91,7 +96,7 @@ async function start(): Promise<void> {
       if (doc) void addFiles([doc], { openSingle: true });
       else ui.notify(t('intake.sharedLink'), 'info');
     });
-    void autoBackup();
+    void refreshReminders();
     await SplashScreen.hide({ fadeOutDuration: 200 }).catch(() => undefined);
   } else {
     // Escape closes the reader in a browser, after any sheet.

@@ -50,6 +50,9 @@ ol {
 .amber {
   color: var(--accent-amber);
 }
+.sage {
+  color: var(--accent-sage);
+}
 .ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -74,11 +77,15 @@ ol {
   gap: var(--space-4);
 }
 
-/* The reader's Aa panel (ReadingPanel): short, with nothing dimming the page,
-   so each change shows on the text above it. Its tabs stay at the top as
-   the controls scroll. From 900px it docks at the lower right. */
+/* Sheets with tabs (Settings, the reader's Aa panel) and the reader's other
+   sheets keep one height, so they open alike and a tab never makes them
+   jump. Their tabs stay at the top as the controls scroll. */
+.sheet.sheet-tall {
+  height: min(76dvh, 720px);
+}
+/* The Aa panel dims nothing, so each change shows on the text above it.
+   From 900px it docks at the lower right. */
 .sheet.sheet-peek {
-  max-height: 52dvh;
   box-shadow: 0 -12px 40px rgba(var(--shadow-rgb), calc(0.45 * var(--shadow-strength)));
 }
 .sheet.sheet-peek::backdrop {
@@ -91,6 +98,27 @@ ol {
     width: min(420px, calc(100vw - 2 * var(--space-6)));
     max-height: min(72dvh, 640px);
   }
+  .sheet.sheet-peek.sheet-tall {
+    height: min(72dvh, 640px);
+  }
+}
+/* A value on a scale: steps either side of the slider, the value in serif (style.md §8.6). */
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.control-row > .range {
+  flex: 1;
+  min-width: 0;
+}
+.control-value {
+  min-width: 2ch;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--text-heading);
+  text-align: right;
+  white-space: nowrap;
 }
 .panel-body {
   display: flex;
@@ -387,6 +415,7 @@ ol {
   border-radius: var(--radius);
 }
 .doc-thumb {
+  position: relative;
   flex-shrink: 0;
   width: 56px;
   aspect-ratio: 2 / 3;
@@ -557,13 +586,13 @@ ol {
   height: 20px;
   color: var(--text-dim);
 }
-/* Sliders are dusk-dawn's .range (style.md §8.6); here they share the row
-   with the step buttons and the value. */
-.size-row .range {
-  flex: 1;
-}
 .settings-list:last-child {
   margin-bottom: 0;
+}
+/* In a column that already spaces its parts (a settings group, the Aa panel), a list needs no margin of its own. */
+.settings-group > .settings-list,
+.panel-body > .settings-list {
+  margin: 0;
 }
 .swatch {
   width: 32px;
@@ -709,9 +738,6 @@ body:has(.reader-foot) {
 }
 .reading.sans {
   font-family: var(--font-sans);
-}
-.reading.custom {
-  font-family: 'Rosetta Custom', var(--font-serif);
 }
 /* Visual anchors: the start of each word a step heavier, for the eye to land on. */
 .reading b.anchor,
@@ -1175,9 +1201,6 @@ mark.tts {
 }
 .flow-sentence.sans {
   font-family: var(--font-sans);
-}
-.flow-sentence.custom {
-  font-family: 'Rosetta Custom', var(--font-serif);
 }
 .flow-sentence.heading {
   font-style: italic;

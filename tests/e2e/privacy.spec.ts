@@ -45,7 +45,7 @@ test('nothing in a book reaches the network', async ({ page }) => {
   await expect(page.locator('.reading h1')).toHaveText('Pictures');
   await expect(page.locator('.reading img')).toHaveAttribute('src', /^blob:/);
   await page.click('#openType');
-  await page.getByRole('switch', { name: /Book’s own styles/ }).click();
+  await page.getByRole('switch', { name: /Original style/ }).click();
   await page.keyboard.press('Escape');
   await page.waitForTimeout(500);
   await page.click('#closeReader');

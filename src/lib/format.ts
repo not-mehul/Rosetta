@@ -32,6 +32,16 @@ export function relativeDay(when: number, now = Date.now()): string {
   });
 }
 
+/** A moment as "2 minutes ago", "3 hours ago", then as a day ("yesterday", "4 Nov"). */
+export function relativeTime(when: number, now = Date.now()): string {
+  const minutes = Math.round((now - when) / 60_000);
+  const rtf = new Intl.RelativeTimeFormat(locale(), { numeric: 'auto' });
+  if (minutes < 1) return rtf.format(0, 'second');
+  if (minutes < 60) return rtf.format(-minutes, 'minute');
+  if (minutes < 12 * 60) return rtf.format(-Math.round(minutes / 60), 'hour');
+  return relativeDay(when, now);
+}
+
 /** An object URL for bytes, for <img>; the caller revokes it. */
 export function blobUrl(bytes: Uint8Array | null | undefined, type = 'image/jpeg'): string | null {
   return bytes?.length ? URL.createObjectURL(new Blob([bytes as BlobPart], { type })) : null;

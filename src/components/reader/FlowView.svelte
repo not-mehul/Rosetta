@@ -245,9 +245,17 @@
     if (reader.jump && reader.jump.to.section === index) void tick().then(arrive);
   });
 
-  // Type or size changes: keep the same words at the top.
+  // Type or size changes: keep the same words at the top. Not on the first
+  // run: opening lays the section out and goes to its place (or to the jump
+  // that opened it, a highlight in Notes), and going back to where the book
+  // was left a moment later would undo that.
+  let typeSet = false;
   $effect(() => {
-    void [v.fontSize, v.typeface, v.customFont, v.anchors, v.spacing, v.measure, v.justify, v.spreads, publisher];
+    void [v.fontSize, v.typeface, v.anchors, v.spacing, v.measure, v.justify, v.spreads, publisher];
+    if (!typeSet) {
+      typeSet = true;
+      return;
+    }
     const at = untrack(() => reader.location.offset);
     void tick().then(() =>
       requestAnimationFrame(() => {
@@ -606,7 +614,6 @@
       class="reading paged"
       class:spread
       class:sans={v.typeface === 'sans'}
-      class:custom={v.typeface === 'custom' && !!v.customFont}
       class:anchored={v.anchors}
       class:justify={v.justify}
       class:publisher
@@ -626,7 +633,6 @@
   <article
     class="reading"
     class:sans={v.typeface === 'sans'}
-    class:custom={v.typeface === 'custom' && !!v.customFont}
     class:anchored={v.anchors}
     class:justify={v.justify}
     class:publisher

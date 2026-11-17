@@ -1,13 +1,13 @@
 // Settings and reading preferences, with their allowed values.
 
 export type ThemeSetting = 'system' | 'dark' | 'light';
-/** 'custom' is a font file the reader added (see platform/fonts.ts). */
-export type Typeface = 'serif' | 'sans' | 'custom';
+export type Typeface = 'serif' | 'sans';
 export type Spacing = 'compact' | 'normal' | 'loose';
 export type Measure = 'narrow' | 'medium' | 'wide';
 export type PageTone = 'original' | 'theme';
 export type LibrarySort = 'recent' | 'title' | 'author' | 'series';
-export type LibraryShelf = 'reading' | 'all' | 'finished';
+/** Which documents the library shows, by how far along they are. */
+export type LibraryShelf = 'all' | 'reading' | 'unread' | 'finished';
 /** The library as a grid of covers, or as a list of rows. */
 export type LibraryLayout = 'grid' | 'list';
 export type PdfFit = 'width' | 'page';
@@ -16,7 +16,11 @@ export type PdfView = 'pages' | 'text';
 /** Flow shows one sentence at a time in the middle of the screen, revealed a letter at a time. */
 export type ReadingMode = 'scroll' | 'paged' | 'flow';
 export type PageTurn = 'curl' | 'slide' | 'none';
-export type LocaleSetting = 'system' | 'en' | 'es' | 'fr' | 'de';
+export type LocaleSetting = 'system' | 'en' | 'es' | 'fr' | 'de' | 'ru';
+/** How often an automatic backup is written. */
+export type BackupFrequency = 'off' | 'daily' | 'weekly' | 'monthly';
+/** Night light: the page dimmed and warmed together, in five steps. */
+export type NightLight = 'off' | 'soft' | 'warm' | 'evening' | 'night';
 /** What the reader's footer shows on the left; a tap moves to the next. */
 export type FooterShows = 'book' | 'chapter' | 'place';
 /** Minutes a day, or 0 for no goal. */
@@ -47,8 +51,6 @@ export interface Settings {
   flowSpeed: number;
   /** Visual anchors: the start of each word in bold, for the eye to land on. */
   anchors: boolean;
-  /** The name of the reader's own font file, when one was added. */
-  customFont: string;
   /** How a page turns in paged mode. Reduce-motion always means none. */
   pageTurn: PageTurn;
   /** Paged mode on a wide screen held sideways: two pages side by side, as an open book. */
@@ -61,10 +63,8 @@ export interface Settings {
   volumeKeys: boolean;
   /** Keep the screen on while a document is open. */
   keepAwake: boolean;
-  /** 0 (off) … 0.7: a dimming layer over the page. */
-  dim: number;
-  /** 0 (off) … 1: a warm layer for night reading. */
-  warmth: number;
+  /** The page dimmed and warmed for night reading (NIGHT_LIGHT). */
+  nightLight: NightLight;
   /** Keep a book's own styling (drop caps, indents, poetry) under the reader's theme. */
   publisherStyles: boolean;
   /** A light tick on marks. */
@@ -73,10 +73,16 @@ export interface Settings {
   speechRate: number;
   /** A voice's identifier, or '' for the system default. */
   voice: string;
-  /** A dated backup to Documents each week (native). */
-  autoBackup: boolean;
+  /** A dated backup in the sync folder (or Documents/Rosetta/backups on a phone) this often. */
+  autoBackup: BackupFrequency;
   /** Merge places and marks with the sync file in the sync folder. */
   sync: boolean;
+  /** When this device last synced. */
+  lastSync: number;
+  /** A notification once a day, at reminderTime, unless the day's reading is done. */
+  reminder: boolean;
+  /** "HH:MM", 24-hour. */
+  reminderTime: string;
   /** The collection the library shows, or '' for every document. */
   collection: string;
   locale: LocaleSetting;
@@ -117,21 +123,22 @@ export const DEFAULT_SETTINGS: Settings = {
   readingMode: 'scroll',
   flowSpeed: 40,
   anchors: false,
-  customFont: '',
   pageTurn: 'curl',
   spreads: true,
   autoScrollSpeed: 12,
   ruler: false,
   volumeKeys: true,
   keepAwake: false,
-  dim: 0,
-  warmth: 0,
+  nightLight: 'off',
   publisherStyles: false,
   haptics: true,
   speechRate: 1,
   voice: '',
-  autoBackup: true,
+  autoBackup: 'weekly',
   sync: false,
+  lastSync: 0,
+  reminder: false,
+  reminderTime: '20:00',
   collection: '',
   locale: 'system',
   lastAutoBackup: 0,
@@ -147,7 +154,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
 const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   theme: ['system', 'dark', 'light'],
-  typeface: ['serif', 'sans', 'custom'],
+  typeface: ['serif', 'sans'],
   spacing: ['compact', 'normal', 'loose'],
   measure: ['narrow', 'medium', 'wide'],
   pageTone: ['original', 'theme'],
@@ -155,9 +162,11 @@ const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   pdfView: ['pages', 'text'],
   readingMode: ['scroll', 'paged', 'flow'],
   pageTurn: ['curl', 'slide', 'none'],
-  locale: ['system', 'en', 'es', 'fr', 'de'],
+  locale: ['system', 'en', 'es', 'fr', 'de', 'ru'],
+  autoBackup: ['off', 'daily', 'weekly', 'monthly'],
+  nightLight: ['off', 'soft', 'warm', 'evening', 'night'],
   sort: ['recent', 'title', 'author', 'series'],
-  shelf: ['reading', 'all', 'finished'],
+  shelf: ['all', 'reading', 'unread', 'finished'],
   layout: ['grid', 'list'],
   footerShows: ['book', 'chapter', 'place'],
   dailyGoal: DAILY_GOALS,
@@ -168,8 +177,6 @@ const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
 const RANGES: Partial<Record<keyof Settings, readonly [number, number]>> = {
   fontSize: [FONT_SIZES.min, FONT_SIZES.max],
   pdfZoom: [PDF_ZOOM.min, PDF_ZOOM.max],
-  dim: [0, 0.7],
-  warmth: [0, 1],
   speechRate: [SPEECH_RATE.min, SPEECH_RATE.max],
   flowSpeed: [FLOW_SPEED.min, FLOW_SPEED.max],
   autoScrollSpeed: [4, 60],
@@ -179,7 +186,7 @@ const RANGES: Partial<Record<keyof Settings, readonly [number, number]>> = {
  * The settings a document keeps for itself. A new document reads with the
  * defaults; a change made while it is open is remembered for it alone.
  */
-export const BOOK_KEYS = ['typeface', 'fontSize', 'spacing', 'measure', 'justify', 'readingMode', 'publisherStyles', 'pdfZoom', 'pdfFit', 'pdfView', 'pageTone', 'flowSpeed', 'anchors'] as const satisfies readonly (keyof Settings)[];
+export const BOOK_KEYS = ['typeface', 'fontSize', 'spacing', 'justify', 'readingMode', 'publisherStyles', 'pdfZoom', 'pdfFit', 'pdfView', 'pageTone'] as const satisfies readonly (keyof Settings)[];
 export type BookKey = (typeof BOOK_KEYS)[number];
 export type BookSettings = Partial<Pick<Settings, BookKey>>;
 
@@ -198,14 +205,11 @@ export function cleanBookSettings(raw: unknown): BookSettings {
 /** The settings a document reads with: the defaults, under its own. */
 export function settingsFor(defaults: Settings, own: BookSettings | undefined): Settings {
   if (!own) return defaults;
-  const out = { ...defaults, ...cleanBookSettings(own) };
-  // A font file of one's own that has since been removed.
-  if (out.typeface === 'custom' && !defaults.customFont) out.typeface = defaults.typeface === 'custom' ? 'serif' : defaults.typeface;
-  return out;
+  return { ...defaults, ...cleanBookSettings(own) };
 }
 
 /** Kept to this device: what a backup leaves out of the settings it carries. */
-const DEVICE_ONLY = ['lastAutoBackup', 'lastDocId', 'customFont', 'sync', 'recapSeen'] as const satisfies readonly (keyof Settings)[];
+const DEVICE_ONLY = ['lastAutoBackup', 'lastDocId', 'sync', 'lastSync', 'recapSeen', 'reminder'] as const satisfies readonly (keyof Settings)[];
 
 /** The settings a backup carries: everything but what belongs to this device. */
 export function portableSettings(s: Settings): Partial<Settings> {
@@ -237,6 +241,15 @@ export function mergeSettings(stored: Partial<Record<keyof Settings, unknown>> |
   for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
     const value = stored[key];
     if (value === undefined) continue;
+    // Automatic backups were on or off (weekly) before they had a frequency.
+    if (key === 'autoBackup' && typeof value === 'boolean') {
+      out.autoBackup = value ? 'weekly' : 'off';
+      continue;
+    }
+    if (key === 'reminderTime') {
+      if (typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value)) out.reminderTime = value;
+      continue;
+    }
     const choices = CHOICES[key];
     if (choices) {
       if (choices.includes(value)) writable[key] = value;
@@ -249,6 +262,9 @@ export function mergeSettings(stored: Partial<Record<keyof Settings, unknown>> |
       writable[key] = value;
     }
   }
+  // Dim and warmth were two sliders before night light had steps: the nearest step.
+  const old = stored as Record<string, unknown>;
+  if (stored.nightLight === undefined && (typeof old.dim === 'number' || typeof old.warmth === 'number')) out.nightLight = nearestNightLight(Number(old.dim) || 0, Number(old.warmth) || 0);
   return out;
 }
 
@@ -263,3 +279,27 @@ export const MEASURE_VALUE: Record<Measure, string> = {
   medium: '38em',
   wide: '46em',
 };
+
+/** Night light's steps: how much the page is dimmed (0 … 0.7) and warmed (0 … 1). */
+export const NIGHT_LIGHT: Record<NightLight, { dim: number; warmth: number }> = {
+  off: { dim: 0, warmth: 0 },
+  soft: { dim: 0.08, warmth: 0.25 },
+  warm: { dim: 0.12, warmth: 0.55 },
+  evening: { dim: 0.28, warmth: 0.75 },
+  night: { dim: 0.45, warmth: 1 },
+};
+
+/** Days between automatic backups. */
+export const BACKUP_DAYS: Record<Exclude<BackupFrequency, 'off'>, number> = { daily: 1, weekly: 7, monthly: 30 };
+
+/** The night-light step closest to a dim and a warmth. */
+export function nearestNightLight(dim: number, warmth: number): NightLight {
+  if (dim <= 0 && warmth <= 0) return 'off';
+  let best: NightLight = 'off';
+  let far = Infinity;
+  for (const [id, l] of Object.entries(NIGHT_LIGHT) as [NightLight, { dim: number; warmth: number }][]) {
+    const d = (l.dim - dim) ** 2 + ((l.warmth - warmth) / 2) ** 2;
+    if (d < far) [best, far] = [id, d];
+  }
+  return best;
+}

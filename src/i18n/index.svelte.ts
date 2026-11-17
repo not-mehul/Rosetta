@@ -17,7 +17,7 @@ export type Messages = {
   [K in MessageKey]: (typeof en)[K] extends string ? string : PluralForms;
 };
 
-export const LOCALES = ['en', 'es', 'fr', 'de'] as const;
+export const LOCALES = ['en', 'es', 'fr', 'de', 'ru'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const LOCALE_NAMES: Record<Locale, string> = {
@@ -25,12 +25,14 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   es: 'Español',
   fr: 'Français',
   de: 'Deutsch',
+  ru: 'Русский',
 };
 
 const loaders: Record<Exclude<Locale, 'en'>, () => Promise<{ default: Messages }>> = {
   es: () => import('./es'),
   fr: () => import('./fr'),
   de: () => import('./de'),
+  ru: () => import('./ru'),
 };
 
 let state = $state.raw<{ locale: Locale; messages: Messages }>({

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { addAnchors, anchorLength, anchorRuns } from '../../src/reader/anchors';
 import { beatAt, beats } from '../../src/reader/cadence';
 import { mergeSettings } from '../../src/state/settings';
-import { fontName } from '../../src/platform/fonts';
 
 describe('visual anchors', () => {
   it('bolds about the first two fifths of a word', () => {
@@ -50,11 +49,8 @@ describe('flow mode', () => {
     expect(s.readingMode).toBe('flow');
     expect(s.flowSpeed).toBe(40);
     expect(s.anchors).toBe(true);
-    expect(s.typeface).toBe('custom');
-  });
-
-  it('names a font after its file', () => {
-    expect(fontName('Atkinson_Hyperlegible-Regular.woff2')).toBe('Atkinson Hyperlegible Regular');
+    // A font file of one's own is no longer a typeface: back to serif.
+    expect(s.typeface).toBe('serif');
   });
 });
 

@@ -34,20 +34,27 @@ test('restoring the archive brings back the finished shelf and tags', async ({ p
   await page.getByRole('button', { name: 'Details for Garden Diary' }).click();
   await page.click('#toggleFinished');
   await page.getByRole('button', { name: 'Close' }).click();
+  // Settings → Data: one way to back up, with the books' files or without.
   await page.click('#openSettings');
-  const [download] = await Promise.all([page.waitForEvent('download'), page.click('#archive')]);
+  await page.click('#settings-data');
+  await page.getByRole('switch', { name: /Include the books/ }).click();
+  const [download] = await Promise.all([page.waitForEvent('download'), page.click('#backUp')]);
+  expect(download.suggestedFilename()).toMatch(/^rosetta-library-.*\.zip$/);
   const path = test.info().outputPath('library.zip');
   await download.saveAs(path);
 
   const fresh = await browser.newPage();
   await fresh.goto('/');
   await fresh.click('#openSettings');
+  await fresh.click('#settings-data');
   const [chooser] = await Promise.all([fresh.waitForEvent('filechooser'), fresh.click('#restore')]);
   await chooser.setFiles(path);
   await expect(fresh.locator('#toast')).toContainText('on 2 documents; added 2 files');
   await fresh.keyboard.press('Escape');
   await expect(fresh.locator('.doc-card')).toHaveCount(2);
-  await fresh.click('#shelf-finished');
+  await fresh.click('#arrangeLibrary');
+  await fresh.click('#show-finished');
+  await fresh.keyboard.press('Escape');
   await expect(fresh.locator('.doc-card')).toHaveCount(1);
   await expect(fresh.locator('.doc-card')).toContainText('Garden Diary');
 });

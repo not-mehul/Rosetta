@@ -47,6 +47,12 @@
                 <data android:mimeType="application/vnd.amazon.ebook" />
                 <data android:mimeType="application/vnd.amazon.mobi8-ebook" />
             </intent-filter>
+            <!-- Text shared from another app (a browser selection, an email): kept as a document. -->
+            <intent-filter android:label="@string/share_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
             <!-- rosetta://open?id=… from BookShelf and the other sibling apps (src/platform/handoff.ts). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

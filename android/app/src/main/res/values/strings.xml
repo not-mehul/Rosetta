@@ -5,6 +5,7 @@
     <string name="package_name">io.github.notmehul.rosetta</string>
     <string name="custom_url_scheme">io.github.notmehul.rosetta</string>
     <string name="open_with_label">Open in Rosetta</string>
+    <string name="share_label">Keep in Rosetta</string>
     <string name="read_aloud_channel">Reading aloud</string>
     <string name="read_aloud_play">Play</string>
     <string name="read_aloud_pause">Pause</string>

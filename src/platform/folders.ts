@@ -8,8 +8,10 @@
 import { registerPlugin } from '@capacitor/core';
 import { db } from '../state/db';
 import { isNative } from './native';
+import { base64ToBytes } from '../lib/base64';
 
-export type FolderKey = 'sync' | 'backup';
+/** sync and backup are kept; import is a folder picked once to add the books in it. */
+export type FolderKey = 'sync' | 'backup' | 'import';
 
 interface FoldersPlugin {
   status(o: { key: FolderKey }): Promise<{ chosen: boolean; name?: string }>;
@@ -19,6 +21,8 @@ interface FoldersPlugin {
   write(o: { key: FolderKey; name: string; data: string }): Promise<void>;
   list(o: { key: FolderKey }): Promise<{ names: string[] }>;
   remove(o: { key: FolderKey; name: string }): Promise<void>;
+  walk(o: { key: FolderKey }): Promise<{ paths: string[] }>;
+  readBytes(o: { key: FolderKey; path: string }): Promise<{ data: string }>;
 }
 
 const Native = registerPlugin<FoldersPlugin>('Folders');
@@ -38,7 +42,7 @@ type DirHandle = {
 export const canPickFolder = isNative || (typeof window !== 'undefined' && 'showDirectoryPicker' in window);
 
 /** The web keeps the sync folder's handle under its old name, so a folder chosen before still works. */
-const storeId = (key: FolderKey) => (key === 'sync' ? 'syncFolder' : 'backupFolder') as 'settings';
+const storeId = (key: FolderKey) => (key === 'sync' ? 'syncFolder' : `${key}Folder`) as 'settings';
 
 async function handle(key: FolderKey): Promise<DirHandle | null> {
   const row = await db.settings.get(storeId(key)).catch(() => undefined);
@@ -107,4 +111,14 @@ export async function listFolder(key: FolderKey): Promise<string[]> {
 export async function removeFolderFile(key: FolderKey, name: string): Promise<void> {
   if (isNative) return Native.remove({ key, name });
   await (await handle(key))?.removeEntry(name);
+}
+
+/** Every file in a picked folder and its subfolders, as paths inside it (phones and tablets). */
+export async function walkFolder(key: FolderKey): Promise<string[]> {
+  return (await Native.walk({ key })).paths;
+}
+
+/** A file's bytes, by its path inside a picked folder (phones and tablets). */
+export async function readFolderBytes(key: FolderKey, path: string): Promise<Uint8Array> {
+  return base64ToBytes((await Native.readBytes({ key, path })).data);
 }

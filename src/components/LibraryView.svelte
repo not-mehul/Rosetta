@@ -1,10 +1,11 @@
 <script lang="ts">
   // The Library section: what you are reading, everything, and what you've
   // finished, on every collection or one; search by title, author, series or #tag.
-  import { ACCEPT, isReadableName } from '../formats/sniff';
+  import { ACCEPT } from '../formats/sniff';
   import { t } from '../i18n/index.svelte';
-  import { canPickFolder, pickFiles, pickFolder } from '../lib/pick';
-  import { addFiles } from '../state/intake';
+  import { canPickFolder, pickFiles } from '../lib/pick';
+  import { isNative } from '../platform/native';
+  import { addFiles, addFolder as addBooksFolder } from '../state/intake';
   import { isFinished, isReading, library, shelve, upNext } from '../state/library.svelte';
   import { stats } from '../state/stats.svelte';
   import { duration } from '../lib/format';
@@ -73,10 +74,9 @@
     await addFiles(files, { openSingle: true });
   }
 
-  async function addFolder() {
-    const files = await pickFolder();
-    await addFiles(files.filter((f) => isReadableName(f.name)));
-  }
+  const addFolder = () => void addBooksFolder();
+  /** Phones and tablets pick folders with the system picker; browsers that can, with their folder input. */
+  const canAddFolder = isNative || canPickFolder;
 
   async function newCollection() {
     const name = await ui.prompt({ title: t('collections.new'), message: t('collections.newHint'), label: t('collections.name'), action: t('collections.create') });
@@ -121,7 +121,7 @@
     {#if library.loaded && !library.items.length}
       <EmptyState icon="library" title={t('library.emptyTitle')} text={t('library.emptyText')}>
         <button type="button" class="btn btn-primary" id="addFirst" onclick={() => void add()}><Icon name="plus" />{t('library.add')}</button>
-        {#if canPickFolder}<button type="button" class="btn btn-secondary" id="addFolderFirst" onclick={() => void addFolder()}><Icon name="folder-open" />{t('library.addFolder')}</button>{/if}
+        {#if canAddFolder}<button type="button" class="btn btn-secondary" id="addFolderFirst" onclick={addFolder}><Icon name="folder-open" />{t('library.addFolder')}</button>{/if}
         <button type="button" class="btn btn-muted" id="readGuide" onclick={() => void addGuide()}>{t('library.readGuide')}</button>
       </EmptyState>
     {:else if library.loaded}

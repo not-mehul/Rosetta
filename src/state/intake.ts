@@ -1,14 +1,20 @@
 // Adding files to the library from the picker, a drop, or "Open with".
 
 import { t } from '../i18n/index.svelte';
-import { fileBytes } from '../lib/pick';
+import { booksIn, type FolderEntry } from '../lib/calibre';
+import { coverFrom, fileBytes, pickFolder } from '../lib/pick';
+import { pickFolder as pickNativeFolder, readFolderBytes, walkFolder } from '../platform/folders';
+import { isNative } from '../platform/native';
 import { library } from './library.svelte';
+import type { StoredDoc } from './db';
 import { reader } from './reader.svelte';
 import { ui } from './ui.svelte';
 
 export interface IncomingFile {
   name: string;
   bytes: Uint8Array | (() => Promise<Uint8Array>);
+  /** Details known from elsewhere (a Calibre folder's metadata.opf and cover), over what the file says. */
+  details?: () => Promise<Partial<StoredDoc>>;
 }
 
 /**
@@ -27,7 +33,8 @@ export async function addFiles(files: (File | IncomingFile)[], { openSingle = fa
   try {
     for (const f of files) {
       const bytes = f instanceof Blob ? await fileBytes(f) : typeof f.bytes === 'function' ? await f.bytes() : f.bytes;
-      const result = await library.add(bytes, f.name);
+      const details = f instanceof Blob || !f.details ? {} : await f.details().catch(() => ({}));
+      const result = await library.add(bytes, f.name, details);
       if (library.batch) library.batch = { ...library.batch, done: library.batch.done + 1 };
       if ('error' in result) {
         errors.push(result.error);
@@ -70,4 +77,33 @@ export async function restoreFile(id: string): Promise<void> {
   }
   await library.add(bytes, file.name);
   await reader.open(id);
+}
+
+/**
+ * Adds every book in a folder the person picks: on a phone or tablet through
+ * the system's folder picker, in a browser through its folder input. A
+ * Calibre library brings its titles, authors, series, tags and covers.
+ */
+export async function addFolder(): Promise<void> {
+  // The picker opens first, while the tap still counts as the person's: a browser refuses it after a wait.
+  const entries = await folderEntries();
+  if (!entries) return;
+  const books = booksIn(entries);
+  if (!books.length) {
+    ui.notify(t('intake.folderEmpty'), 'info');
+    return;
+  }
+  await addFiles(books.map((b) => ({ name: b.name, bytes: b.bytes, details: () => b.details((bytes) => coverFrom(new Blob([bytes.slice().buffer]))) })));
+}
+
+/** The folder's files, or null when the picker was cancelled. */
+async function folderEntries(): Promise<FolderEntry[] | null> {
+  if (isNative) {
+    if (!(await pickNativeFolder('import'))) return null;
+    const paths = await walkFolder('import');
+    return paths.map((path) => ({ path, read: () => readFolderBytes('import', path) }));
+  }
+  const files = await pickFolder();
+  if (!files.length) return null;
+  return files.map((f) => ({ path: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name, read: () => fileBytes(f) }));
 }

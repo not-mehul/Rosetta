@@ -29,8 +29,9 @@ import java.nio.charset.StandardCharsets;
  * chosen here stays readable and writable, whoever wrote its files, until
  * the reader forgets it (src/platform/folders.ts).
  *
- * Each folder is kept under a key ("sync" or "backup") as its tree URI, with
- * the permission persisted. Files are UTF-8 text.
+ * Each folder is kept under a key ("sync", "backup", or "import" for a folder
+ * of books to add) as its tree URI, with the permission persisted. The sync
+ * and backup files are UTF-8 text; walk and readBytes list and read any file.
  */
 @CapacitorPlugin(name = "Folders")
 public class FolderPlugin extends Plugin {
@@ -43,7 +44,7 @@ public class FolderPlugin extends Plugin {
 
     private String key(PluginCall call) {
         String key = call.getString("key", "sync");
-        return "sync".equals(key) || "backup".equals(key) ? key : null;
+        return "sync".equals(key) || "backup".equals(key) || "import".equals(key) ? key : null;
     }
 
     /** The tree chosen for a key, if its permission is still held. */
@@ -122,10 +123,10 @@ public class FolderPlugin extends Plugin {
             call.reject("That folder can't be kept: " + e.getMessage());
             return;
         }
-        // Let go of the folder this key had before, unless the other key still uses it.
+        // Let go of the folder this key had before, unless another key still uses it.
         String before = prefs().getString(key, null);
         prefs().edit().putString(key, uri.toString()).apply();
-        if (before != null && !before.equals(uri.toString()) && !before.equals(prefs().getString("sync".equals(key) ? "backup" : "sync", null))) {
+        if (before != null && !before.equals(uri.toString()) && !usedByAnother(key, before)) {
             try {
                 getContext().getContentResolver().releasePersistableUriPermission(Uri.parse(before), flags);
             } catch (Exception ignored) {}
@@ -239,6 +240,96 @@ public class FolderPlugin extends Plugin {
         } catch (Exception e) {
             call.reject("Removing " + name + " failed: " + e.getMessage());
         }
+    }
+
+    private boolean usedByAnother(String key, String uri) {
+        for (String other : new String[] { "sync", "backup", "import" }) {
+            if (!other.equals(key) && uri.equals(prefs().getString(other, null))) return true;
+        }
+        return false;
+    }
+
+    private static final int MAX_FILES = 5000;
+    private static final int MAX_DEPTH = 8;
+
+    /** Every file under the folder, as paths inside it ("Author/Book/book.epub"). */
+    @PluginMethod
+    public void walk(PluginCall call) {
+        Uri tree = treeFor(call);
+        if (tree == null) return;
+        JSArray paths = new JSArray();
+        try {
+            walkInto(tree, DocumentsContract.getTreeDocumentId(tree), "", 0, paths);
+        } catch (Exception e) {
+            call.reject("Reading the folder failed: " + e.getMessage());
+            return;
+        }
+        JSObject out = new JSObject();
+        out.put("paths", paths);
+        call.resolve(out);
+    }
+
+    private void walkInto(Uri tree, String docId, String prefix, int depth, JSArray paths) {
+        if (depth > MAX_DEPTH || paths.length() >= MAX_FILES) return;
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, docId);
+        String[] columns = { DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE };
+        try (Cursor c = getContext().getContentResolver().query(children, columns, null, null, null)) {
+            while (c != null && c.moveToNext() && paths.length() < MAX_FILES) {
+                String name = c.getString(1);
+                if (name == null || name.startsWith(".")) continue;
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(2))) walkInto(tree, c.getString(0), prefix + name + "/", depth + 1, paths);
+                else paths.put(prefix + name);
+            }
+        }
+    }
+
+    /** A file's bytes, as base64, by its path inside the folder. */
+    @PluginMethod
+    public void readBytes(PluginCall call) {
+        String path = call.getString("path");
+        if (path == null) {
+            call.reject("No file named");
+            return;
+        }
+        Uri tree = treeFor(call);
+        if (tree == null) return;
+        try {
+            String docId = DocumentsContract.getTreeDocumentId(tree);
+            Uri file = null;
+            String[] parts = path.split("/");
+            for (int i = 0; i < parts.length; i++) {
+                file = childOf(tree, docId, parts[i]);
+                if (file == null) break;
+                docId = DocumentsContract.getDocumentId(file);
+            }
+            if (file == null) {
+                call.reject("No such file: " + path);
+                return;
+            }
+            try (InputStream in = getContext().getContentResolver().openInputStream(file)) {
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                byte[] buf = new byte[64 * 1024];
+                int n;
+                while (in != null && (n = in.read(buf)) > 0) bytes.write(buf, 0, n);
+                JSObject out = new JSObject();
+                out.put("data", android.util.Base64.encodeToString(bytes.toByteArray(), android.util.Base64.NO_WRAP));
+                call.resolve(out);
+            }
+        } catch (Exception e) {
+            call.reject("Reading " + path + " failed: " + e.getMessage());
+        }
+    }
+
+    /** The document named `name` directly in the directory `docId`, or null. */
+    private Uri childOf(Uri tree, String docId, String name) {
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, docId);
+        String[] columns = { DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME };
+        try (Cursor c = getContext().getContentResolver().query(children, columns, null, null, null)) {
+            while (c != null && c.moveToNext()) {
+                if (name.equals(c.getString(1))) return DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0));
+            }
+        }
+        return null;
     }
 
     /** The call's folder, or null after rejecting the call. */

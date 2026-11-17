@@ -10,6 +10,7 @@ import { setLocale, t } from './i18n/index.svelte';
 import { canOpen, parseRosettaUrl, sendToBookShelf, sendToNookling } from './platform/handoff';
 import { loadCustomFont } from './platform/fonts';
 import { listenForFiles } from './platform/intake';
+import { listenForSharedText, sharedDocument } from './platform/shared';
 import { isNative } from './platform/native';
 import { applyTheme } from './platform/theme.svelte';
 import { addFiles } from './state/intake';
@@ -94,6 +95,11 @@ async function start(): Promise<void> {
         else ui.notify(t('intake.notInLibrary'), 'info');
       },
     );
+    void listenForSharedText((text, subject) => {
+      const doc = sharedDocument(text, subject);
+      if (doc) void addFiles([doc], { openSingle: true });
+      else ui.notify(t('intake.sharedLink'), 'info');
+    });
     void autoBackup();
     await SplashScreen.hide({ fadeOutDuration: 200 }).catch(() => undefined);
   } else {

@@ -16,7 +16,7 @@ Rosetta is a quiet place to read. It keeps your books, papers and notes on this 
 - **Comic archives** (`.cbz`), one picture after another.
 - **Markdown**, **HTML** and **plain text**, set in the same type as everything else.
 
-Add files with the **+** button, a whole folder at once, drop them on the window, or choose _Open with Rosetta_ from another app. Adding the same file twice keeps one copy. The **Catalogs** tab has free books from Project Gutenberg and Standard Ebooks, and can add a Calibre server or a library's catalog (OPDS 1 or 2). A catalog's own choices, such as language or order, show as chips above its books, and a book you already have says _In your library_.
+Add files with the **+** button, a whole folder at once (a Calibre library brings its titles, series, tags and covers), drop them on the window, or choose _Open with Rosetta_ from another app. On Android, text shared to Rosetta from another app, such as a passage from a browser or an email, is kept as a document. Adding the same file twice keeps one copy. The **Catalogs** tab has free books from Project Gutenberg and Standard Ebooks, and can add a Calibre server or a library's catalog (OPDS 1 or 2). A catalog's own choices, such as language or order, show as chips above its books, and a book you already have says _In your library_.
 
 Books bought with DRM can't be opened here. Read them in the app they were bought for, or look for a DRM-free copy.
 
@@ -65,7 +65,7 @@ The tabs under the title are **Library**, **Notes**, **Stats** and **Catalogs**.
 
 The **Notes** tab gathers every highlight from every document; filter it by colour or words, and _Export these_ saves what it shows as Markdown. A book's details have room for a note on the whole book, which goes out with its highlights. From a document's details, or from the highlights list, you can export them as Markdown.
 
-Settings can back up every place, bookmark, highlight and collection to a file, save the whole library with its files, and restore either later. **Sync with a folder** keeps places and notes the same on your devices through a folder you share between them: choose one in iCloud Drive, or one Syncthing or Dropbox keeps in step. Weekly backups can go to a folder of your choice too. **Storage** shows what each file takes and can offload one, keeping its place and notes until you add it again.
+Settings can bring over a Kindle's highlights from its _My Clippings.txt_, onto the same words in the same books here. It can also back up every place, bookmark, highlight and collection to a file, save the whole library with its files, and restore either later. **Sync with a folder** keeps places and notes the same on your devices through a folder you share between them: choose one in iCloud Drive, or one Syncthing or Dropbox keeps in step. Weekly backups can go to a folder of your choice too. **Storage** shows what each file takes and can offload one, keeping its place and notes until you add it again.
 
 A finished book can be logged in **BookShelf**, with your note on it, and a highlight can go there as a quote from the highlight itself. An EPUB can be opened in **Colophon**.
 

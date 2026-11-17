@@ -46,7 +46,7 @@ export async function rememberText(id: string, content: OpenDoc): Promise<void> 
 }
 
 /** A document's words: kept, or read from its file now (and kept). Null when there's no file or it won't open. */
-async function wordsOf(doc: StoredDoc): Promise<TextIndex | null> {
+export async function wordsOf(doc: StoredDoc): Promise<TextIndex | null> {
   const kept = await db.texts.get(doc.id).catch(() => undefined);
   if (kept) return kept;
   if (doc.offloaded) return null;

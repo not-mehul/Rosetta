@@ -28,13 +28,15 @@ public class FoldersPlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentPickerDelegat
         CAPPluginMethod(name: "write", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "list", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "remove", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "walk", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "readBytes", returnType: CAPPluginReturnPromise),
     ]
 
     private var picking: (call: CAPPluginCall, key: String)?
 
     private func key(_ call: CAPPluginCall) -> String? {
         let key = call.getString("key") ?? "sync"
-        return key == "sync" || key == "backup" ? key : nil
+        return key == "sync" || key == "backup" || key == "import" ? key : nil
     }
 
     private func defaultsKey(_ key: String) -> String { "rosetta.folder.\(key)" }
@@ -167,6 +169,41 @@ public class FoldersPlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentPickerDelegat
         withFolder(call) { dir in
             let names = try FileManager.default.contentsOfDirectory(atPath: dir.path)
             call.resolve(["names": names])
+        }
+    }
+
+    /// Every file under the folder, as paths inside it ("Author/Book/book.epub"), up to 5,000.
+    @objc func walk(_ call: CAPPluginCall) {
+        withFolder(call) { dir in
+            var paths: [String] = []
+            let root = dir.standardizedFileURL.path
+            let keys: [URLResourceKey] = [.isDirectoryKey]
+            if let walker = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles]) {
+                for case let url as URL in walker {
+                    if paths.count >= 5000 { break }
+                    let isDir = (try? url.resourceValues(forKeys: Set(keys)).isDirectory) ?? false
+                    if isDir { continue }
+                    var path = url.standardizedFileURL.path
+                    if path.hasPrefix(root) { path = String(path.dropFirst(root.count)) }
+                    while path.hasPrefix("/") { path.removeFirst() }
+                    paths.append(path)
+                }
+            }
+            call.resolve(["paths": paths])
+        }
+    }
+
+    /// A file's bytes, as base64, by its path inside the folder.
+    @objc func readBytes(_ call: CAPPluginCall) {
+        guard let path = call.getString("path") else { return call.reject("No file named") }
+        withFolder(call) { dir in
+            let file = dir.appendingPathComponent(path)
+            try? FileManager.default.startDownloadingUbiquitousItem(at: file)
+            var data = Data()
+            try coordinated(reading: file) { u in
+                data = try Data(contentsOf: u)
+            }
+            call.resolve(["data": data.base64EncodedString()])
         }
     }
 

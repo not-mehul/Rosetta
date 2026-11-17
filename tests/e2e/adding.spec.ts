@@ -21,7 +21,9 @@ test('a locked PDF is added, asks for its password once, then shows its title an
   await page.click('#promptAction');
   await expect(page.locator('.pdf-page')).toHaveCount(3);
   await expect(page.locator('.textLayer').first()).toContainText('lighthouses');
-  await expect(page.locator('.reader-title')).toHaveText('Harbour Charts');
+  // The book is the bar's eyebrow, its outline's chapter the title.
+  await expect(page.locator('.reader-book')).toHaveText('Harbour Charts');
+  await expect(page.locator('.reader-title')).toHaveText('Chart 1');
 
   // Back in the library: its own title and a cover; opening again doesn't ask.
   await page.click('#closeReader');

@@ -18,6 +18,8 @@ test('unopened books carry no "New" chip, and read aloud without a voice says wh
   await expect(page.locator('.doc-card .chip-status')).toHaveCount(0);
 
   await page.getByRole('button', { name: /^Garden Diary/ }).click();
+  await page.click('#openType');
+  await page.click('#panel-listen');
   await page.click('#readAloud');
   await expect(page.locator('#toast')).toContainText('text-to-speech');
   await expect(page.locator('#toast')).not.toContainText('[object');

@@ -14,7 +14,7 @@
   import SearchSheet from './components/sheets/SearchSheet.svelte';
   import SettingsSheet from './components/sheets/SettingsSheet.svelte';
   import StorageSheet from './components/sheets/StorageSheet.svelte';
-  import TypeSheet from './components/sheets/TypeSheet.svelte';
+  import ReadingPanel from './components/sheets/ReadingPanel.svelte';
   import ConfirmModal from './components/ui/ConfirmModal.svelte';
   import PromptModal from './components/ui/PromptModal.svelte';
   import { setLocale, t } from './i18n/index.svelte';
@@ -70,7 +70,7 @@
 {:else if ui.overlay === 'storage'}
   <StorageSheet onclose={close} />
 {:else if ui.overlay === 'type'}
-  <TypeSheet onclose={close} />
+  <ReadingPanel onclose={close} />
 {:else if reader.content}
   {#if ui.overlay === 'contents'}
     <ContentsSheet onclose={close} />

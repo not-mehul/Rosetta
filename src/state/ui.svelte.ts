@@ -43,6 +43,9 @@ export interface PromptRequest {
 /** Overlays the app opens; one at a time per kind. */
 export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | 'edit' | 'storage' | null;
 
+/** The reader's Aa panel tabs. */
+export type PanelTab = 'text' | 'page' | 'light' | 'listen';
+
 /** The top-level sections, under the header as icon tabs (style.md §8.5.1). */
 export type Section = 'library' | 'notes' | 'stats' | 'catalogs';
 
@@ -56,6 +59,8 @@ class UiState {
   overlay = $state<Overlay>(null);
   /** The top-level section on screen; the library is home. */
   section = $state<Section>('library');
+  /** The Aa panel's tab last used, so it opens where it was left. */
+  panelTab = $state<PanelTab>('text');
   /** The document the details sheet is about. */
   detailsId = $state<string | null>(null);
   toast = $state.raw<Toast | null>(null);

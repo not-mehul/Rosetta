@@ -270,7 +270,7 @@ const fr: Messages = {
   'reader.contents': 'Sommaire, signets et surlignages',
   'reader.addBookmark': 'Marquer cet endroit',
   'reader.removeBookmark': 'Retirer le signet',
-  'reader.type': 'Texte et thème',
+  'reader.type': 'Lecture',
   'reader.opening': 'Ouverture de {title}…',
   'reader.read': 'Lu',
   'reader.page': 'Page {page}',
@@ -325,7 +325,7 @@ const fr: Messages = {
   'selection.failed': 'Impossible de surligner.',
 
   'settings.title': 'Réglages',
-  'settings.appearance': 'Apparence et lecture',
+  'settings.appearance': 'Apparence',
   'settings.library': 'Bibliothèque',
   'settings.data': 'Vos données',
   'settings.about': 'À propos',
@@ -512,6 +512,14 @@ const fr: Messages = {
   'arrange.list': 'Liste',
   'arrange.in': 'Dans',
   'arrange.showEverything': 'Tout afficher',
+  'panel.label': 'Réglages de lecture',
+  'panel.text': 'Texte',
+  'panel.page': 'Page',
+  'panel.light': 'Lumière',
+  'panel.listen': 'Écouter',
+  'panel.rate': 'Vitesse',
+  'panel.listenHint': 'Lit depuis le haut de la page, une phrase à la fois, et continue écran éteint.',
+  'settings.readingWhere': 'Les réglages de texte, de page et de lecture à voix haute sont dans chaque livre, sous Aa, là où l’on voit la page changer.',
 };
 
 export default fr;

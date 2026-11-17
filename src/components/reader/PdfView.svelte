@@ -8,7 +8,6 @@
   import { watchSelection, type PageSelection } from '../../reader/selection.svelte';
   import type { HighlightColour } from '../../state/db';
   import { reader } from '../../state/reader.svelte';
-  import { settings } from '../../state/settings.svelte';
   import { PDF_ZOOM } from '../../state/settings';
   import { t } from '../../i18n/index.svelte';
   import { speech } from '../../state/speech.svelte';
@@ -22,11 +21,11 @@
   let column = $state<HTMLDivElement>();
   let columnWidth = $state(360);
   let viewHeight = $state(640);
-  const zoom = $derived(settings.value.pdfZoom);
+  const zoom = $derived(reader.view.pdfZoom);
   /** The page width at zoom 1: the column, or small enough that the tallest page fits the screen. */
   const fitted = $derived.by(() => {
     const width = Math.min(columnWidth, MAX_COLUMN);
-    if (settings.value.pdfFit !== 'page') return width;
+    if (reader.view.pdfFit !== 'page') return width;
     const tallest = Math.max(...content.sizes.map((s) => s.height / s.width));
     return Math.min(width, Math.floor((viewHeight - TOP - 96) / tallest));
   });
@@ -175,7 +174,7 @@
     const ratio = z / zoom;
     const docY = scrollY + cy;
     const colX = (column?.scrollLeft ?? 0) + cx - (column?.getBoundingClientRect().left ?? 0);
-    void settings.update({ pdfZoom: z });
+    void reader.adjust({ pdfZoom: z });
     void tick().then(() => {
       scrollTo({ top: Math.max(0, docY * ratio - cy), behavior: 'instant' });
       if (column) column.scrollLeft = Math.max(0, colX * ratio - (cx - column.getBoundingClientRect().left));
@@ -284,7 +283,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
     class="pdf-pages"
-    class:tone-theme={settings.value.pageTone === 'theme'}
+    class:tone-theme={reader.view.pageTone === 'theme'}
     style:width="{pageWidth}px"
     style:transform={pinchScale !== 1 ? `scale(${pinchScale})` : undefined}
     style:transform-origin={pinchOrigin}

@@ -16,7 +16,6 @@
   import type { HighlightColour } from '../../state/db';
   import { library, nextInSeries } from '../../state/library.svelte';
   import { reader } from '../../state/reader.svelte';
-  import { settings } from '../../state/settings.svelte';
   import { MEASURE_VALUE, SPACING_VALUE } from '../../state/settings';
   import { speech } from '../../state/speech.svelte';
   import { t } from '../../i18n/index.svelte';
@@ -47,7 +46,7 @@
 
   const index = $derived(reader.section);
   const section = $derived(content.sections[index]!);
-  const v = $derived(settings.value);
+  const v = $derived(reader.view);
   const paged = $derived(v.readingMode === 'paged');
   const rtl = $derived(content.dir === 'rtl');
   const publisher = $derived(v.publisherStyles && !!content.css);

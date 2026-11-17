@@ -18,7 +18,7 @@ import { FOLDER } from '../platform/output';
 import { db, toBytes, type Collection, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
 import { settings } from './settings.svelte';
-import { portableSettings, restoredSettings } from './settings';
+import { cleanBookSettings, portableSettings, restoredSettings } from './settings';
 import { t } from '../i18n/index.svelte';
 import { ui } from './ui.svelte';
 
@@ -102,6 +102,7 @@ export function merge(local: Local, remote: Backup): MergeResult {
           collections: r.collections ?? mine.collections,
           series: r.series ?? mine.series,
           seriesIndex: r.seriesIndex ?? mine.seriesIndex,
+          ...(r.reading ? { reading: cleanBookSettings(r.reading) } : {}),
         });
       out.docs.push({ id: r.id, patch });
     }

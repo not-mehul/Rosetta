@@ -16,6 +16,7 @@ import { db, type HighlightColour, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
 import { stats } from './stats.svelte';
 import { settings } from './settings.svelte';
+import { cleanBookSettings, isBookKey, settingsFor, type BookSettings, type Settings } from './settings';
 import { ui } from './ui.svelte';
 
 export interface Jump {
@@ -106,6 +107,50 @@ class ReaderState {
   get atEnd(): boolean {
     const c = this.content;
     return !!c && endInView(c.kind, this.lengths, this.sectionCount, this.location, this.visibleEnd);
+  }
+
+  /** The settings the open document reads with: the defaults, under its own. */
+  get view(): Settings {
+    return settingsFor(settings.value, this.doc?.reading);
+  }
+
+  /** The open document has settings of its own that differ from the defaults. */
+  get ownView(): boolean {
+    const own = cleanBookSettings(this.doc?.reading);
+    const base = settings.value as unknown as Record<string, unknown>;
+    return Object.entries(own).some(([k, v]) => base[k] !== v);
+  }
+
+  /**
+   * A change from the reading panel. Type, page and mode settings are
+   * remembered for the open document alone; the rest (theme, light, voice)
+   * apply everywhere.
+   */
+  async adjust(patch: Partial<Settings>): Promise<void> {
+    const own: Record<string, unknown> = {};
+    const everywhere: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) (isBookKey(key) ? own : everywhere)[key] = value;
+    const doc = this.doc;
+    if (!doc) Object.assign(everywhere, own);
+    if (Object.keys(everywhere).length) await settings.update(everywhere as Partial<Settings>);
+    if (!doc || !Object.keys(own).length) return;
+    const reading: BookSettings = { ...doc.reading, ...(own as BookSettings) };
+    this.doc = { ...doc, reading };
+    await library.update(doc.id, { reading });
+  }
+
+  /** The open document's settings become the defaults, for every document without its own. */
+  async useForAll(): Promise<void> {
+    const own = cleanBookSettings(this.doc?.reading);
+    if (Object.keys(own).length) await settings.update(own);
+  }
+
+  /** The open document goes back to reading with the defaults. */
+  async useDefaults(): Promise<void> {
+    const doc = this.doc;
+    if (!doc?.reading) return;
+    this.doc = { ...doc, reading: {} };
+    await library.update(doc.id, { reading: {} });
   }
 
   /** The whole document is on one screen: its start and its end. */

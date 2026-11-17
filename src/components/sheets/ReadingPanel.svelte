@@ -15,7 +15,6 @@
   import { FONT_ACCEPT, removeCustomFont, saveCustomFont } from '../../platform/fonts';
   import { reader } from '../../state/reader.svelte';
   import { FLOW_SPEED, FONT_SIZES, type Settings } from '../../state/settings';
-  import { settings } from '../../state/settings.svelte';
   import { speech } from '../../state/speech.svelte';
   import { ui, type PanelTab } from '../../state/ui.svelte';
   import Icon from '../ui/Icon.svelte';
@@ -23,8 +22,8 @@
   import ThemeControls from './ThemeControls.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
-  const v = $derived(settings.value);
-  const set = (patch: Partial<Settings>) => void settings.update(patch);
+  const v = $derived(reader.view);
+  const set = (patch: Partial<Settings>) => void reader.adjust(patch);
   const size = (by: number) => set({ fontSize: Math.max(FONT_SIZES.min, Math.min(FONT_SIZES.max, v.fontSize + by)) });
 
   const c = $derived(reader.content);
@@ -250,6 +249,15 @@
         </label>
       {/if}
     {/if}
+    {#if (tab === 'text' || tab === 'page') && reader.ownView}
+      <div class="own-view">
+        <p class="t-hint">{t('panel.ownHint')}</p>
+        <div class="own-actions">
+          <button type="button" class="btn btn-secondary" id="useForAll" onclick={() => void reader.useForAll()}>{t('panel.useForAll')}</button>
+          <button type="button" class="btn btn-muted" id="useDefaults" onclick={() => void reader.useDefaults()}>{t('panel.useDefaults')}</button>
+        </div>
+      </div>
+    {/if}
   </div>
 </Sheet>
 
@@ -261,6 +269,20 @@
     margin: 0 calc(-1 * var(--space-5)) var(--space-4);
     padding: 0 var(--space-5);
     background: var(--sheet-bg);
+  }
+  /* This book's own settings, and the way to share or drop them. */
+  .own-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-faint);
+  }
+  .own-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
   .listen-start {
     display: flex;

@@ -51,6 +51,8 @@ The **Aa** button opens the reading panel over the page, so you can watch each c
 - **Light** has the theme, _Dim_, _Warmth_ and _Keep the screen on_.
 - **Listen** reads aloud, at the speed and in the voice you choose.
 
+Each book keeps the type and page settings changed while it is open, and a new book starts from the defaults. _Use for all books_ makes one book's settings the defaults; _Back to the defaults_ drops them.
+
 Rosetta has two themes. _Dusk_ is a late-night reading room and _Dawn_ is a sunlit study. _System_ follows your device. The theme is also in Settings.
 
 ## Your library

@@ -70,7 +70,7 @@ Your documents never leave the device. Rosetta goes online only when you browse 
 
 ## The Dusk & Dawn apps
 
-Rosetta is one of six apps by Mehul Sen that share one design system, [Editorial Dusk & Dawn](https://github.com/not-mehul/dusk-dawn), and a common link scheme, so they can hand things to each other.
+Rosetta is one of seven apps by Mehul Sen that share one design system, [Editorial Dusk & Dawn](https://github.com/not-mehul/dusk-dawn), and a common link scheme, so they can hand things to each other.
 
 | App | What it is for |
 |---|---|
@@ -80,6 +80,7 @@ Rosetta is one of six apps by Mehul Sen that share one design system, [Editorial
 | [Colophon](https://github.com/not-mehul/Colophon) | Inspect, fix and rebind EPUB editions |
 | [Rosetta](https://github.com/not-mehul/Rosetta) | A quiet library and reader for books, papers and notes |
 | [Mise](https://github.com/not-mehul/Mise) | Recipes from anywhere, cooked one step at a time |
+| [Nookling](https://github.com/not-mehul/Nookling) | A small round friend to feed, play with and put to bed |
 
 ## Build from source
 

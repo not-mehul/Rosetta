@@ -3,7 +3,7 @@
 // stats sheet its figures and "time left" the reader's own pace.
 
 import { DEFAULT_PACE } from '../reader/progress';
-import { dayKey, longestRun } from '../lib/calendar';
+import { dayKey, daysBefore, longestRun } from '../lib/calendar';
 import { db, type ReadingSession } from './db';
 import { settings } from './settings.svelte';
 
@@ -51,16 +51,18 @@ export function summarise(sessions: readonly ReadingSession[], now = Date.now())
       paceChars += s.chars;
     }
   }
+  // Days step back by the calendar, not by 24 hours, which skips or repeats a day around a clock change.
+  const today = dayKey(now);
   const week = Array.from({ length: 7 }, (_, i) => {
-    const day = dayKey(now - (6 - i) * 86_400_000);
+    const day = daysBefore(today, 6 - i);
     return { day, ms: byDay.get(day) ?? 0 };
   });
   let streak = 0;
   // A streak still counts this morning if yesterday was read.
-  let t = byDay.get(dayKey(now)) ? now : now - 86_400_000;
-  while (byDay.get(dayKey(t))) {
+  let day = byDay.get(today) ? today : daysBefore(today);
+  while (byDay.get(day)) {
     streak++;
-    t -= 86_400_000;
+    day = daysBefore(day);
   }
   const pace = paceMs >= 10 * 60_000 ? Math.round(paceChars / (paceMs / 60_000)) : DEFAULT_PACE;
   return {

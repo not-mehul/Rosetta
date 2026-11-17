@@ -7,11 +7,12 @@ export const dayKey = (t: number | Date = Date.now()) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-/** The day before a YYYY-MM-DD key, by the calendar (safe across clock changes). */
-const dayBefore = (day: string) => {
+/** The day `n` days before a YYYY-MM-DD key, by the calendar (safe across clock changes). */
+export const daysBefore = (day: string, n = 1) => {
   const [y, m, d] = day.split('-').map(Number);
-  return dayKey(new Date(y!, m! - 1, d! - 1, 12));
+  return dayKey(new Date(y!, m! - 1, d! - n, 12));
 };
+const dayBefore = (day: string) => daysBefore(day);
 
 /** The longest run of consecutive days among these. */
 export function longestRun(days: Iterable<string>): number {

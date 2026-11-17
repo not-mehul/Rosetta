@@ -32,7 +32,8 @@ const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').rep
 
 /**
  * Plain text as paragraphs: blank lines separate them, single line breaks
- * inside a paragraph are kept. Short all-caps or "Chapter …" lines become headings.
+ * inside a paragraph are kept. Short all-caps or "Chapter …" lines become
+ * headings; a long shouted line ("I SAID NO, AND I MEANT IT") stays a paragraph.
  */
 export function textToHtml(source: string): string {
   return source
@@ -41,7 +42,7 @@ export function textToHtml(source: string): string {
     .filter((block) => block.trim())
     .map((block) => {
       const line = block.trim();
-      if (!line.includes('\n') && line.length < 80 && (/^(chapter|part|book|prologue|epilogue)\b/i.test(line) || (/[A-Z]/.test(line) && line === line.toUpperCase() && !/[.!?,;]$/.test(line)))) {
+      if (!line.includes('\n') && line.length < 80 && (/^(chapter|part|book|prologue|epilogue)\b/i.test(line) || (/[A-Z]/.test(line) && line === line.toUpperCase() && !/[.!?,;]$/.test(line) && line.split(/\s+/).length <= 8))) {
         return `<h2>${escape(line)}</h2>`;
       }
       return `<p>${escape(block).replace(/\n/g, '<br>')}</p>`;

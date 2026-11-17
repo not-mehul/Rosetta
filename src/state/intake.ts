@@ -20,12 +20,14 @@ export async function addFiles(files: (File | IncomingFile)[], { openSingle = fa
   let added = 0;
   let known = 0;
   const errors: string[] = [];
+  const failed: string[] = [];
   let last: string | null = null;
   for (const f of files) {
     const bytes = f instanceof Blob ? await fileBytes(f) : typeof f.bytes === 'function' ? await f.bytes() : f.bytes;
     const result = await library.add(bytes, f.name);
     if ('error' in result) {
       errors.push(result.error);
+      failed.push(f.name);
       continue;
     }
     last = result.doc.id;
@@ -37,7 +39,9 @@ export async function addFiles(files: (File | IncomingFile)[], { openSingle = fa
     return;
   }
   if (errors.length) {
-    ui.notify(errors.length === 1 ? errors[0]! : t('intake.unreadable', { count: errors.length }), 'error');
+    // One file: why. Several: which ones.
+    const names = failed.length > 3 ? `${failed.slice(0, 3).join(', ')}, …` : failed.join(', ');
+    ui.notify(errors.length === 1 ? errors[0]! : t('intake.unreadable', { count: errors.length, names }), 'error');
   } else if (added) {
     ui.notify(known ? t('intake.addedSome', { count: added, known }) : t('intake.added', { count: added }), 'success');
   } else if (known) {

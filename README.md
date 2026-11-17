@@ -14,8 +14,8 @@ Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB
 
 <p align="center">
   <img src="docs/screenshots/reader.webp" width="200" alt="Reading Moby-Dick: the first chapter in a serif typeface with the reader bar above">
-  <img src="docs/screenshots/flow.webp" width="200" alt="Flow mode: one sentence at a time in the middle of the screen">
-  <img src="docs/screenshots/type-and-theme.webp" width="200" alt="The Type and theme sheet: theme, reading mode, typeface, size, spacing and column">
+  <img src="docs/screenshots/flow.webp" width="200" alt="Flow mode: Call me Ishmael, one sentence at a time in the middle of the screen">
+  <img src="docs/screenshots/reading-panel.webp" width="200" alt="The reading panel over the page, with Text, Page, Light and Listen tabs">
   <img src="docs/screenshots/library-dawn.webp" width="200" alt="The library in the light Dawn theme, with Continue reading and document cards">
 </p>
 

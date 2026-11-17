@@ -4,6 +4,7 @@
 
 import { CapacitorHttp } from '@capacitor/core';
 import { isNative } from '../platform/native';
+import { bytesToBase64 } from './base64';
 import { t } from '../i18n/index.svelte';
 
 export interface Catalog {
@@ -60,6 +61,7 @@ const READABLE: [RegExp, number][] = [
   [/application\/pdf/i, 1],
   [/application\/x-fictionbook|fb2/i, 2],
   [/application\/(vnd\.comicbook\+zip|x-cbz)/i, 3],
+  [/application\/(x-mobipocket-ebook|vnd\.amazon\.(ebook|mobi8-ebook))/i, 4],
   [/text\/html/i, 5],
   [/text\/plain/i, 6],
 ];
@@ -131,7 +133,46 @@ export const fillSearch = (template: string, terms: string) =>
     .replace(/\{startPage\}/, '1')
     .replace(/\{count\}/, '20');
 
-const auth = (c: Catalog): Record<string, string> => (c.user ? { Authorization: `Basic ${btoa(`${c.user}:${c.password ?? ''}`)}` } : {});
+/** Basic auth, as UTF-8 (btoa alone throws on anything outside Latin-1). */
+const auth = (c: Catalog): Record<string, string> => (c.user ? { Authorization: `Basic ${bytesToBase64(new TextEncoder().encode(`${c.user}:${c.password ?? ''}`))}` } : {});
+
+/** The catalog wants a user name and password (or the ones it has were wrong). */
+export class CatalogAuthError extends Error {
+  constructor() {
+    super(t('catalog.signInNeeded'));
+  }
+}
+
+function check(status: number): void {
+  if (status === 401) throw new CatalogAuthError();
+  if (status >= 400) throw new Error(t('catalog.answered', { status }));
+}
+
+/**
+ * A catalog from the address typed in. Credentials in it ("http://me:pw@host/opds")
+ * become its sign-in; an address without a scheme gets http:// when it's a home
+ * server (an IP address, localhost or a port, as Calibre's usually is), https:// otherwise.
+ */
+export function catalogFrom(address: string): Omit<Catalog, 'id'> | null {
+  let text = address.trim();
+  if (!text) return null;
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(text)) {
+    const host = text.split(/[/?#]/)[0]!;
+    text = `${/^(\d{1,3}(\.\d{1,3}){3}|localhost|[^:]+\.local)(:\d+)?$|:\d+$/i.test(host) ? 'http' : 'https'}://${text}`;
+  }
+  let url: URL;
+  try {
+    url = new URL(text);
+  } catch {
+    return null;
+  }
+  if (!/^https?:$/.test(url.protocol) || !url.hostname) return null;
+  const user = decodeURIComponent(url.username);
+  const password = decodeURIComponent(url.password);
+  url.username = '';
+  url.password = '';
+  return { name: url.hostname, url: url.toString(), ...(user ? { user, password } : {}) };
+}
 
 /** Fetches text from a catalog. Native goes through CapacitorHttp, which catalogs' CORS rules don't block. */
 export async function fetchText(url: string, catalog: Catalog): Promise<string> {
@@ -144,7 +185,7 @@ export async function fetchText(url: string, catalog: Catalog): Promise<string> 
       },
       responseType: 'text',
     });
-    if (res.status >= 400) throw new Error(`The catalog answered ${res.status}.`);
+    check(res.status);
     return typeof res.data === 'string' ? res.data : String(res.data);
   }
   const res = await fetch(url, {
@@ -153,7 +194,7 @@ export async function fetchText(url: string, catalog: Catalog): Promise<string> 
       ...auth(catalog),
     },
   });
-  if (!res.ok) throw new Error(`The catalog answered ${res.status}.`);
+  check(res.status);
   return res.text();
 }
 
@@ -164,28 +205,29 @@ export async function fetchBytes(url: string, catalog: Catalog): Promise<Uint8Ar
       headers: auth(catalog),
       responseType: 'arraybuffer',
     });
-    if (res.status >= 400) throw new Error(`The catalog answered ${res.status}.`);
+    check(res.status);
     // Native returns base64 for binary responses.
     const data = res.data as string;
     return Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
   }
   const res = await fetch(url, { headers: auth(catalog) });
-  if (!res.ok) throw new Error(`The catalog answered ${res.status}.`);
+  check(res.status);
   return new Uint8Array(await res.arrayBuffer());
 }
 
+/** File extensions by download type, first match wins. */
+const EXTENSIONS: [RegExp, string][] = [
+  [/epub/, 'epub'],
+  [/pdf/, 'pdf'],
+  [/fictionbook|fb2/, 'fb2'],
+  [/comicbook|cbz/, 'cbz'],
+  [/mobi8/, 'azw3'],
+  [/mobipocket|amazon/, 'mobi'],
+  [/html/, 'html'],
+];
+
 /** A file name for a download, from its title and type. */
 export function downloadName(entry: Pick<FeedEntry, 'title'>, link: FeedLink): string {
-  const ext = /epub/.test(link.type)
-    ? 'epub'
-    : /pdf/.test(link.type)
-      ? 'pdf'
-      : /fictionbook|fb2/.test(link.type)
-        ? 'fb2'
-        : /comicbook|cbz/.test(link.type)
-          ? 'cbz'
-          : /html/.test(link.type)
-            ? 'html'
-            : 'txt';
+  const ext = EXTENSIONS.find(([re]) => re.test(link.type))?.[1] ?? 'txt';
   return `${entry.title.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Download'}.${ext}`;
 }

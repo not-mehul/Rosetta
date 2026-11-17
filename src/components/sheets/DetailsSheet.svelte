@@ -6,7 +6,7 @@
   import { t } from '../../i18n/index.svelte';
   import { notesMarkdown, slug } from '../../lib/export';
   import { fileSize, relativeDay } from '../../lib/format';
-  import { openInColophon, sendToBookShelf, sendToNookling, canOpen } from '../../platform/handoff';
+  import { sendToBookShelf } from '../../platform/handoff';
   import { saveFile, shareFile, shareText } from '../../platform/output';
   import { restoreFile } from '../../state/intake';
   import { duration } from '../../lib/format';
@@ -86,23 +86,6 @@
       await shareText(doc.title, `${doc.title}${doc.author ? ` — ${doc.author}` : ''}`);
       ui.notify(t('details.noBookShelf'), 'info');
     }
-  }
-
-  // Nookling keeps a shelf of finished books; offered once the book is finished, when Nookling is here.
-  let nookling = $state(false);
-  $effect(() => {
-    void canOpen('nookling').then((v) => (nookling = v));
-  });
-
-  async function toNookling() {
-    if (!doc) return;
-    if (!(await sendToNookling(doc))) ui.notify(t('details.noNookling'), 'info');
-  }
-
-  async function colophon() {
-    if (!doc) return;
-    const bytes = await library.bytes(id);
-    if (bytes) await openInColophon(doc.fileName, bytes, doc.title);
   }
 
   async function offload() {
@@ -201,8 +184,6 @@
       {#if doc.location}<li><button type="button" class="row" onclick={() => void startOver()}><Icon name="rotate-ccw" /><span class="row-label">{t('details.startOver')}</span></button></li>{/if}
       {#if !doc.offloaded}<li><button type="button" class="row" onclick={() => void share()}><Icon name="share-2" /><span class="row-label">{t('details.shareFile')}</span></button></li>{/if}
       <li><button type="button" class="row" id="sendBookShelf" onclick={() => void bookShelf()}><Icon name="library" /><span class="row-label">{t('details.toBookShelf')}</span></button></li>
-      {#if nookling && doc.finishedAt}<li><button type="button" class="row" id="sendNookling" onclick={() => void toNookling()}><Icon name="heart" /><span class="row-label">{t('details.toNookling')}</span></button></li>{/if}
-      {#if doc.format === 'epub' && !doc.offloaded}<li><button type="button" class="row" id="openColophon" onclick={() => void colophon()}><Icon name="file-code" /><span class="row-label">{t('details.toColophon')}</span></button></li>{/if}
       {#if !doc.offloaded}<li><button type="button" class="row" id="offloadDoc" onclick={() => void offload()}><Icon name="hard-drive" /><span class="row-label">{t('details.offload')}</span></button></li>{/if}
     </ul>
     <button type="button" class="row row-danger" id="removeDoc" onclick={() => void remove()}><Icon name="trash-2" /><span class="row-label">{t('action.remove')}</span></button>

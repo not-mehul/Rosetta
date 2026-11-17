@@ -1,4 +1,4 @@
-// Hand-off with the sibling apps, through the URL schemes all five share
+// Hand-off with the sibling apps, through the URL schemes they all share
 // (style.md §14.1, src/platform/links.ts), so it works the same on Android
 // and iOS:
 //
@@ -6,18 +6,12 @@
 //     logs a book in BookShelf (sent when a book is finished, or on request).
 //   bookshelf://quote?text=…&title=…&author=…&where=…&note=…
 //     offers a highlight to BookShelf as a quote; it asks before saving it.
-//   nookling://read?title=…&author=…
-//     tells Nookling a book was finished; it asks before shelving it.
 //   rosetta://open?id=<fingerprint>   or   rosetta://open?title=…
 //     opens a document in Rosetta, from BookShelf or anywhere else.
-//
-// Colophon reads EPUB files, so a book goes to it through the system's
-// "open with" sheet, which lists Colophon once it is installed.
 
 import { AppLauncher } from '@capacitor/app-launcher';
 import { buildLink, parseLink } from './links';
 import { isNative } from './native';
-import { shareFile } from './output';
 
 export interface BookShelfEntry {
   title: string;
@@ -78,34 +72,14 @@ async function open(url: string): Promise<boolean> {
   }
 }
 
-export function nooklingReadUrl(e: Pick<BookShelfEntry, 'title' | 'author'>): string {
-  return buildLink('nookling', 'read', { title: e.title, author: e.author }, 'rosetta');
-}
-
 /** Whether a sibling app is installed to take a link. Always false on the web. */
-export async function canOpen(app: 'bookshelf' | 'nookling'): Promise<boolean> {
+export async function canOpen(app: 'bookshelf'): Promise<boolean> {
   if (!isNative) return false;
   try {
     return (await AppLauncher.canOpenUrl({ url: `${app}://` })).value;
   } catch {
     return false;
   }
-}
-
-/** Tells Nookling a book was finished. False when Nookling isn't there to hear it. */
-export async function sendToNookling(e: Pick<BookShelfEntry, 'title' | 'author'>): Promise<boolean> {
-  if (!(await canOpen('nookling'))) return false;
-  try {
-    await AppLauncher.openUrl({ url: nooklingReadUrl(e) });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Offers an EPUB to Colophon (and any other app that opens EPUBs). */
-export async function openInColophon(name: string, bytes: Uint8Array, title: string): Promise<void> {
-  await shareFile({ name, data: bytes, mime: 'application/epub+zip' }, title);
 }
 
 export type RosettaLink = { kind: 'open'; id?: string; title?: string } | null;

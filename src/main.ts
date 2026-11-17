@@ -7,7 +7,7 @@ import { dismissOverlay } from 'dusk-dawn';
 import { mount } from 'svelte';
 import App from './App.svelte';
 import { setLocale, t } from './i18n/index.svelte';
-import { canOpen, parseRosettaUrl, sendToBookShelf, sendToNookling } from './platform/handoff';
+import { canOpen, parseRosettaUrl, sendToBookShelf } from './platform/handoff';
 import { loadCustomFont } from './platform/fonts';
 import { listenForFiles } from './platform/intake';
 import { listenForSharedText, sharedDocument } from './platform/shared';
@@ -44,19 +44,10 @@ async function start(): Promise<void> {
   const last = settings.value.lastDocId;
   if (last && library.get(last)) await reader.open(last);
 
-  // A finished book can go to BookShelf, and then to Nookling, each offered once.
+  // A finished book can go to BookShelf, offered once.
   reader.onFinished = async (doc) => {
-    if (!isNative) return;
-    const [bookShelf, nookling] = await Promise.all([canOpen('bookshelf'), canOpen('nookling')]);
-    let offered = false;
-    const offerNookling = () => {
-      if (offered || !nookling) return;
-      offered = true;
-      ui.notify(t('handoff.finishedNookling'), 'success', { label: t('handoff.tellNookling'), run: () => void sendToNookling(doc) });
-    };
-    if (bookShelf) {
-      ui.notify(t('handoff.finished'), 'success', { label: t('handoff.logIt'), run: () => void sendToBookShelf(doc).then(offerNookling), dismissed: offerNookling });
-    } else offerNookling();
+    if (!isNative || !(await canOpen('bookshelf'))) return;
+    ui.notify(t('handoff.finished'), 'success', { label: t('handoff.logIt'), run: () => void sendToBookShelf(doc) });
   };
 
   // The Continue Reading widget follows the library: the book last opened and not finished.

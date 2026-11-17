@@ -129,9 +129,6 @@ const en = {
   'details.shareFile': 'Share file',
   'details.toBookShelf': 'Send to BookShelf',
   'details.noBookShelf': 'BookShelf isn’t installed here, so the title went to the share sheet instead.',
-  'details.toNookling': 'Send to Nookling',
-  'details.noNookling': 'Nookling isn’t installed here.',
-  'details.toColophon': 'Open in Colophon',
   'details.offload': 'Offload',
   'details.offloadTitle': 'Offload the file?',
   'details.offloadMessage': 'Frees {size}. The place, marks and details stay; add the same file again to read it.',
@@ -189,8 +186,6 @@ const en = {
 
   'handoff.finished': 'Finished. Log it in BookShelf?',
   'handoff.logIt': 'Log it',
-  'handoff.finishedNookling': 'Tell Nookling you finished it?',
-  'handoff.tellNookling': 'Tell Nookling',
   'widget.continue': 'Continue reading',
   'widget.percent': '{percent}% read',
   'widget.empty': 'Nothing to continue. Open a book in Rosetta.',

@@ -1,6 +1,6 @@
 <script lang="ts">
   // Home: the editorial header (style.md §8.8) and the four top-level
-  // sections as icon tabs under it (§8.5.1), as in Ledger, Mise and Colophon:
+  // sections as icon tabs under it (§8.5.1), as in Ledger and Mise:
   // Library, Notes, Stats and Catalogs. Settings is a sheet from the header.
   import { IconTabs, ThemeToggle, konami, play, secretTaps } from 'dusk-dawn';
   import type { Snippet } from 'svelte';

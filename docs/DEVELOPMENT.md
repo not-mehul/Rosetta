@@ -26,7 +26,7 @@ npm run assets       # redraw the app icon and splash screens
 ```
 
 - **Open with.** Android registers VIEW intents for EPUB, PDF, Word, OpenDocument, RTF, FB2, CBZ, Markdown, text and HTML; iOS declares the matching document types. Both arrive through `appUrlOpen` (`src/platform/intake.ts`), and the format is read from the bytes, since Android content URIs rarely carry a file name.
-- **Links.** Both platforms register the `rosetta` URL scheme and are allowed to ask whether each sibling app (`waymark`, `bookshelf`, `ledger`, `colophon`, `mise`, `nookling`) is installed (`<queries>` on Android, `LSApplicationQueriesSchemes` on iOS).
+- **Links.** Both platforms register the `rosetta` URL scheme and are allowed to ask whether each sibling app (`waymark`, `bookshelf`, `ledger`, `mise`) is installed (`<queries>` on Android, `LSApplicationQueriesSchemes` on iOS).
 - **Volume keys** turn pages through a small Android plugin (`VolumeKeysPlugin.java`); iOS has no public API for them.
 - **System.** The back button closes the topmost sheet, then the reader, then the app. The system bars follow the theme, and the splash is Dusk's `--bg-grad-mid` behind the amber R.
 - Notes and backups are saved to `Documents/Rosetta/` (the app's folder in Files on iOS), or downloaded in a browser. The sync file and the weekly backups go to a folder chosen with the system picker (`src/platform/folders.ts`, `FolderPlugin.java`, `FoldersPlugin.swift`), falling back to `Documents/Rosetta/` until one is chosen.
@@ -56,4 +56,4 @@ npm run icons        # regenerate src/components/ui/icons.ts after using a new L
 
 ## Updates
 
-Renovate (`renovate.json`) groups dev tooling and the Capacitor plugins. pdf.js is pinned and every bump is reviewed by hand after `npm run test:pdf`, because its worker and assets are copied into the build. CI runs one quick job on every pull request and push to main: `npm run check` (tokens, lint, colours, typecheck, unit tests), then the web build and the Playwright end-to-end tests against it. The slow checks (the Android debug and release builds with an emulator launch test, and the iOS simulator build) run when started by hand from the Actions tab with *Run workflow*.
+Dependencies are updated by hand. pdf.js is pinned and every bump is reviewed by hand after `npm run test:pdf`, because its worker and assets are copied into the build. CI runs one quick job on every pull request and push to main: `npm run check` (tokens, lint, colours, typecheck, unit tests), then the web build and the Playwright end-to-end tests against it. The slow checks (the Android debug and release builds with an emulator launch test, and the iOS simulator build) run when started by hand from the Actions tab with *Run workflow*.

@@ -67,6 +67,6 @@ The **Notes** tab gathers every highlight from every document; filter it by colo
 
 Settings can bring over a Kindle's highlights from its _My Clippings.txt_, onto the same words in the same books here. It can also back up every place, bookmark, highlight and collection to a file, save the whole library with its files, and restore either later. **Sync with a folder** keeps places and notes the same on your devices through a folder you share between them: choose one in iCloud Drive, or one Syncthing or Dropbox keeps in step. Weekly backups can go to a folder of your choice too. **Storage** shows what each file takes and can offload one, keeping its place and notes until you add it again.
 
-A finished book can be logged in **BookShelf**, with your note on it, and a highlight can go there as a quote from the highlight itself. An EPUB can be opened in **Colophon**.
+A finished book can be logged in **BookShelf**, with your note on it, and a highlight can go there as a quote from the highlight itself.
 
 _Private._ Nothing you add leaves this device unless you open a catalog, sync to a folder you chose, or share it.

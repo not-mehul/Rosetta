@@ -191,3 +191,156 @@
 {#if image}
   <ImageViewer src={image.src} alt={image.alt} onclose={() => (image = null)} />
 {/if}
+
+<style>
+  /* ─── The reader ─────────────────────────────────────────────── */
+
+  .reader-bar,
+  .reader-foot {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: var(--modal-bg);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition:
+      transform var(--spring-spatial-default-dur) var(--spring-spatial-default),
+      opacity var(--spring-effects-default-dur) var(--spring-effects-default);
+  }
+  .reader-bar {
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: calc(var(--space-2) + var(--inset-top)) calc(var(--space-2) + var(--inset-right)) var(--space-2) calc(var(--space-2) + var(--inset-left));
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .reader-bar-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .reader-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+    color: var(--text-heading);
+  }
+  /* The book, as an eyebrow over the chapter (style.md §5.2). */
+  .reader-book {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .reader-bar-text {
+    container: bar / inline-size;
+  }
+  /* At large text the chapter needs the room: the eyebrow goes. */
+  @container bar (max-width: 7rem) {
+    .reader-book {
+      display: none;
+    }
+  }
+  .reader-bar-actions {
+    display: flex;
+    align-items: center;
+  }
+  .reader-foot {
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: 0 calc(var(--space-5) + var(--inset-right)) calc(var(--space-2) + var(--inset-bottom)) calc(var(--space-5) + var(--inset-left));
+    border-top: 1px solid var(--border-soft);
+  }
+  .reader-foot-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: 24px;
+    align-items: center;
+  }
+  .reader-foot-row > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  /* A chapter boundary: a cut in the line, in the page colour. */
+  .meter-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--sheet-bg);
+    pointer-events: none;
+  }
+  /* The footer's figure changes on a tap; the target is taller than it looks (§14). */
+  .foot-figure {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin: -10px 0;
+    padding: 0;
+    text-align: left;
+    color: var(--text-dim);
+    border-radius: var(--radius);
+    transition: color var(--dur-hover);
+  }
+  .foot-figure:hover {
+    color: var(--text-heading);
+  }
+  /* The way back after a jump: one quiet amber action. */
+  .return-to {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 55%;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 44px;
+    margin: -10px 0;
+    padding: 0 var(--space-2);
+    color: var(--accent-amber);
+    border-radius: var(--radius);
+    animation: fade-in var(--spring-effects-default-dur) var(--spring-effects-default);
+    transition: background-color var(--dur-hover);
+  }
+  .return-to:hover {
+    background: var(--hover-bg);
+  }
+  .return-to :global(svg) {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+  .chrome-hidden .reader-bar {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .chrome-hidden .reader-foot {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .reader-page {
+    position: relative;
+    z-index: 1;
+    padding: calc(5rem + var(--inset-top)) calc(1.25rem + var(--inset-right)) calc(6rem + var(--inset-bottom)) calc(1.25rem + var(--inset-left));
+  }
+  .night-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    pointer-events: none;
+    background: linear-gradient(rgba(var(--accent-amber-rgb), calc(var(--warmth) * 0.22)), rgba(var(--accent-amber-rgb), calc(var(--warmth) * 0.22))), rgba(var(--shadow-rgb), var(--dim));
+    mix-blend-mode: multiply;
+  }
+</style>

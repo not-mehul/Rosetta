@@ -224,3 +224,86 @@
 {:else if library.adding}
   <p class="adding t-data-small" role="status">{t('library.adding', { count: library.adding })}</p>
 {/if}
+
+<style>
+  .resume-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .shelf-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-1);
+    margin-bottom: var(--space-5);
+  }
+  .shelf-row > .shelf-tabs {
+    flex: 1;
+    min-width: 0;
+  }
+  .library-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+  }
+  /* Arranged other than by default (a collection, a tag, another order): a dot says so; the collection bar names it. */
+  .arrange-button {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .arrange-button.is-set::after {
+    content: '';
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--corner-full);
+    background: var(--accent-amber);
+  }
+  .collection-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+    min-width: 0;
+  }
+  .collection-name {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* The cover grid: two columns on a phone, up to five at the content width. */
+  .doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
+    gap: var(--space-5) var(--space-4);
+  }
+  .doc-grid > li {
+    min-width: 0;
+  }
+  .list-count {
+    margin-top: var(--space-4);
+    text-align: center;
+  }
+  .adding-batch {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 12rem;
+  }
+
+  /* ─── Depth: the library's figures, the calendar, most read ─── */
+
+  .resume-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+  }
+  .resume-thumb {
+    width: 44px;
+  }
+</style>

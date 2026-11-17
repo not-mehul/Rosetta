@@ -26,7 +26,33 @@
     if (!host || !page) return;
     const shadow = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
     // The page's own markup and CSS, already sanitised and scoped to .fx (styles.ts).
-    shadow.innerHTML = `<style>:host{display:block}.fx{position:relative;overflow:hidden;width:${page.width}px;height:${page.height}px;background:var(--sheet-bg)}.fx img{max-width:none}${page.css}</style><div class="fx">${page.html}</div>`;
+    shadow.innerHTML = `<style>:host{display:block}.fx{position:relative;overflow:hidden;width:${page.width}px;height:${page.height}px;background:var(--sheet-bg)}.fx img{max-width:none}${page.css}
+  /* ─── Fixed layout and pictures ─────────────────────────────── */
+
+  .fixed-pager {
+    touch-action: pan-y;
+  }
+  .fixed-page {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: center;
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-strength)));
+  }
+  .fixed-page.slide-next {
+    animation: page-in-next var(--spring-spatial-calm-dur) var(--spring-spatial-calm);
+  }
+  .fixed-page.slide-prev {
+    animation: page-in-prev var(--spring-spatial-calm-dur) var(--spring-spatial-calm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fixed-page.slide-next,
+    .fixed-page.slide-prev {
+      animation: none;
+    }
+  }
+</style><div class="fx">${page.html}</div>`;
     reader.report({ section: index, offset: 0 }, content.sections[index]?.text.length ?? 0);
     if (reader.jump) reader.jump = null;
   });

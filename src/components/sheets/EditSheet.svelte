@@ -118,3 +118,23 @@
     {/snippet}
   </Sheet>
 {/if}
+
+<style>
+  .form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+  .edit-cover {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+    margin-bottom: var(--space-4);
+  }
+  .field-pair {
+    display: grid;
+    grid-template-columns: 1fr 7rem;
+    gap: var(--space-3);
+  }
+</style>

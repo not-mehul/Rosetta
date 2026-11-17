@@ -187,3 +187,97 @@
     <button type="button" class="row row-danger" id="removeDoc" onclick={() => void remove()}><Icon name="trash-2" /><span class="row-label">{t('action.remove')}</span></button>
   </Sheet>
 {/if}
+
+<style>
+  /* Details */
+  /* Book details (DetailsSheet): cover and how far through, the one button to
+     read it, the facts, then the rest as rows and Remove alone at the end. */
+  .details-head {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+  .details-name {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .details-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 1.375rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--text-heading);
+    overflow-wrap: anywhere;
+  }
+  .details-author {
+    margin: 0;
+    color: var(--text-body);
+  }
+  .details-state {
+    margin: var(--space-1) 0 0;
+  }
+  .details-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+    gap: var(--space-2);
+  }
+  .details-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+    gap: var(--space-3) var(--space-4);
+    margin: 0;
+  }
+  .details-facts dd {
+    margin: 2px 0 0;
+    color: var(--text-heading);
+  }
+  .details-file {
+    margin-top: calc(-1 * var(--space-2));
+  }
+  .row-label {
+    flex: 1;
+    min-width: 0;
+  }
+  .row-danger,
+  .row-danger > :global(svg:first-child) {
+    color: var(--danger);
+  }
+  .details-tags {
+    margin-top: var(--space-3);
+  }
+
+  /* The next volume, from a document's details: a row that opens it. */
+  .details-next {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px var(--space-3);
+    width: 100%;
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) var(--space-2);
+    text-align: left;
+    border-top: 1px solid var(--border-faint);
+    border-bottom: 1px solid var(--border-faint);
+    transition: background-color var(--dur-hover);
+  }
+  .details-next:hover {
+    background: var(--hover-bg);
+  }
+  .details-next > :global(svg) {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    width: 18px;
+    height: 18px;
+    color: var(--text-faint);
+  }
+  .details-next-title {
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    color: var(--text-heading);
+  }
+</style>

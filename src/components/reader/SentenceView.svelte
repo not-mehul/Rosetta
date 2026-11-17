@@ -205,3 +205,87 @@
     >
   </div>
 </div>
+
+<style>
+  /* ─── Flow mode: a sentence at a time (SentenceView) ─────────── */
+
+  .flow-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-6);
+    padding: calc(4.5rem + var(--inset-top)) calc(1.5rem + var(--inset-right)) calc(4.5rem + var(--inset-bottom)) calc(1.5rem + var(--inset-left));
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .flow-column {
+    width: 100%;
+    max-width: min(var(--read-measure), 100%);
+    min-height: 9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flow-sentence {
+    --read-size: 1.125rem;
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: calc(var(--read-size) * 1.3);
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    color: var(--text-body);
+    text-align: center;
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+    animation: flow-in var(--spring-effects-default-dur) var(--spring-effects-default) both;
+  }
+  /* The count and its line sit still at the bottom centre, whatever the
+     sentence's length, so the sentence alone moves; they rise above the
+     footer while the bars are showing. */
+  .flow-under {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--space-4) + var(--inset-bottom));
+    transform: translateX(-50%);
+    transition: bottom var(--spring-spatial-calm-dur) var(--spring-spatial-calm);
+    width: min(16rem, calc(100% - 3rem));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+  }
+  .flow-progress {
+    width: 100%;
+    height: 2px;
+    border-radius: var(--corner-full);
+    background: var(--chart-track);
+    overflow: hidden;
+  }
+  .flow-progress > span {
+    display: block;
+    height: 100%;
+    background: var(--accent-amber);
+    transform-origin: left;
+    transition: transform var(--spring-spatial-default-dur) var(--spring-spatial-default);
+  }
+  .flow-hint {
+    margin: 0;
+  }
+  .flow-count {
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    border-radius: var(--corner-full);
+    color: var(--text-faint);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .flow-count:hover {
+    background: var(--hover-bg);
+  }
+</style>

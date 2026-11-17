@@ -40,3 +40,23 @@
   </button>
   <button type="button" class="btn-icon doc-more" aria-label={t('library.detailsFor', { title: doc.title })} onclick={details}><Icon name="ellipsis-vertical" /></button>
 </div>
+
+<style>
+  .tile-meter {
+    height: 3px;
+  }
+  .tile-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+  }
+  .tile-title {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--text-heading);
+  }
+</style>

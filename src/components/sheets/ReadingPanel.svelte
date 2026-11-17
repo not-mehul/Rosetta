@@ -8,7 +8,7 @@
   //   Light  theme, true black, dim and warmth
   //   Listen read aloud, its voice and speed
   import { onMount } from 'svelte';
-  import { Select, TabRail } from 'dusk-dawn';
+  import { Select, Switch, TabRail } from 'dusk-dawn';
   import { t } from '../../i18n/index.svelte';
   import { pickFiles } from '../../lib/pick';
   import { volumeKeysAvailable } from '../../platform/device';
@@ -20,7 +20,6 @@
   import { ui, type PanelTab } from '../../state/ui.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
-  import Switch from '../ui/Switch.svelte';
   import ThemeControls from './ThemeControls.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
@@ -253,3 +252,50 @@
     {/if}
   </div>
 </Sheet>
+
+<style>
+  .panel-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0 calc(-1 * var(--space-5)) var(--space-4);
+    padding: 0 var(--space-5);
+    background: var(--sheet-bg);
+  }
+  .listen-start {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  /* Type controls */
+  .size-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .slider-value {
+    min-width: 2ch;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    color: var(--text-heading);
+    text-align: right;
+  }
+  .face-serif {
+    font-family: var(--font-serif);
+  }
+
+  /* The reader's own font, named in itself, with a way to change or remove it. */
+  .font-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .font-name {
+    flex: 1;
+    font-family: 'Rosetta Custom', var(--font-serif);
+    font-size: 1.125rem;
+    color: var(--text-heading);
+  }
+</style>

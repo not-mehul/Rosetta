@@ -196,4 +196,15 @@
     justify-content: center;
     padding: var(--space-5) 0;
   }
+
+  .catalog-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .catalog-entry {
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-faint);
+  }
 </style>

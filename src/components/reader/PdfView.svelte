@@ -302,3 +302,42 @@
 {#if selection}
   <SelectionBar rect={selection.rect} text={selection.text} onhighlight={(c, n) => void highlight(c, n)} />
 {/if}
+
+<style>
+  /* PDF */
+  .pdf-column {
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+    overflow-x: auto;
+  }
+  .pdf-pages {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0 auto;
+  }
+  .pdf-page {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    background: var(--panel-bg-faint);
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-strength)));
+    --scale-round-x: 1px;
+    --scale-round-y: 1px;
+  }
+  .pdf-page canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .pdf-column {
+    touch-action: pan-x pan-y;
+  }
+  .pdf-pages {
+    transition: none;
+  }
+</style>

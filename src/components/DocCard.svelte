@@ -46,3 +46,40 @@
   </button>
   <button type="button" class="btn-icon doc-more" aria-label={t('library.detailsFor', { title: doc.title })} onclick={details}><Icon name="ellipsis-vertical" /></button>
 </div>
+
+<style>
+  .doc-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .doc-title {
+    font-size: 1.125rem;
+  }
+  .doc-meter {
+    margin-top: var(--space-2);
+    max-width: 10rem;
+  }
+  .doc-figure {
+    /* The status sits on the same line as the menu beside it, centred on the card. */
+    flex-shrink: 0;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  /* When a card was last read or finished, under its figure. */
+  .doc-figure {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .doc-when {
+    white-space: nowrap;
+  }
+</style>

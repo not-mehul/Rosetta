@@ -189,7 +189,7 @@
     {:else if reader.content.kind === 'flow' && reader.content.fixed}
       <FixedView content={reader.content} />
     {:else if flowing && reader.content.kind === 'flow'}
-      <SentenceView content={reader.content} />
+      <SentenceView content={reader.content} onedit={(id) => (editing = id)} />
     {:else if reader.content.kind === 'flow'}
       <FlowView content={reader.content} onedit={(id) => (editing = id)} onnote={(html, go) => (note = { html, go })} onimage={(src, alt) => (image = { src, alt })} />
     {:else}

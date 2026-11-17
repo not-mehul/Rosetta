@@ -209,7 +209,6 @@ const de: Messages = {
   'mark.note': 'Notiz',
   'mark.notePlaceholder': 'Was es dir zu denken gab',
   'mark.share': 'Als Karte teilen',
-  'mark.toBookShelf': 'BookShelf',
 
   'note.title': 'Fußnote',
   'note.goTo': 'Zur Fußnote',
@@ -373,7 +372,7 @@ const de: Messages = {
   'time.underMinute': 'Unter einer Minute',
 
   'type.flow': 'Fluss',
-  'type.flowHint': 'Ein Satz nach dem anderen, Buchstabe für Buchstabe. Tippen zeigt den Rest, erneutes Tippen den nächsten. Der linke Rand geht zurück.',
+  'type.flowHint': 'Ein Satz nach dem anderen, Buchstabe für Buchstabe. Tippe für den Rest, noch einmal für den nächsten, halte gedrückt zum Markieren. Tippe an den linken Rand, um zurückzugehen.',
   'type.flowSpeed': 'Flusstempo',
   'type.slower': 'Langsamer',
   'type.faster': 'Schneller',
@@ -395,7 +394,7 @@ const de: Messages = {
   'flow.empty': 'Auf dieser Seite gibt es nichts zu lesen.',
   'flow.bars': 'Leisten ein- oder ausblenden',
   'flow.count': '{at} von {count}',
-  'flow.hint': 'Tippen zeigt den ganzen Satz, erneut tippen den nächsten.',
+  'flow.hint': 'Tippe, um alles zu zeigen, und noch einmal für den nächsten Satz. Halte einen Satz gedrückt, um ihn zu markieren.',
   'reader.openingLabel': 'Wird geöffnet',
   'type.oled': 'Echtes Schwarz (OLED)',
   'type.oledHint': 'Im Abend-Thema ist jeder Hintergrund reines Schwarz: tiefer bei Nacht und schonender für den Akku eines OLED-Bildschirms.',
@@ -561,6 +560,7 @@ const de: Messages = {
   'notes.show': 'Zeigen',
   'notes.bookmark': 'Lesezeichen',
   'notes.bookmarkCount': { one: '{count} Lesezeichen', other: '{count} Lesezeichen' },
+  'mark.remove': 'Markierung entfernen',
 };
 
 export default de;

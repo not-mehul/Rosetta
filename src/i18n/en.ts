@@ -210,7 +210,6 @@ const en = {
   'mark.note': 'Note',
   'mark.notePlaceholder': 'What it made you think',
   'mark.share': 'Share as a card',
-  'mark.toBookShelf': 'BookShelf',
 
   'note.title': 'Note',
   'note.goTo': 'Go to the note',
@@ -374,7 +373,7 @@ const en = {
   'time.underMinute': 'Under a minute',
 
   'type.flow': 'Flow',
-  'type.flowHint': 'One sentence at a time, letter by letter. Tap to show the rest, tap again for the next. Tap the left edge to go back.',
+  'type.flowHint': 'One sentence at a time, letter by letter. Tap to show the rest, tap again for the next, hold to highlight. Tap the left edge to go back.',
   'type.flowSpeed': 'Flow speed',
   'type.slower': 'Slower',
   'type.faster': 'Faster',
@@ -396,7 +395,7 @@ const en = {
   'flow.empty': 'Nothing to read on this page.',
   'flow.bars': 'Show or hide the reader’s bars',
   'flow.count': '{at} of {count}',
-  'flow.hint': 'Tap to show it all, then again for the next sentence.',
+  'flow.hint': 'Tap to show it all, then again for the next sentence. Hold a sentence to highlight it.',
   'reader.openingLabel': 'Opening',
   'type.oled': 'True black (OLED)',
   'type.oledHint': 'In Dusk, every background is pure black: deeper at night, and lighter on an OLED screen’s battery.',
@@ -562,6 +561,7 @@ const en = {
   'notes.show': 'Show',
   'notes.bookmark': 'Bookmark',
   'notes.bookmarkCount': { one: '{count} bookmark', other: '{count} bookmarks' },
+  'mark.remove': 'Remove highlight',
 };
 
 export default en;

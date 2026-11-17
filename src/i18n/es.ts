@@ -209,7 +209,6 @@ const es: Messages = {
   'mark.note': 'Nota',
   'mark.notePlaceholder': 'Lo que te hizo pensar',
   'mark.share': 'Compartir como tarjeta',
-  'mark.toBookShelf': 'BookShelf',
 
   'note.title': 'Nota',
   'note.goTo': 'Ir a la nota',
@@ -376,7 +375,7 @@ const es: Messages = {
   'time.underMinute': 'Menos de un minuto',
 
   'type.flow': 'Flujo',
-  'type.flowHint': 'Una frase cada vez, letra a letra. Toca para verla entera y otra vez para la siguiente. Toca el borde izquierdo para volver.',
+  'type.flowHint': 'Una frase cada vez, letra a letra. Toca para ver el resto, otra vez para la siguiente, mantén pulsado para subrayar. Toca el borde izquierdo para volver.',
   'type.flowSpeed': 'Velocidad del flujo',
   'type.slower': 'Más lento',
   'type.faster': 'Más rápido',
@@ -398,7 +397,7 @@ const es: Messages = {
   'flow.empty': 'No hay nada que leer en esta página.',
   'flow.bars': 'Mostrar u ocultar las barras',
   'flow.count': '{at} de {count}',
-  'flow.hint': 'Toca para verla entera y otra vez para la siguiente frase.',
+  'flow.hint': 'Toca para verla entera y otra vez para la siguiente frase. Mantén pulsada una frase para subrayarla.',
   'reader.openingLabel': 'Abriendo',
   'type.oled': 'Negro puro (OLED)',
   'type.oledHint': 'En Ocaso, todos los fondos son negro puro: más profundo de noche y más ligero para la batería de una pantalla OLED.',
@@ -564,6 +563,7 @@ const es: Messages = {
   'notes.show': 'Mostrar',
   'notes.bookmark': 'Marcador',
   'notes.bookmarkCount': { one: '{count} marcador', other: '{count} marcadores' },
+  'mark.remove': 'Quitar subrayado',
 };
 
 export default es;

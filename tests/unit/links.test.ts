@@ -21,7 +21,7 @@ describe('links between the apps', () => {
   });
 
   it('treats a bare scheme as open', () => {
-    expect(parseLink('colophon://')).toMatchObject({ app: 'colophon', action: 'open', params: {}, source: null });
+    expect(parseLink('mise://')).toMatchObject({ app: 'mise', action: 'open', params: {}, source: null });
     expect(parseLink('ROSETTA://Open/?id=abc')).toMatchObject({ app: 'rosetta', action: 'open', params: { id: 'abc' } });
   });
 

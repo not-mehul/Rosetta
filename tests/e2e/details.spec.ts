@@ -16,9 +16,8 @@ test('details lead with the cover and one button, then rows, with Remove alone a
   await expect(sheet.locator('.details-title')).toHaveText('Garden Diary');
   await expect(sheet.locator('.btn-primary')).toHaveCount(1);
   await expect(sheet.locator('#readDoc')).toHaveText('Read');
-  // Named for where it goes (style.md §14.1); Colophon only takes EPUBs.
+  // Named for where it goes (style.md §14.1).
   await expect(sheet.locator('#sendBookShelf')).toHaveText('Send to BookShelf');
-  await expect(sheet.locator('#openColophon')).toHaveCount(0);
   // Remove comes after every other row.
   const rows = await sheet.locator('.row').evaluateAll((els) => els.map((e) => e.id || e.textContent?.trim()));
   expect(rows.at(-1)).toBe('removeDoc');

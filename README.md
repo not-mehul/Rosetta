@@ -56,7 +56,7 @@ EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading dire
 - **Sync with a folder.** Places and marks merge with a file in a folder you choose with the system picker, in iCloud Drive or a folder Syncthing or Dropbox shares.
 - **Storage.** See what each file takes, and offload a file while keeping its place and notes.
 - **Four languages.** English, Spanish, French and German.
-- **The other apps.** Log a finished book in BookShelf, tell Nookling you finished it, open an EPUB in Colophon, and let other apps open a document with `rosetta://open?title=…`.
+- **The other apps.** Log a finished book in BookShelf, and let other apps open a document with `rosetta://open?title=…`.
 
 ## Private by design
 
@@ -70,17 +70,15 @@ Your documents never leave the device. Rosetta goes online only when you browse 
 
 ## The Dusk & Dawn apps
 
-Rosetta is one of seven apps by Mehul Sen that share one design system, [Editorial Dusk & Dawn](https://github.com/not-mehul/dusk-dawn), and a common link scheme, so they can hand things to each other.
+Rosetta is one of five apps by Mehul Sen that share one design system, [Editorial Dusk & Dawn](https://github.com/not-mehul/dusk-dawn), and a common link scheme, so they can hand things to each other.
 
 | App | What it is for |
 |---|---|
 | [Waymark](https://github.com/not-mehul/Waymark) | Your whole trip, offline: flights, stays, plans and costs on one timeline |
 | [BookShelf](https://github.com/not-mehul/BookShelf) | Books, films, shows and the lines worth keeping |
 | [Ledger](https://github.com/not-mehul/Ledger) | A record of cities, scored on what matters to you |
-| [Colophon](https://github.com/not-mehul/Colophon) | Inspect, fix and rebind EPUB editions |
 | [Rosetta](https://github.com/not-mehul/Rosetta) | A quiet library and reader for books, papers and notes |
 | [Mise](https://github.com/not-mehul/Mise) | Recipes from anywhere, cooked one step at a time |
-| [Nookling](https://github.com/not-mehul/Nookling) | A small round friend to feed, play with and put to bed |
 
 ## Build from source
 

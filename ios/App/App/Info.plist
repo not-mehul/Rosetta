@@ -256,9 +256,7 @@
 		<string>waymark</string>
 		<string>bookshelf</string>
 		<string>ledger</string>
-		<string>colophon</string>
 		<string>mise</string>
-		<string>nookling</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Rosetta reaches a catalog on your home network, such as a Calibre server, when you open it.</string>

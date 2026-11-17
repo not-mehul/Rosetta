@@ -128,9 +128,6 @@ const es: Messages = {
   'details.shareFile': 'Compartir fichero',
   'details.toBookShelf': 'Enviar a BookShelf',
   'details.noBookShelf': 'BookShelf no está instalado aquí, así que el título fue a la hoja de compartir.',
-  'details.toNookling': 'Enviar a Nookling',
-  'details.noNookling': 'Nookling no está instalado aquí.',
-  'details.toColophon': 'Abrir en Colophon',
   'details.offload': 'Liberar',
   'details.offloadTitle': '¿Liberar el fichero?',
   'details.offloadMessage': 'Libera {size}. El lugar, las marcas y los detalles se quedan; añade el mismo fichero para volver a leerlo.',
@@ -188,8 +185,6 @@ const es: Messages = {
 
   'handoff.finished': 'Terminado. ¿Registrarlo en BookShelf?',
   'handoff.logIt': 'Registrar',
-  'handoff.finishedNookling': '¿Contarle a Nookling que lo terminaste?',
-  'handoff.tellNookling': 'Contárselo',
   'widget.continue': 'Seguir leyendo',
   'widget.percent': '{percent}% leído',
   'widget.empty': 'Nada que continuar. Abre un libro en Rosetta.',

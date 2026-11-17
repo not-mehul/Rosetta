@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Reading stats: today against the day's goal, the streak, the week, a
+  // The Stats section: today against the day's goal, the streak, the week, a
   // calendar of the last few months, what took the most time, and what's
   // finished. Figures only, in the stat-tile and bar-list patterns
   // (style.md §8.15).
@@ -9,9 +9,7 @@
   import { DAILY_GOALS } from '../../state/settings';
   import { settings } from '../../state/settings.svelte';
   import { calendarWeeks, dayKey, stats, type Summary } from '../../state/stats.svelte';
-  import Sheet from '../ui/Sheet.svelte';
 
-  let { onclose }: { onclose: () => void } = $props();
   let summary = $state.raw<Summary | null>(null);
   $effect(() => {
     void stats.summary().then((s) => (summary = s));
@@ -63,7 +61,7 @@
   const goalShare = $derived(summary && goal ? Math.min(1, summary.todayMs / (goal * 60_000)) : 0);
 </script>
 
-<Sheet title={t('stats.title')} {onclose}>
+<div class="section-view" id="view-stats" role="tabpanel" aria-labelledby="tab-stats">
   {#if summary}
     <div class="stat-grid">
       <div class="stat-tile"><span class="stat-value" id="statToday">{duration(summary.todayMs)}</span><span class="t-field-label">{t('stats.today')}</span></div>
@@ -173,4 +171,4 @@
     {/if}
     <p class="t-hint"><em>{t('stats.noteTerm')}</em> {t('stats.note')}</p>
   {/if}
-</Sheet>
+</div>

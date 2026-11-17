@@ -186,7 +186,7 @@ test('all notes gather in one place and search', async ({ page }) => {
   await page.getByRole('button', { name: 'Highlight in Amber' }).click();
   await page.click('#closeReader');
 
-  await page.click('#openNotes');
+  await page.click('#tab-notes');
   await expect(page.locator('#allNotes li')).toHaveCount(1);
   await expect(page.locator('#allNotes')).toContainText('Paragraph 1');
   await page.fill('#notesSearch', 'albatross');
@@ -354,12 +354,12 @@ test('the way back after a jump, the footer’s figures and chapter ticks', asyn
 test('a daily goal and the reading calendar', async ({ page }) => {
   await add(page, ['lantern.epub']);
   await page.click('#closeReader');
-  await page.click('#openStats');
+  await page.click('#tab-stats');
   await expect(page.locator('.calendar-day[data-day]')).toHaveCount(18 * 7);
   await expect(page.locator('.calendar-day.is-today')).toHaveCount(1);
   await page.click('[data-goal="30"]');
   await expect(page.locator('#goalStatus')).toHaveText('0 of 30 min today');
-  await expectAccessible(page, '.sheet');
+  await expectAccessible(page, '#view-stats');
 
   // Arrow keys move between days; a picked day shows its time.
   await page.locator('.calendar-day.is-today').focus();
@@ -367,7 +367,7 @@ test('a daily goal and the reading calendar', async ({ page }) => {
   await expect(page.locator('.calendar-day[aria-pressed=true]')).not.toHaveClass(/is-today/);
   await expect(page.locator('#calendarPicked')).toContainText('0 min');
 
-  // The goal shows beside Continue reading.
+  // The goal shows beside Continue reading. Escape, like Android's Back, goes home to the library.
   await page.keyboard.press('Escape');
   await expect(page.locator('#goalToday')).toHaveText('0 of 30 min today');
 });

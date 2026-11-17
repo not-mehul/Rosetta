@@ -114,7 +114,7 @@
     <h3 class="t-section-label">{t('settings.library')}</h3>
     <div class="btn-grid">
       <button type="button" class="btn btn-secondary" id="openStorage" onclick={() => ui.open('storage')}>{t('storage.title')}</button>
-      <button type="button" class="btn btn-secondary" onclick={() => ui.open('catalog')}>{t('catalog.title')}</button>
+      <button type="button" class="btn btn-secondary" onclick={() => ui.go('catalogs')}>{t('catalog.title')}</button>
     </div>
   </section>
 

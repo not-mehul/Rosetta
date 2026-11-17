@@ -77,9 +77,10 @@ ol {
 
 /* ─── Header and the edition bar ─────────────────────────────── */
 
-/* On a phone the header stacks (style.md §15): the tools make one row across
-   the top, spread edge to edge, and the eyebrow, title and tagline get the
-   full width under it. From 640px they sit side by side. */
+/* On a phone the header stacks (style.md §15): Settings and the theme toggle
+   make one row across the top, at its right (§8.8), and the eyebrow, title
+   and tagline get the full width under it. From 640px they sit side by side.
+   The section tabs sit under the header (§8.5.1). */
 .site-header {
   display: flex;
   flex-direction: column;
@@ -101,7 +102,7 @@ ol {
   order: -1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-2);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border-soft);
@@ -119,6 +120,21 @@ ol {
     padding-bottom: 0;
     border-bottom: 0;
   }
+}
+
+.app-tabs {
+  margin-bottom: var(--space-6);
+}
+.section-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.catalog-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 /* ─── Sections ───────────────────────────────────────────────── */

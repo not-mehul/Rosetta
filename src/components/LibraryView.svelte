@@ -1,10 +1,9 @@
 <script lang="ts">
-  // The library: what you are reading, everything, and what you've finished,
-  // on every collection or one; search by title, author, series or #tag.
+  // The Library section: what you are reading, everything, and what you've
+  // finished, on every collection or one; search by title, author, series or #tag.
   import { ACCEPT, isReadableName } from '../formats/sniff';
   import { t } from '../i18n/index.svelte';
   import { canPickFolder, pickFiles, pickFolder } from '../lib/pick';
-  import { shown, toggledTheme } from '../platform/theme.svelte';
   import { addFiles } from '../state/intake';
   import { isFinished, isReading, library, shelve, upNext } from '../state/library.svelte';
   import { stats } from '../state/stats.svelte';
@@ -18,7 +17,7 @@
   import BlobImg from './ui/BlobImg.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
-  import { TabRail, ThemeToggle, konami, play, secretTaps } from 'dusk-dawn';
+  import { TabRail } from 'dusk-dawn';
   import { hatch } from '../lib/delight';
 
   let filter = $state('');
@@ -90,27 +89,7 @@
     finished: t('library.emptyFinished'),
   });
 
-  // Easter eggs (style.md §11.3). The Konami code reads the title's word off
-  // the stone in Greek and Latin before coming home; seven taps on the title
-  // dust the shelves; and the filter knows the answer.
-  let script = $state<string | null>(null);
-  let scriptWord = $state<HTMLElement>();
-  $effect(() =>
-    konami(() => {
-      const words = ['ἀνάγνωσις', 'lectio', null];
-      words.forEach((word, i) =>
-        setTimeout(() => {
-          script = word;
-          play(scriptWord, 'flip');
-        }, i * 900),
-      );
-      hatch('konami', t('egg.konami'));
-    }),
-  );
-  function dust() {
-    for (const [i, el] of [...document.querySelectorAll('.doc-list > li')].slice(0, 24).entries()) setTimeout(() => play(el, 'jelly'), 50 * i);
-    hatch('title', t('egg.title'));
-  }
+  // The filter knows the answer (style.md §11.3; the title's eggs live in Home.svelte).
   let answered = false;
   $effect(() => {
     const asked = filter.trim() === '42';
@@ -119,24 +98,7 @@
   });
 </script>
 
-<div class="container">
-  <header class="site-header">
-    <div class="site-title">
-      <p class="eyebrow">{t('library.eyebrow')}</p>
-      <h1 class="t-page-title" use:secretTaps={{ count: 7, onunlock: dust }}>{t('library.titleBefore')}<em class="script-word" bind:this={scriptWord}>{script ?? t('library.titleEm')}</em>{t('library.titleAfter')}</h1>
-      <p class="t-tagline">{t('library.tagline')}</p>
-    </div>
-    <div class="header-tools">
-      <ThemeToggle dawn={!shown.dark} label={t('library.dawn')} ontoggle={() => void settings.update({ theme: toggledTheme() })} />
-      {#if library.items.length}
-        <button type="button" class="btn-icon" id="openNotes" aria-label={t('notes.title')} onclick={() => ui.open('notes')}><Icon name="highlighter" /></button>
-        <button type="button" class="btn-icon" id="openStats" aria-label={t('stats.title')} onclick={() => ui.open('stats')}><Icon name="chart-column" /></button>
-      {/if}
-      <button type="button" class="btn-icon" id="openCatalogs" aria-label={t('catalog.title')} onclick={() => ui.open('catalog')}><Icon name="globe" /></button>
-      <button type="button" class="btn-icon" id="openSettings" aria-label={t('settings.title')} onclick={() => ui.open('settings')}><Icon name="settings" /></button>
-    </div>
-  </header>
-
+<div class="library-view" id="view-library" role="tabpanel" aria-labelledby="tab-library">
   <main>
     {#if library.loaded && !library.items.length}
       <EmptyState icon="library" title={t('library.emptyTitle')} text={t('library.emptyText')}>

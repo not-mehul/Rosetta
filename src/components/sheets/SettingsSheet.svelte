@@ -17,6 +17,8 @@
   import { folderStatus } from '../../platform/folders';
   import { isNative } from '../../platform/native';
   import { saveFile } from '../../platform/output';
+  import { applyTheme } from '../../platform/theme.svelte';
+  import { reveal } from '../../lib/reveal';
   import { remindersAvailable } from '../../platform/reminders';
   import { addFolder } from '../../state/intake';
   import { library } from '../../state/library.svelte';
@@ -37,6 +39,14 @@
   let { onclose }: { onclose: () => void } = $props();
   const v = $derived(settings.value);
   const set = (patch: Partial<Settings>) => void settings.update(patch);
+  /** The new theme spreads as a circle from the option tapped. */
+  function themeTo(theme: Settings['theme'], from: Element): Promise<void> {
+    if (v.theme === theme) return Promise.resolve();
+    return reveal(from, async () => {
+      await settings.update({ theme });
+      applyTheme(theme, settings.value.oled);
+    });
+  }
   const today = () => new Date().toISOString().slice(0, 10);
   const year = new Date().getFullYear();
   let busy = $state(false);
@@ -50,6 +60,12 @@
     { id: 'about', label: 'settings.about', icon: aboutIcon },
   ];
   const tabs = $derived(TABS.map((x) => ({ id: x.id, label: t(x.label), icon: x.icon, domId: `settings-${x.id}`, controls: 'settingsBody' })));
+  /** Which side the tab's controls slide in from: the side its tab is on. */
+  let from = $state(0);
+  function choose(id: SettingsTab) {
+    from = Math.sign(TABS.findIndex((x) => x.id === id) - TABS.findIndex((x) => x.id === ui.settingsTab));
+    ui.settingsTab = id;
+  }
 
   // ─── General ───────────────────────────────────────────────
 
@@ -178,10 +194,11 @@
 
 <Sheet title={t('settings.title')} {onclose} tall>
   <div class="sheet-tabs sheet-icon-tabs">
-    <IconTabs {tabs} value={ui.settingsTab} label={t('settings.title')} onselect={(id) => (ui.settingsTab = id)} />
+    <IconTabs {tabs} value={ui.settingsTab} label={t('settings.title')} onselect={choose} />
   </div>
 
-  <div class="settings-body" id="settingsBody" role="tabpanel" aria-labelledby="settings-{ui.settingsTab}">
+  {#key ui.settingsTab}
+  <div class="settings-body axis-stage axis-small" style:--from={from} id="settingsBody" role="tabpanel" aria-labelledby="settings-{ui.settingsTab}">
     {#if ui.settingsTab === 'general'}
       <section class="settings-group">
         <h3 class="t-section-label">{t('settings.appearance')}</h3>
@@ -189,7 +206,7 @@
           <span class="t-field-label" id="themeLabel">{t('type.theme')}</span>
           <div class="segmented" role="radiogroup" aria-labelledby="themeLabel">
             {#each [['system', t('type.system')], ['dark', t('type.dusk')], ['light', t('type.dawn')]] as const as [id, label] (id)}
-              <button type="button" role="radio" data-theme-option={id} aria-checked={v.theme === id} onclick={() => set({ theme: id })}>{label}</button>
+              <button type="button" role="radio" data-theme-option={id} aria-checked={v.theme === id} onclick={(e) => void themeTo(id, e.currentTarget)}>{label}</button>
             {/each}
           </div>
         </div>
@@ -376,6 +393,7 @@
       </section>
     {/if}
   </div>
+  {/key}
 </Sheet>
 
 <style>

@@ -561,6 +561,9 @@ const en = {
   'notes.bookmark': 'Bookmark',
   'notes.bookmarkCount': { one: '{count} bookmark', other: '{count} bookmarks' },
   'mark.remove': 'Remove highlight',
+  'stats.emptyTitle': 'Nothing read yet',
+  'stats.emptyText': 'Open a book, and the minutes, days and streaks gather here.',
+  'stats.streakMet': { one: '{count} day of reading in a row.', other: '{count} days of reading in a row.' },
 };
 
 export default en;

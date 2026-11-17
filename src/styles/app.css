@@ -28,11 +28,26 @@ ol {
 }
 
 .container {
+  /* The home screen's width: the system's 880px, wider on a large tablet
+     held sideways so the shelf takes six covers a row, not four. */
+  --home-width: var(--max-width);
   position: relative;
   z-index: 1;
-  max-width: var(--max-width);
+  max-width: var(--home-width);
   margin: 0 auto;
   padding: 1.5rem 1.25rem 6rem;
+}
+@media (min-width: 1100px) {
+  .container {
+    --home-width: 1080px;
+  }
+}
+/* On a wide screen the add button keeps to the shelf's right edge, rather
+   than sitting alone at the window's. */
+@media (min-width: 960px) {
+  .container .fab {
+    right: max(calc(var(--space-5) + var(--inset-right)), calc((100vw - var(--home-width)) / 2 + var(--space-5)));
+  }
 }
 @media (min-width: 640px) {
   .container {
@@ -896,14 +911,21 @@ mark.hl-flash {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+/* Each colour as a gradient of itself, so a new highlight can be swept on
+   (motion.css, marker-sweep) by growing its background from the left. */
 .hl-amber {
-  background: rgba(var(--accent-amber-rgb), 0.3);
+  --hl: rgba(var(--accent-amber-rgb), 0.3);
 }
 .hl-sage {
-  background: rgba(var(--accent-sage-rgb), 0.35);
+  --hl: rgba(var(--accent-sage-rgb), 0.35);
 }
 .hl-bright {
-  background: rgba(var(--accent-bright-rgb), 0.32);
+  --hl: rgba(var(--accent-bright-rgb), 0.32);
+}
+.hl-amber,
+.hl-sage,
+.hl-bright {
+  background: linear-gradient(var(--hl), var(--hl)) no-repeat left center / 100% 100%;
 }
 mark.hl.has-note {
   text-decoration: underline dotted rgba(var(--accent-amber-rgb), 0.9);
@@ -932,6 +954,11 @@ mark.hl-flash {
 }
 :root[data-theme='dark'] .tone-theme .pdf-page canvas {
   filter: invert(0.92) hue-rotate(180deg);
+}
+/* Dusk with the paper kept: the page a little less than white, so it doesn't
+   glare in the dark. Brightness only, so a figure's colours stay its own. */
+:root[data-theme='dark'] .pdf-pages:not(.tone-theme) .pdf-page canvas {
+  filter: brightness(0.84);
 }
 
 /* pdf.js text layer (from pdf_viewer.css), for selection and highlights */
@@ -1193,6 +1220,25 @@ mark.tts {
   text-align: center;
   justify-content: center;
 }
+/* Options that no longer fit one line (large text, src/lib/fit.ts) sit two to
+   a row, each its own rounded segment, rather than three and a straggler. */
+.segmented.is-wrapped {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-radius: var(--corner-lg);
+}
+.segmented.is-wrapped button {
+  min-width: 0;
+  white-space: normal;
+  border-radius: var(--corner-md);
+  padding: var(--space-2) var(--space-2);
+}
+.segmented.is-wrapped button:last-child:nth-child(odd) {
+  grid-column: span 2;
+}
+.segmented.is-wrapped button[aria-checked='true'] {
+  border-radius: var(--corner-full);
+}
 /* A touch leaves no hover wash behind on the segment it lifted from. */
 @media (hover: none) {
   .segmented button:hover:not([aria-checked='true']) {
@@ -1264,6 +1310,29 @@ mark.tts {
 .sheet-icon-tabs .icon-tab-word {
   transition: opacity var(--spring-effects-fast-dur) var(--spring-effects-fast);
 }
-.sheet-icon-tabs [role='tab']:not([aria-selected='true']) .icon-tab-word {
+.sheet-icon-tabs [role='tab']:not([aria-selected='true']) .icon-tab-word,
+.sheet-icon-tabs.is-tight .icon-tab-word {
   opacity: 0;
+}
+/* Too little room for the open tab's word whole (large text, src/lib/fit.ts):
+   the icons alone, without a row's height kept for words. */
+.sheet-icon-tabs.is-tight .icon-tab-word {
+  height: 0;
+}
+
+/* Titles break into lines of even length, so none ends on a word alone
+   ("No highlights or bookmarks / yet"); running text avoids a lone last word. */
+.empty-title,
+.sheet-title,
+.modal-title,
+.t-page-title,
+.t-card-title,
+.details-title {
+  text-wrap: balance;
+}
+.empty-text,
+.t-hint,
+.field-hint,
+.t-tagline {
+  text-wrap: pretty;
 }

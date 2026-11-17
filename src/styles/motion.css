@@ -11,6 +11,14 @@
    stroke "draws" from 0 to its whole length (pathLength is 1, set by
    iconMotion.ts). Under reduced motion none of this exists. */
 
+/* An inline SVG hides what it draws outside its 24 by 24 box, which cut off
+   every part that grows or slides near the edge (Contents' dots, the knobs,
+   the rays, the bin's lid). An icon may draw past its box; at rest nothing is
+   there, so this changes only the motion. */
+svg[data-icon] {
+  overflow: visible;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   svg[data-icon] > * {
     transform-box: fill-box;
@@ -764,5 +772,97 @@
       transform: none;
       opacity: 1;
     }
+  }
+}
+
+/* ─── Moments ─────────────────────────────────────────────────
+
+   The rest of Rosetta's motion, each with a job (style.md §11.2): showing
+   where something went, answering a touch, or marking something worth
+   marking. All of it springs, none of it loops, and none of it makes anyone
+   wait. Under reduced motion none of it plays. */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Tabs, shared axis: Home's sections and a sheet's tabs slide in a little
+     from the side their tab is on (--from is -1, 0 or 1), fading up as they
+     come. Home moves its panel only, so the add button keeps its place. */
+  .axis-stage:not(.axis-small) > [role='tabpanel'],
+  .axis-stage.axis-small {
+    animation:
+      axis-in var(--spring-spatial-calm-dur) var(--spring-spatial-calm) both,
+      fade-up var(--spring-effects-default-dur) var(--spring-effects-default) both;
+  }
+  .axis-stage:not(.axis-small) > [role='tabpanel'] {
+    --axis-distance: 28px;
+  }
+  .axis-stage.axis-small {
+    --axis-distance: 16px;
+  }
+
+  /* A new highlight is swept across its words, as with a marker, line by
+     line (each line of the mark is its own box). */
+  mark.hl.is-fresh,
+  .flow-marked.is-fresh {
+    animation: marker-sweep 520ms var(--ease-settle) both;
+  }
+
+  /* A document just added pops onto the shelf. */
+  .doc-card.is-new {
+    animation: shelf-pop var(--spring-spatial-slow-dur) var(--spring-spatial-slow) both;
+  }
+
+  /* Continue reading: the bar fills to where you are as the library opens. */
+  .resume .meter-fill {
+    animation: fill-in var(--spring-spatial-slow-dur) var(--spring-spatial-slow) 160ms both;
+  }
+
+  /* Flow: holding a sentence washes it amber as the hold goes on, so you can
+     feel it's about to take; let go early and it fades back. */
+  .flow-hold {
+    border-radius: var(--corner-xs);
+    transition: background-color 120ms var(--ease-standard);
+  }
+  .flow-hold.is-holding {
+    background-color: rgba(var(--accent-amber-rgb), 0.2);
+    transition: background-color 500ms linear;
+  }
+}
+
+/* The theme changing: the new one spreads from the tap in a circle, through
+   the View Transitions API where there is one (src/lib/reveal.ts), and the
+   page underneath stays put. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@keyframes axis-in {
+  from {
+    transform: translateX(calc(var(--from, 0) * var(--axis-distance, 20px)));
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes marker-sweep {
+  from {
+    background-size: 0% 100%;
+  }
+  to {
+    background-size: 100% 100%;
+  }
+}
+@keyframes shelf-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86) translateY(10px);
+  }
+}
+@keyframes fill-in {
+  from {
+    transform: scaleX(0);
   }
 }

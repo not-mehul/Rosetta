@@ -6,6 +6,7 @@
   import { coverFrom, pickFiles } from '../../lib/pick';
   import { library, parseTags } from '../../state/library.svelte';
   import { ui } from '../../state/ui.svelte';
+  import Cover from '../ui/Cover.svelte';
   import BlobImg from '../ui/BlobImg.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
@@ -65,7 +66,8 @@
     >
       <div class="edit-cover">
         <div class="details-cover" aria-hidden="true">
-          {#if cover}<BlobImg bytes={cover} alt="" />{:else}<Icon name="book-open" />{/if}
+          <!-- The cover as the library will draw it, changing with the title and author as they're typed. -->
+          {#if doc}<Cover doc={{ id: doc.id, format: doc.format, cover, title: title.trim() || doc.title, author: author.trim() }} />{:else if cover}<BlobImg bytes={cover} alt="" />{/if}
         </div>
         <div class="btn-row btn-row-start">
           <button type="button" class="btn btn-secondary" id="pickCover" onclick={() => void pickCover()}><Icon name="image" />{t('edit.pickCover')}</button>

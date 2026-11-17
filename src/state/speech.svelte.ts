@@ -6,6 +6,7 @@
 // sleep timer stops it after a while or at the end of the chapter.
 
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
+import { shown } from '../reader/notes';
 import { sentencesWithJoins, type Sentence } from '../reader/sentences';
 import { reader } from './reader.svelte';
 import { settings } from './settings.svelte';
@@ -116,9 +117,12 @@ class SpeechState {
   private async fill(section: number, from: number): Promise<void> {
     const c = reader.content;
     if (!c) return;
-    const text = c.kind === 'flow' ? (c.sections[section]?.text ?? '') : await c.pageText(section);
+    // Note numbers aren't read out ("a log of every ship", not "a log one of").
+    const text = c.kind === 'flow' ? (c.sections[section] ? reader.readableText(c.sections[section]!) : '') : await c.pageText(section);
     const joins = c.kind === 'flow' ? (c.sections[section]?.joins ?? []) : [];
-    this.queue = sentencesWithJoins(text, joins, from, c.kind === 'flow' ? c.lang : undefined).map((s) => ({ ...s, section }));
+    this.queue = sentencesWithJoins(text, joins, from, c.kind === 'flow' ? c.lang : undefined)
+      .map((s) => ({ ...s, text: shown(s.text), section }))
+      .filter((s) => s.text.trim());
   }
 
   async play(): Promise<void> {

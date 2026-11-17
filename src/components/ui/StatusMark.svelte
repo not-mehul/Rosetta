@@ -45,10 +45,13 @@
     stroke-width: 2.25;
     color: var(--modal-bg);
   }
+  /* Not opened: a dashed ring in the heading colour, so it reads on a dark
+     cover in Dusk and a pale one in Dawn alike. */
   .is-unread {
-    color: var(--text-dim);
+    color: var(--text-heading);
     background: var(--modal-bg);
     border-style: dashed;
+    border-width: 1.75px;
   }
   .is-reading {
     color: var(--accent-amber);

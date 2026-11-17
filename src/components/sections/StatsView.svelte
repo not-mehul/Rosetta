@@ -3,11 +3,15 @@
   // The Stats section: today against the day's goal, the streak, the week, a
   // calendar of the last few months, what took the most time, and what's
   // finished. Figures only, in the stat-tile and bar-list patterns
-  // (style.md §8.15).
+  // (style.md §8.15). Before any reading, an empty state instead of a wall
+  // of zeros. The figures arrive once each time Stats opens: the tiles rise in
+  // turn, the bars and meters grow from nothing, the calendar fills in week
+  // by week (none of it under reduced motion).
   import { locale, t } from '../../i18n/index.svelte';
   import { duration } from '../../lib/format';
   import { library } from '../../state/library.svelte';
-    import { settings } from '../../state/settings.svelte';
+  import { settings } from '../../state/settings.svelte';
+  import EmptyState from '../ui/EmptyState.svelte';
   import { ui } from '../../state/ui.svelte';
   import { calendarWeeks, dayKey, stats, type Summary } from '../../state/stats.svelte';
 
@@ -71,8 +75,20 @@
 </script>
 
 <div class="section-view" id="view-stats" role="tabpanel" aria-labelledby="tab-stats">
-  {#if summary}
-    <div class="stat-grid">
+  {#if summary && !summary.totalMs && !finishedThisYear.length && !settings.value.dailyGoal && !settings.value.yearlyGoal}
+    <EmptyState icon="chart-column" title={t('stats.emptyTitle')} text={t('stats.emptyText')}>
+      <button
+        type="button"
+        class="btn btn-muted"
+        id="setGoals"
+        onclick={() => {
+          ui.settingsTab = 'general';
+          ui.open('settings');
+        }}>{t('stats.setGoals')}</button
+      >
+    </EmptyState>
+  {:else if summary}
+    <div class="stat-grid dd-stagger">
       <div class="stat-tile"><span class="stat-value" id="statToday">{duration(summary.todayMs)}</span><span class="t-field-label">{t('stats.today')}</span></div>
       <div class="stat-tile"><span class="stat-value" id="statStreak">{t('stats.days', { count: summary.streak })}</span><span class="t-field-label">{t('stats.streak')}</span></div>
       <div class="stat-tile"><span class="stat-value" id="statLongest">{t('stats.days', { count: Math.max(summary.longest, summary.streak) })}</span><span class="t-field-label">{t('stats.longest')}</span></div>
@@ -125,8 +141,8 @@
     <section class="settings-group">
       <h3 class="t-section-label">{t('stats.week')}</h3>
       <ul class="bar-list">
-        {#each summary.week as d (d.day)}
-          <li>
+        {#each summary.week as d, i (d.day)}
+          <li style:--i={i}>
             <span class="bar-label">{weekday(d.day)}</span>
             <span class="bar-track"><span class="bar-fill" style:transform="scaleX({d.ms / most})"></span></span>
             <span class="t-data-small tabular bar-value">{duration(d.ms)}</span>
@@ -143,8 +159,9 @@
         </div>
         <!-- One button per day, with arrow keys between them; only the picked day is a tab stop. -->
         <div class="calendar-days" role="group" aria-labelledby="calendarLabel" aria-describedby="calendarSummary">
-          {#each days as d (d.day)}
+          {#each days as d, i (d.day)}
             <button
+              style:--w={Math.floor(i / 7)}
               type="button"
               class="calendar-day level-{d.level}"
               class:is-today={d.day === dayKey()}
@@ -175,8 +192,8 @@
       <section class="settings-group">
         <h3 class="t-section-label">{t('stats.mostRead')}</h3>
         <ul class="most-list">
-          {#each mostRead as r (r.docId)}
-            <li>
+          {#each mostRead as r, i (r.docId)}
+            <li style:--i={i}>
               <span class="most-title ellipsis">{r.doc!.title}</span>
               <span class="t-data-small tabular bar-value">{duration(r.ms)}</span>
               <span class="bar-track"><span class="bar-fill" style:transform="scaleX({r.ms / mostMs})"></span></span>
@@ -203,6 +220,31 @@
 
 <style>
   /* ─── Stats (style.md §8.15) ────────────────────────────────── */
+
+  /* Arriving: bars and meters grow from nothing on a spring, one after
+     another; the calendar's weeks fade in from the oldest. */
+  @media (prefers-reduced-motion: no-preference) {
+    .bar-fill,
+    .meter-fill {
+      animation: grow-in var(--spring-spatial-default-dur) var(--spring-spatial-default) both;
+      animation-delay: calc(120ms + var(--i, 0) * 45ms);
+    }
+    .calendar-days .calendar-day {
+      animation: week-in var(--spring-effects-default-dur) var(--spring-effects-default) both;
+      animation-delay: calc(var(--w, 0) * 22ms);
+    }
+  }
+  @keyframes grow-in {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes week-in {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  }
 
   .stat-grid {
     /* In the sheet's flex column, overflow: hidden would let it shrink to its border. */

@@ -560,6 +560,9 @@ const fr: Messages = {
   'notes.bookmark': 'Signet',
   'notes.bookmarkCount': { one: '{count} signet', other: '{count} signets' },
   'mark.remove': 'Supprimer le surlignage',
+  'stats.emptyTitle': 'Rien de lu pour l’instant',
+  'stats.emptyText': 'Ouvrez un livre : les minutes, les jours et les séries s’assembleront ici.',
+  'stats.streakMet': { one: '{count} jour de lecture d’affilée.', other: '{count} jours de lecture d’affilée.' },
 };
 
 export default fr;

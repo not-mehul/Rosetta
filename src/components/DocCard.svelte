@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { t } from '../i18n/index.svelte';
   // A document in the library's list (style.md §7.2): cover, serif title, the
   // author, the series when there is one, and one trailing figure.
@@ -14,6 +15,8 @@
   let { doc }: { doc: StoredDoc } = $props();
 
   const status = $derived(docStatus(doc));
+  /** Added a moment ago: it pops onto the shelf (motion.css, shelf-pop). */
+  const isNew = untrack(() => Date.now() - doc.addedAt < 4000);
 
   function details() {
     ui.detailsId = doc.id;
@@ -21,7 +24,7 @@
   }
 </script>
 
-<div class="doc-card dd-lift">
+<div class="doc-card dd-lift" class:is-new={isNew}>
   <button type="button" class="doc-open dd-pressable" data-doc={doc.id} onclick={() => void reader.open(doc.id)}>
     <span class="doc-thumb" aria-hidden="true">
       <Cover {doc} small />

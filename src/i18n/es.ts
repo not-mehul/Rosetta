@@ -563,6 +563,9 @@ const es: Messages = {
   'notes.bookmark': 'Marcador',
   'notes.bookmarkCount': { one: '{count} marcador', other: '{count} marcadores' },
   'mark.remove': 'Quitar subrayado',
+  'stats.emptyTitle': 'Aún no hay lectura',
+  'stats.emptyText': 'Abre un libro y aquí se irán reuniendo los minutos, los días y las rachas.',
+  'stats.streakMet': { one: '{count} día seguido de lectura.', other: '{count} días seguidos de lectura.' },
 };
 
 export default es;

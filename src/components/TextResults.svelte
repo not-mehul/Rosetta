@@ -61,7 +61,7 @@
                   <button type="button" class="row text-hit" onclick={() => go(book, hit)}>
                     <span class="row-main">
                       {#if hit.where}<span class="t-data-small faint ellipsis">{hit.where}</span>{/if}
-                      <span class="row-sub">{hit.before}<mark class="text-match">{hit.match}</mark>{hit.after}</span>
+                      <span class="row-sub text-excerpt">{hit.before}<mark class="text-match">{hit.match}</mark>{hit.after}</span>
                     </span>
                   </button>
                 </li>
@@ -77,6 +77,9 @@
 {/if}
 
 <style>
+  .text-excerpt {
+    white-space: pre-line;
+  }
   .text-results {
     display: flex;
     flex-direction: column;

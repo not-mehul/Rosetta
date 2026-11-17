@@ -47,6 +47,12 @@
   );
   /** The tab last used, if it applies here; otherwise the first. */
   const tab = $derived(tabs.some((x) => x.id === ui.panelTab) ? ui.panelTab : tabs[0]!.id);
+  /** Which side a tab's controls slide in from: the side its tab is on. */
+  let from = $state(0);
+  function choose(id: PanelTab) {
+    from = Math.sign(tabs.findIndex((x) => x.id === id) - tabs.findIndex((x) => x.id === tab));
+    ui.panelTab = id;
+  }
 
   /** Starts (or stops) reading aloud; starting closes the panel so the page and its controls show. */
   function readAloud() {
@@ -77,10 +83,11 @@
 
 <Sheet title={t('reader.type')} {onclose} peek tall actions={revert}>
   <div class="panel-tabs sheet-icon-tabs">
-    <IconTabs {tabs} value={tab} label={t('panel.label')} onselect={(id) => (ui.panelTab = id)} />
+    <IconTabs {tabs} value={tab} label={t('panel.label')} onselect={choose} />
   </div>
 
-  <div class="panel-body" id="panelBody" role="tabpanel" aria-labelledby="panel-{tab}">
+  {#key tab}
+  <div class="panel-body axis-stage axis-small" style:--from={from} id="panelBody" role="tabpanel" aria-labelledby="panel-{tab}">
     {#if tab === 'text'}
       <TextControls {v} {set} {bookStyles} />
     {:else if tab === 'page'}
@@ -135,6 +142,7 @@
       <p class="t-hint own-hint">{t('panel.ownHint')}</p>
     {/if}
   </div>
+  {/key}
 </Sheet>
 
 <style>

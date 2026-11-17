@@ -505,6 +505,9 @@ const ru: Messages = {
   'notes.bookmark': 'Закладка',
   'notes.bookmarkCount': { one: '{count} закладка', few: '{count} закладки', many: '{count} закладок', other: '{count} закладки' },
   'mark.remove': 'Удалить выделение',
+  'stats.emptyTitle': 'Пока ничего не прочитано',
+  'stats.emptyText': 'Откройте книгу — здесь соберутся минуты, дни и серии.',
+  'stats.streakMet': { one: '{count} день чтения подряд.', few: '{count} дня чтения подряд.', many: '{count} дней чтения подряд.', other: '{count} дня чтения подряд.' },
 };
 
 export default ru;

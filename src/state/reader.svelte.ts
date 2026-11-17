@@ -6,12 +6,13 @@ import { openDocument, PasswordError, readInfo, type OpenDoc } from '../formats'
 import { titleFromName } from '../formats/sniff';
 import { FORMAT_LABEL } from '../formats/types';
 import { blockBreaks } from '../reader/cadence';
+import { hideNoteRefs, shown } from '../reader/notes';
 import { excerpt } from '../reader/offsets';
 import { chapterAt, chapterTicks, endInView, FAR_CHARS, flowProgress, globalOffset, pageProgress, percent, START, type Location } from '../reader/progress';
 import { queryPattern, searchJoined, MAX_HITS, type Hit } from '../reader/search';
 import { t } from '../i18n/index.svelte';
 import { duration } from '../lib/format';
-import { tick } from '../platform/device';
+import { successTick, tick } from '../platform/device';
 import { db, type HighlightColour, type Mark, type StoredDoc } from './db';
 import { library } from './library.svelte';
 import { stats } from './stats.svelte';
@@ -569,6 +570,7 @@ class ReaderState {
     if (justFinished) {
       const finished = { ...doc, ...patch };
       cheer(null, { count: 80 });
+      if (settings.value.haptics) successTick();
       void this.finishedMessage(doc.id).then((message) => this.notifyFinished(doc, finished, message));
     }
   }
@@ -584,6 +586,7 @@ class ReaderState {
     const finished = { ...doc, ...patch };
     this.doc = finished;
     cheer(null, { count: 80 });
+    if (settings.value.haptics) successTick();
     void this.finishedMessage(doc.id).then((message) => this.notifyFinished(doc, finished, message));
   }
 
@@ -645,13 +648,14 @@ class ReaderState {
       const s = this.content.sections[section]!;
       let breaks = this.breaks.get(s);
       if (!breaks) this.breaks.set(s, (breaks = blockBreaks(s.html)));
+      const words = this.readableText(s);
       let at = offset;
       text = '';
       for (const k of breaks.filter((k) => k > offset && k < offset + 160)) {
-        text += s.text.slice(at, k) + ' ';
+        text += words.slice(at, k) + ' ';
         at = k;
       }
-      text += s.text.slice(at, offset + 160);
+      text = shown(text + words.slice(at, offset + 160));
     } else text = await this.content.pageText(section).then((t) => t.slice(0, 160));
     await this.putMark({
       id: crypto.randomUUID(),
@@ -673,6 +677,12 @@ class ReaderState {
   async highlight(section: number, start: number, end: number, text: string, colour: HighlightColour, note = ''): Promise<Mark | null> {
     const doc = this.doc;
     if (!doc) return null;
+    // The words as read, without the note numbers among them ("a log¹ of" → "a log of").
+    const c = this.content;
+    if (c?.kind === 'flow' && c.sections[section]) {
+      const words = shown(this.readableText(c.sections[section]!).slice(start, end)).replace(/\s+/g, ' ').trim();
+      if (words) text = words;
+    }
     // A highlight laid over existing ones absorbs them.
     const overlapping = this.highlights.filter((h) => h.section === section && h.start < end && h.end > start);
     const mark: Mark = {
@@ -689,11 +699,17 @@ class ReaderState {
       createdAt: Date.now(),
     };
     if (overlapping.length) {
-      const sectionText = this.content?.kind === 'flow' ? this.content.sections[section]?.text : await (this.content as Extract<OpenDoc, { kind: 'pdf' }>).pageText(section);
-      if (sectionText) mark.text = sectionText.slice(mark.start, mark.end).replace(/\s+/g, ' ').trim();
+      const flowSection = this.content?.kind === 'flow' ? this.content.sections[section] : undefined;
+      const sectionText = flowSection ? this.readableText(flowSection) : await (this.content as Extract<OpenDoc, { kind: 'pdf' }>).pageText(section);
+      if (sectionText) mark.text = shown(sectionText.slice(mark.start, mark.end)).replace(/\s+/g, ' ').trim();
       this.marks = this.marks.filter((m) => !overlapping.includes(m));
       await this.deleteMarks(overlapping.map((m) => m.id));
     }
+    // Swept on as it's painted (motion.css), then an ordinary highlight.
+    this.freshMark = mark.id;
+    setTimeout(() => {
+      if (this.freshMark === mark.id) this.freshMark = null;
+    }, 1500);
     await this.putMark(mark);
     if (settings.value.haptics) tick();
     return mark;
@@ -747,6 +763,16 @@ class ReaderState {
 
   /** Where paragraphs meet in each section, so excerpts don't run them together. */
   private breaks = new WeakMap<object, number[]>();
+  /** The highlight made a moment ago, swept onto the page as it's painted. */
+  freshMark = $state<string | null>(null);
+  private readable = new WeakMap<object, string>();
+
+  /** A section's text with its note numbers blanked (hideNoteRefs): the same offsets, read without "log¹". */
+  readableText(section: { html: string; text: string }): string {
+    let text = this.readable.get(section);
+    if (text === undefined) this.readable.set(section, (text = hideNoteRefs(section.html, section.text)));
+    return text;
+  }
 
   async excerptFor(hit: Hit) {
     const c = this.content;
@@ -755,7 +781,7 @@ class ReaderState {
     const section = c.sections[hit.section]!;
     let breaks = this.breaks.get(section);
     if (!breaks) this.breaks.set(section, (breaks = blockBreaks(section.html)));
-    return excerpt(section.text, hit.start, hit.end, 48, breaks);
+    return excerpt(this.readableText(section), hit.start, hit.end, 48, breaks);
   }
 
   get formatLabel(): string {

@@ -18,7 +18,8 @@
   const v = $derived(reader.view);
   const index = $derived(reader.section);
   const section = $derived(content.sections[index]!);
-  const list = $derived<Beat[]>(beats(section.html, section.text, content.lang, section.joins));
+  // Read without their note numbers (reader.readableText), at the same offsets.
+  const list = $derived<Beat[]>(beats(section.html, reader.readableText(section), content.lang, section.joins));
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /** The sentence on screen. */
@@ -137,6 +138,8 @@
   let holdFrom: { x: number; y: number } | null = null;
   /** A hold just happened: the click that ends it is not a tap. */
   let held = false;
+  /** A press on the sentence that may become a hold: it washes amber as it goes (motion.css). */
+  let holding = $state(false);
 
   function onpointerdown(e: PointerEvent) {
     // A touch that is held often ends without a click: the next press starts afresh.
@@ -144,11 +147,16 @@
     if (e.button !== 0 || (e.target as Element).closest('button, a') || !(e.target as Element).closest('.flow-sentence')) return;
     holdFrom = { x: e.clientX, y: e.clientY };
     clearTimeout(holdTimer);
+    // Only once it's clearly a press, not the start of a quick tap.
     holdTimer = setTimeout(() => {
-      holdFrom = null;
-      held = true;
-      void hold();
-    }, HOLD_MS);
+      holding = true;
+      holdTimer = setTimeout(() => {
+        holdFrom = null;
+        holding = false;
+        held = true;
+        void hold();
+      }, HOLD_MS - 120);
+    }, 120);
   }
   function onpointermove(e: PointerEvent) {
     if (holdFrom && Math.hypot(e.clientX - holdFrom.x, e.clientY - holdFrom.y) > 10) endHold();
@@ -156,6 +164,7 @@
   function endHold() {
     clearTimeout(holdTimer);
     holdFrom = null;
+    holding = false;
   }
 
   /** Highlights the sentence on screen, then opens it for a colour or a note; one already highlighted just opens. */
@@ -239,8 +248,8 @@
           style:--read-size="{v.fontSize / 16}rem"
           aria-live="polite"
         >
-          <span class="visually-hidden">{beat.text}</span><span aria-hidden="true" data-mark={marked?.id}
-            >{#each pieces as p, i (i)}{@const wash = marked && !p.veiled ? `flow-marked hl-${marked.colour}${marked.note ? ' has-note' : ''}` : ''}{#if p.anchor}<b class="anchor {wash}" class:veiled={p.veiled}>{p.text}</b>{:else}<span class={wash} class:veiled={p.veiled}>{p.text}</span>{/if}{/each}</span
+          <span class="visually-hidden">{beat.text}</span><span aria-hidden="true" class="flow-hold" class:is-holding={holding} data-mark={marked?.id}
+            >{#each pieces as p, i (i)}{@const wash = marked && !p.veiled ? `flow-marked hl-${marked.colour}${marked.note ? ' has-note' : ''}${marked.id === reader.freshMark ? ' is-fresh' : ''}` : ''}{#if p.anchor}<b class="anchor {wash}" class:veiled={p.veiled}>{p.text}</b>{:else}<span class={wash} class:veiled={p.veiled}>{p.text}</span>{/if}{/each}</span
           >
         </p>
       {/key}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   // A document in the cover grid (style.md §7.2, a card with a picture): the
   // cover (its own, or one drawn for it), a thin meter while it's being read,
   // the serif title, the author, and one figure. The menu opens its details.
@@ -14,6 +15,8 @@
 
   let { doc }: { doc: StoredDoc } = $props();
   const status = $derived(docStatus(doc));
+  /** Added a moment ago: it pops onto the shelf (motion.css, shelf-pop). */
+  const isNew = untrack(() => Date.now() - doc.addedAt < 4000);
 
   function details() {
     ui.detailsId = doc.id;
@@ -21,7 +24,7 @@
   }
 </script>
 
-<div class="doc-card doc-tile dd-lift">
+<div class="doc-card doc-tile dd-lift" class:is-new={isNew}>
   <button type="button" class="doc-open dd-pressable" data-doc={doc.id} onclick={() => void reader.open(doc.id)}>
     <span class="doc-thumb tile-cover" aria-hidden="true"><Cover {doc} /><StatusMark {status} /></span>
     {#if status === 'reading'}

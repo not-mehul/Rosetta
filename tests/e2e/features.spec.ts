@@ -412,15 +412,18 @@ test('a daily goal and the reading calendar', async ({ page }) => {
   await add(page, ['lantern.epub']);
   await page.click('#closeReader');
   await page.click('#tab-stats');
-  await expect(page.locator('.calendar-day[data-day]')).toHaveCount(18 * 7);
-  await expect(page.locator('.calendar-day.is-today')).toHaveCount(1);
-  // Stats shows progress; goals are set in Settings → General, which it opens.
+  // Before any reading or goal, Stats invites one instead of a wall of zeros.
+  await expect(page.locator('#view-stats .empty-title')).toBeVisible();
+  await expect(page.locator('.calendar-day')).toHaveCount(0);
+  // Goals are set in Settings → General, which it opens.
   await expect(page.locator('#goalStatus')).toHaveCount(0);
   await page.click('#setGoals');
   await expect(page.locator('#settings-general')).toHaveAttribute('aria-selected', 'true');
   await page.click('[data-goal="30"]');
   await page.keyboard.press('Escape');
   await expect(page.locator('#goalStatus')).toHaveText('0 of 30 min today');
+  await expect(page.locator('.calendar-day[data-day]')).toHaveCount(18 * 7);
+  await expect(page.locator('.calendar-day.is-today')).toHaveCount(1);
   await expect(page.locator('[data-goal]')).toHaveCount(0);
   await expectAccessible(page, '#view-stats');
 

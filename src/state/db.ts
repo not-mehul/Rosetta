@@ -48,6 +48,8 @@ export interface Collection {
   id: string;
   name: string;
   createdAt: number;
+  /** Last rename, for sync. Missing on collections made before it was kept. */
+  updatedAt?: number;
 }
 
 /** A day's reading of one document, for stats and the reader's own pace. */
@@ -167,7 +169,8 @@ export function withDefaults(d: Partial<StoredDoc> & Pick<StoredDoc, 'id'>): Sto
 
 /** The bytes of a stored file, whichever way it was stored. */
 export async function toBytes(stored: Blob | Uint8Array): Promise<Uint8Array> {
-  return stored instanceof Uint8Array ? stored : new Uint8Array(await stored.arrayBuffer());
+  // isView rather than instanceof: a copy from IndexedDB may come from another realm.
+  return ArrayBuffer.isView(stored) ? new Uint8Array(stored.buffer, stored.byteOffset, stored.byteLength) : new Uint8Array(await stored.arrayBuffer());
 }
 
 export async function hashBytes(bytes: Uint8Array): Promise<string> {

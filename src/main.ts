@@ -17,7 +17,7 @@ import { library } from './state/library.svelte';
 import { reader } from './state/reader.svelte';
 import { settings } from './state/settings.svelte';
 import { stats } from './state/stats.svelte';
-import { autoBackup, syncNow } from './state/sync';
+import { autoBackup, syncNow, whenMerged } from './state/sync';
 import { ui } from './state/ui.svelte';
 import { followForWidget } from './state/widget.svelte';
 import './styles/app.css';
@@ -31,6 +31,10 @@ async function start(): Promise<void> {
     await settings.update({ customFont: font, ...(!font && settings.value.typeface === 'custom' ? { typeface: 'serif' as const } : {}) });
   }
   await setLocale(settings.value.locale).catch(() => undefined);
+  // A sync that brings the open document a newer place lets the reader follow it.
+  whenMerged((result) => {
+    for (const { id, patch } of result.docs) reader.followRemote(id, patch);
+  });
   await syncNow().catch((err) => console.warn('Sync failed:', err));
 
   mount(App, { target: document.getElementById('app')! });

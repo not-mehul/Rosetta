@@ -386,6 +386,10 @@ const es: Messages = {
   'sync.done': 'Sincronizado: {marks} cambios de marcas, {docs} documentos actualizados.',
   'sync.first': 'Fichero de sincronización escrito. Los otros dispositivos lo recogerán.',
   'sync.failed': 'La sincronización falló ({reason}).',
+  'sync.unreadable': 'No se pudo leer el fichero de sincronización; se guardó una copia como {name} y se escribió uno nuevo.',
+  'sync.unreadableLost': 'No se pudo leer ni copiar el fichero de sincronización, así que se dejó como estaba. Revisa la carpeta de sincronización.',
+  'sync.elsewhere': 'Otro dispositivo se quedó en {percent}.',
+  'sync.goThere': 'Ir allí',
 
   'time.minutes': { one: '{count} min', other: '{count} min' },
   'time.hours': { one: '{count} h', other: '{count} h' },

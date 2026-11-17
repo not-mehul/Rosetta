@@ -6,6 +6,7 @@
 
 import DOMPurify from 'dompurify';
 import type { TocEntry } from './types';
+import { safeDecode } from '../lib/uri';
 
 export const ID_PREFIX = 'r-';
 
@@ -27,7 +28,8 @@ export interface Cleaned {
 }
 
 const FORBID_TAGS = ['style', 'script', 'form', 'input', 'button', 'select', 'textarea', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'video', 'audio', 'source', 'track', 'noscript', 'title'];
-const FORBID_ATTR = ['align', 'bgcolor', 'color', 'face', 'size', 'background', 'border', 'tabindex', 'contenteditable'];
+// srcset and sizes would let a picture load from the web in place of the book's own.
+const FORBID_ATTR = ['align', 'bgcolor', 'color', 'face', 'size', 'background', 'border', 'tabindex', 'contenteditable', 'srcset', 'sizes'];
 
 /** Removes anything in CSS that would reach the network: a book must read offline and privately. */
 export function offlineCss(css: string): string {
@@ -35,6 +37,67 @@ export function offlineCss(css: string): string {
     .replace(/url\(\s*(['"]?)\s*(?:https?:|\/\/)[^)]*\)/gi, 'none')
     .replace(/@import[^;]*;?/gi, '')
     .replace(/expression\s*\(/gi, '(');
+}
+
+/**
+ * A block of CSS declarations split at its semicolons, but not at the ones
+ * inside strings or brackets: a data: URI holds one ("data:font/woff2;base64,").
+ */
+export function declarations(block: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let quote = '';
+  let from = 0;
+  for (let i = 0; i < block.length; i++) {
+    const c = block[i]!;
+    if (quote) {
+      if (c === '\\') i++;
+      else if (c === quote) quote = '';
+    } else if (c === '"' || c === "'") quote = c;
+    else if (c === '(') depth++;
+    else if (c === ')') depth = Math.max(0, depth - 1);
+    else if (c === ';' && depth === 0) {
+      out.push(block.slice(from, i));
+      from = i + 1;
+    }
+  }
+  out.push(block.slice(from));
+  return out.map((d) => d.trim()).filter(Boolean);
+}
+
+/** CSS functions whose strings are URLs, which url() rewriting doesn't see. */
+const URL_STRINGS = /(?:-webkit-)?image-set\s*\(|(?:^|[\s,(])src\s*\(/i;
+const URL_FUNCTION = /url\(\s*(?:"([^"]*)"|'([^']*)'|([^)\s'"]*))\s*\)/gi;
+
+/**
+ * A declaration's value with every url() pointing at a file in the book
+ * (through `resolve`), a data: URI, or nothing. Null when the value can't be
+ * made safe: URL strings in image-set(), or CSS escapes outside a string,
+ * which can spell "url(" or "http" in a way the patterns here can't read.
+ */
+export function offlineValue(value: string, resolve?: (url: string) => string | null): string | null {
+  const bare = value.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
+  if (bare.includes('\\') || URL_STRINGS.test(bare)) return null;
+  return value.replace(URL_FUNCTION, (m, dq?: string, sq?: string, raw?: string) => {
+    const url = (dq ?? sq ?? raw ?? '').trim();
+    if (/^data:/i.test(url)) return m;
+    if (url.includes('\\')) return 'none';
+    const resolved = resolve?.(url);
+    return resolved ? `url("${resolved}")` : 'none';
+  });
+}
+
+/** An inline style attribute kept for a fixed-layout page, with nothing in it that reaches the network. */
+export function offlineStyle(style: string, resolve?: (url: string) => string | null): string {
+  return declarations(style)
+    .map((d) => {
+      const colon = d.indexOf(':');
+      if (colon < 1) return '';
+      const value = offlineValue(d.slice(colon + 1).trim(), resolve);
+      return value === null ? '' : `${d.slice(0, colon).trim()}: ${value}`;
+    })
+    .filter(Boolean)
+    .join('; ');
 }
 
 /** The text a container's textContent will have once `html` is rendered in it. */
@@ -62,7 +125,8 @@ export function clean(html: string, options: CleanOptions = {}): Cleaned {
     }
     const style = el.getAttribute('style');
     if (style !== null) {
-      if (options.keepStyle) el.setAttribute('style', offlineCss(style));
+      const kept = options.keepStyle ? offlineStyle(style, options.resolveSrc) : '';
+      if (kept) el.setAttribute('style', kept);
       else el.removeAttribute('style');
     }
     // name anchors are how older books mark footnotes.
@@ -90,7 +154,7 @@ export function clean(html: string, options: CleanOptions = {}): Cleaned {
     if (el.tagName === 'A' && el.hasAttribute('href')) {
       const href = el.getAttribute('href')!.trim();
       if (href.startsWith('#')) {
-        el.setAttribute('data-link', `#${ID_PREFIX}${decodeURIComponent(href.slice(1))}`);
+        el.setAttribute('data-link', `#${ID_PREFIX}${safeDecode(href.slice(1))}`);
         el.setAttribute('href', `#${ID_PREFIX}${href.slice(1)}`);
         return;
       }

@@ -30,7 +30,8 @@ function pages(bytes: Uint8Array): {
 
 export function isComicArchive(names: string[]): boolean {
   const files = names.filter((n) => !n.endsWith('/'));
-  return files.length > 0 && files.every((n) => IMAGE.test(n) || /comicinfo\.xml$/i.test(n) || n.startsWith('__MACOSX/') || /(^|\/)\./.test(n) || /\.(txt|nfo|sfv)$/i.test(n));
+  // Besides the pages: metadata, release notes, and what Windows and macOS leave behind (Thumbs.db, desktop.ini, __MACOSX).
+  return files.some((n) => IMAGE.test(n)) && files.every((n) => IMAGE.test(n) || n.startsWith('__MACOSX/') || /(^|\/)\./.test(n) || /\.(xml|json|txt|nfo|sfv|md5|url|ini|db)$/i.test(n));
 }
 
 export function cbzInfo(bytes: Uint8Array): Omit<DocInfo, 'cover'> & {

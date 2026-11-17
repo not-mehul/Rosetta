@@ -2,11 +2,12 @@
 // highlights. The views render from here and report the location back.
 
 import { cheer } from '../lib/delight';
-import { openDocument, PasswordError, type OpenDoc } from '../formats';
+import { openDocument, PasswordError, readInfo, type OpenDoc } from '../formats';
+import { titleFromName } from '../formats/sniff';
 import { FORMAT_LABEL } from '../formats/types';
 import { blockBreaks } from '../reader/cadence';
 import { excerpt } from '../reader/offsets';
-import { chapterAt, chapterTicks, FAR_CHARS, flowProgress, globalOffset, pageProgress, START, type Location } from '../reader/progress';
+import { chapterAt, chapterTicks, endInView, FAR_CHARS, flowProgress, globalOffset, pageProgress, percent, START, type Location } from '../reader/progress';
 import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
 import { t } from '../i18n/index.svelte';
 import { duration } from '../lib/format';
@@ -27,6 +28,8 @@ export interface Jump {
 }
 
 const SAVE_MS = 800;
+/** A document opened at or past this, and not finished, was declined at its end (see finishDeclined). */
+const DECLINED_AT = 0.99;
 
 class ReaderState {
   doc = $state.raw<StoredDoc | null>(null);
@@ -51,6 +54,8 @@ class ReaderState {
   onFinished: ((doc: StoredDoc) => void) | null = null;
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
+  /** The place moved since it was last saved; only then is it written (and stamped for sync). */
+  private dirty = false;
   private jumpKey = 0;
   private lengths: number[] = [];
   /** Where a remembered jump landed; reading on a few screens from it lets the way back go. */
@@ -58,6 +63,15 @@ class ReaderState {
   /** Progress when the document was opened, for the note on leaving. */
   private openedProgress = 0;
   private starts: Location[] | null = null;
+  /**
+   * The reader said this document isn't finished (Undo on "Finished", or
+   * marked unfinished while at the end): don't finish it again until they
+   * have gone back from the end and come to it again.
+   */
+  private finishDeclined = false;
+  /** Where the document opened; reaching the end only finishes it once the reader has moved from there. */
+  private openedAt: Location | null = null;
+  private moved = false;
 
   get isPdf(): boolean {
     return this.content?.kind === 'pdf';
@@ -71,7 +85,27 @@ class ReaderState {
   get progress(): number {
     const c = this.content;
     if (!c) return 0;
+    if (this.atEnd) return 1;
     return c.kind === 'pdf' ? pageProgress(c.pageCount, this.location) : flowProgress(this.lengths, this.location);
+  }
+
+  /**
+   * Far enough back from the end that coming to it again is a new finish:
+   * a couple of screens (or 1% of a long book, or half a short one), or more
+   * than two pages from the end of a PDF. A nudge at the end isn't enough.
+   */
+  private wellBeforeEnd(): boolean {
+    const c = this.content;
+    if (!c || this.atEnd) return false;
+    if (c.kind === 'pdf') return c.pageCount - this.location.section > 2;
+    const total = this.lengths.reduce((a, b) => a + b, 0);
+    return total - globalOffset(this.lengths, this.location) > Math.min(Math.max(FAR_CHARS, total * 0.01), total / 2);
+  }
+
+  /** The last words (or the bottom of a PDF's last page) are on screen. */
+  get atEnd(): boolean {
+    const c = this.content;
+    return !!c && endInView(c.kind, this.lengths, this.sectionCount, this.location, this.visibleEnd);
   }
 
   /** Characters after the reader's place, for the time left. */
@@ -181,14 +215,20 @@ class ReaderState {
       this.content = content;
       this.marks = marks;
       this.openedProgress = doc.progress;
+      this.finishDeclined = doc.finishedAt === null && doc.progress >= DECLINED_AT;
       const at = doc.location && doc.location.section < this.sectionCount ? doc.location : START;
       this.location = at;
+      this.visibleEnd = 0;
+      this.openedAt = at;
+      this.moved = false;
+      this.dirty = false;
       this.section = content.kind === 'flow' ? at.section : 0;
       this.jump = { to: at, key: ++this.jumpKey };
       this.jumpedAt = performance.now();
       this.chrome = true;
       stats.begin(id);
-      void library.update(id, { openedAt: Date.now() });
+      // Opening isn't a change to the place: sync must not let it win over a newer place from another device.
+      void library.update(id, { openedAt: Date.now() }, { touch: false });
       void settings.update({ lastDocId: id });
     } catch (err) {
       this.doc = null;
@@ -204,6 +244,24 @@ class ReaderState {
     }
   }
 
+  /**
+   * Sync brought the open document a newer place from another device. Before
+   * any reading here it moves there; after, it offers to.
+   */
+  followRemote(id: string, patch: Partial<StoredDoc>): void {
+    const to = patch.location;
+    if (this.doc?.id !== id || !this.content) return;
+    this.doc = { ...this.doc, ...patch };
+    if (!to || to.section >= this.sectionCount || (to.section === this.location.section && to.offset === this.location.offset)) return;
+    if (!this.moved) {
+      this.goTo(to);
+      // Arriving where the other device already saved isn't a new place to write.
+      this.dirty = false;
+      return;
+    }
+    ui.notify(t('sync.elsewhere', { percent: percent(patch.progress ?? 0) }), 'info', { label: t('sync.goThere'), run: () => this.goTo(to, undefined, undefined, true) });
+  }
+
   /** Opens a document at a mark: the notes view and sync use it. */
   async openAt(id: string, to: Location, flash?: Jump['flash']): Promise<void> {
     if (this.doc?.id !== id) await this.open(id);
@@ -216,7 +274,10 @@ class ReaderState {
     for (;;) {
       try {
         const content = await openDocument(bytes, doc.format, password);
-        if (password && password !== doc.password) void library.update(doc.id, { password }, { touch: false });
+        if (password && password !== doc.password) {
+          void library.update(doc.id, { password }, { touch: false });
+          if (!doc.cover) void this.fillLockedDetails(doc, bytes, password);
+        }
         return content;
       } catch (err) {
         if (!(err instanceof PasswordError)) throw err;
@@ -231,6 +292,20 @@ class ReaderState {
         password = answer;
       }
     }
+  }
+
+  /** A locked PDF was added with its file name and no cover; once it opens, its own title and first page fill them in. */
+  private async fillLockedDetails(doc: StoredDoc, bytes: Uint8Array, password: string): Promise<void> {
+    const info = await readInfo(bytes, doc.fileName, password).catch(() => null);
+    if (!info) return;
+    const patch: Partial<StoredDoc> = {};
+    if (info.cover) patch.cover = info.cover;
+    // Only over what was guessed, never over a title or author the reader typed.
+    if (info.title && doc.title === titleFromName(doc.fileName)) patch.title = info.title;
+    if (info.author && !doc.author) patch.author = info.author;
+    if (!Object.keys(patch).length) return;
+    await library.update(doc.id, patch, { touch: false });
+    if (this.doc?.id === doc.id) this.doc = { ...this.doc, ...patch };
   }
 
   /** Keeps a PDF's page text in the database, so later searches don't read every page again. */
@@ -298,6 +373,9 @@ class ReaderState {
     const section = Math.max(0, Math.min(this.sectionCount - 1, to.section));
     if (this.content.kind === 'flow') this.section = section;
     this.location = { section, offset: to.offset };
+    this.dirty = true;
+    // Until the view reports what the jump put on screen.
+    this.visibleEnd = 0;
     this.jump = {
       to: { section, offset: to.offset },
       flash,
@@ -333,8 +411,12 @@ class ReaderState {
   /** Called by the views as the reader scrolls or turns. */
   report(location: Location, visibleEnd: number): void {
     const before = this.globalChar(this.location);
+    if (location.section !== this.location.section || location.offset !== this.location.offset) this.dirty = true;
     this.location = location;
     this.visibleEnd = visibleEnd;
+    if (this.finishDeclined && this.wellBeforeEnd()) this.finishDeclined = false;
+    // A note that fits on one screen isn't finished by being opened.
+    if (!this.moved && this.openedAt && (location.section !== this.openedAt.section || location.offset !== this.openedAt.offset)) this.moved = true;
     if (this.doc) stats.activity(this.doc.id, Math.abs(this.globalChar(location) - before));
     if (this.returnTo) {
       // The scroll a jump causes settles where it lands; reading on from there lets the way back go.
@@ -364,11 +446,14 @@ class ReaderState {
     const doc = this.doc;
     if (!doc || !this.content) return;
     const progress = this.progress;
+    const justFinished = progress >= 0.999 && doc.finishedAt === null && !this.finishDeclined && this.moved;
+    // Leaving or pausing without reading writes nothing, so it can't overwrite a newer place from sync.
+    if (!this.dirty && !justFinished) return;
+    this.dirty = false;
     const patch: Partial<StoredDoc> = {
       location: $state.snapshot(this.location),
       progress,
     };
-    const justFinished = progress >= 0.999 && doc.finishedAt === null;
     if (justFinished) patch.finishedAt = Date.now();
     void library.update(doc.id, patch);
     this.doc = { ...doc, ...patch };
@@ -392,7 +477,10 @@ class ReaderState {
     ui.notify(message, 'success', {
       label: t('action.undo'),
       run: () => {
-        if (this.doc?.id === doc.id) this.doc = { ...this.doc, finishedAt: null };
+        if (this.doc?.id === doc.id) {
+          this.doc = { ...this.doc, finishedAt: null };
+          this.finishDeclined = true;
+        }
         void library.update(doc.id, { finishedAt: null });
       },
       // Once the Undo has passed, the finished book can go on to BookShelf.

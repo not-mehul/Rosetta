@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Writes the small documents the tests open: an EPUB 3 with three chapters
 // (a footnote and a picture among them), a Word document, FB2, CBZ, RTF and
-// ODT files, and (with Playwright's Chromium) a three-page PDF.
+// ODT files, and (with Playwright's Chromium) a three-page PDF and, with
+// qpdf, a copy of it locked with the password "harbour".
 //
 //   node tests/fixtures/make-fixtures.mjs
 
@@ -113,6 +114,13 @@ try {
   await page.setContent(`<html><head><title>Harbour Charts</title></head><body style="font: 18px serif">${pages.map((t, i) => `<section style="page-break-after: always"><h1>Chart ${i + 1}</h1><p>${t}</p></section>`).join('')}</body></html>`);
   writeFileSync(join(here, 'harbour.pdf'), await page.pdf({ format: 'A5', outline: true, tagged: true }));
   await browser.close();
+  // The same PDF locked with the password "harbour", when qpdf is installed.
+  try {
+    const { execFileSync } = await import('node:child_process');
+    execFileSync('qpdf', ['--encrypt', 'harbour', 'harbour', '256', '--', join(here, 'harbour.pdf'), join(here, 'harbour-locked.pdf')]);
+  } catch {
+    console.warn('Skipped the locked PDF (qpdf not available).');
+  }
 } catch (err) {
   console.warn('Skipped the PDF (Playwright not available):', err.message);
 }

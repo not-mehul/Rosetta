@@ -1,9 +1,10 @@
 // The library: every document added, with its cover, place and progress.
 
-import { FormatError, readInfo } from '../formats';
-import { t } from '../i18n/index.svelte';
+import { FormatError, PasswordError, readInfo, type DocInfo } from '../formats';
+import { titleFromName } from '../formats/sniff';
 import { db, hashBytes, toBytes, withDefaults, type Collection, type Mark, type StoredDoc } from './db';
 import type { LibraryShelf, LibrarySort } from './settings';
+import { t } from '../i18n/index.svelte';
 
 export type AddResult = { doc: StoredDoc; added: boolean } | { error: string; name: string };
 
@@ -43,7 +44,15 @@ class LibraryState {
         return { doc: this.get(id)!, added: false };
       }
       if (existing) return { doc: withDefaults(existing), added: false };
-      const info = await readInfo(bytes, fileName, extra.password);
+      let info: DocInfo;
+      try {
+        info = await readInfo(bytes, fileName, extra.password);
+      } catch (err) {
+        // A locked PDF goes in as it is: the reader asks for its password when
+        // it's opened, then fills in its title and cover (reader.svelte.ts).
+        if (!(err instanceof PasswordError) || extra.password) throw err;
+        info = { format: 'pdf', title: titleFromName(fileName), author: '', cover: null };
+      }
       const doc: StoredDoc = {
         id,
         fileName,
@@ -116,6 +125,7 @@ class LibraryState {
       id: crypto.randomUUID(),
       name: trimmed,
       createdAt: Date.now(),
+      updatedAt: Date.now(),
     };
     await db.collections.put(c);
     this.collections = [...this.collections, c].sort((a, b) => a.name.localeCompare(b.name));
@@ -123,13 +133,18 @@ class LibraryState {
   }
 
   async renameCollection(id: string, name: string): Promise<void> {
-    await db.collections.update(id, { name: name.trim() });
-    this.collections = this.collections.map((c) => (c.id === id ? { ...c, name: name.trim() } : c)).sort((a, b) => a.name.localeCompare(b.name));
+    const patch = { name: name.trim(), updatedAt: Date.now() };
+    await db.collections.update(id, patch);
+    this.collections = this.collections.map((c) => (c.id === id ? { ...c, ...patch } : c)).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /** Deletes a collection; its documents stay in the library. */
   async deleteCollection(id: string): Promise<void> {
-    await db.collections.delete(id);
+    // The tombstone tells sync to delete it on the other devices too.
+    await db.transaction('rw', db.collections, db.tombstones, async () => {
+      await db.collections.delete(id);
+      await db.tombstones.put({ id, deletedAt: Date.now() });
+    });
     this.collections = this.collections.filter((c) => c.id !== id);
     for (const d of this.items.filter((x) => x.collections.includes(id)))
       await this.update(d.id, {
@@ -157,10 +172,11 @@ class LibraryState {
     });
     this.items = this.items.filter((d) => d.id !== id);
     return async () => {
-      if (!doc || !blob) return;
+      // An offloaded document has no file to put back, but its details and marks come back all the same.
+      if (!doc) return;
       await db.transaction('rw', db.docs, db.bytes, db.marks, async () => {
         await db.docs.put(doc);
-        await db.bytes.put(blob);
+        if (blob) await db.bytes.put(blob);
         await db.marks.bulkPut(marks);
       });
       await this.load();

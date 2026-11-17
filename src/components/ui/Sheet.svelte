@@ -55,7 +55,8 @@
   style:transform={drag ? `translateY(${drag}px)` : undefined}
   oncancel={(e) => {
     e.preventDefault();
-    onclose();
+    // Escape does what Android's Back does: the topmost thing first (a sheet may hold its own steps).
+    ui.back();
   }}
   onclick={(e) => {
     if (e.target === dialog) onclose();

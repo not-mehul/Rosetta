@@ -1,7 +1,7 @@
 <script lang="ts">
   // The library: what you are reading, everything, and what you've finished,
   // on every collection or one; search by title, author, series or #tag.
-  import { ACCEPT } from '../formats/sniff';
+  import { ACCEPT, isReadableName } from '../formats/sniff';
   import { t } from '../i18n/index.svelte';
   import { canPickFolder, pickFiles, pickFolder } from '../lib/pick';
   import { shown, toggledTheme } from '../platform/theme.svelte';
@@ -52,7 +52,7 @@
 
   async function addFolder() {
     const files = await pickFolder();
-    await addFiles(files.filter((f) => /\.(epub|pdf|docx|md|markdown|txt|html?|xhtml|fb2|cbz|rtf|odt)$/i.test(f.name)));
+    await addFiles(files.filter((f) => isReadableName(f.name)));
   }
 
   async function newCollection() {

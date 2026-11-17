@@ -1,0 +1,768 @@
+/* ─── Icon motion ──────────────────────────────────────────────
+
+   Each icon's answer to a tap, played once when src/lib/iconMotion.ts sets
+   data-play on it (style.md §11). The motions are small, two or three
+   pixels or a few degrees, and act out what the icon is: the gear turns,
+   the bookmark drops into place, the chart's bars grow, the bin's lid lifts,
+   a tick draws itself. Each settles on a spring (§11.1), so it ends with
+   the slight give of something physical, and nothing loops.
+
+   Parts move about their own centre unless a motion says otherwise, and a
+   stroke "draws" from 0 to its whole length (pathLength is 1, set by
+   iconMotion.ts). Under reduced motion none of this exists. */
+
+@media (prefers-reduced-motion: no-preference) {
+  svg[data-icon] > * {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* Any icon without a motion of its own: a press, and a spring back. */
+  svg[data-icon][data-play] {
+    animation: icon-press 420ms both;
+  }
+
+  /* Icons whose parts move do without the press as a whole. */
+  svg:is(
+      [data-icon='list'],
+      [data-icon='a-large-small'],
+      [data-icon='trash-2'],
+      [data-icon='share-2'],
+      [data-icon='copy'],
+      [data-icon='download'],
+      [data-icon='file-down'],
+      [data-icon='ellipsis-vertical'],
+      [data-icon='settings-2'],
+      [data-icon='sliders-horizontal'],
+      [data-icon='database'],
+      [data-icon='info'],
+      [data-icon='type'],
+      [data-icon='book-text'],
+      [data-icon='library'],
+      [data-icon='chart-column'],
+      [data-icon='volume-2'],
+      [data-icon='circle-check'],
+      [data-icon='notebook-pen']
+    )[data-play] {
+    animation: none;
+  }
+
+  /* ─── The way around ───────────────────────────────────────── */
+
+  /* Back: the arrow leans the way it points, and its shaft follows. */
+  svg[data-icon='arrow-left'][data-play],
+  svg[data-icon='chevron-left'][data-play] {
+    animation: icon-nudge-left 460ms both;
+  }
+  svg[data-icon='arrow-left'][data-play] > :nth-child(2) {
+    animation: icon-shaft 460ms both;
+  }
+  svg[data-icon='chevron-right'][data-play],
+  svg[data-icon='skip-forward'][data-play] {
+    animation: icon-nudge-right 460ms both;
+  }
+  svg[data-icon='skip-back'][data-play] {
+    animation: icon-nudge-left 460ms both;
+  }
+
+  /* Search: the lens tilts to look closer. */
+  svg[data-icon='search'][data-play] {
+    animation: icon-peer 520ms both;
+  }
+
+  /* Contents: the dots tap in, then each line is written out, top to bottom. */
+  svg[data-icon='list'][data-play] > :nth-child(-n + 3) {
+    animation: icon-dot 360ms both;
+  }
+  svg[data-icon='list'][data-play] > :nth-child(n + 4) {
+    animation: icon-draw 420ms var(--ease-standard) both;
+  }
+  svg[data-icon='list'][data-play] > :nth-child(2) {
+    animation-delay: 50ms;
+  }
+  svg[data-icon='list'][data-play] > :nth-child(3) {
+    animation-delay: 100ms;
+  }
+  svg[data-icon='list'][data-play] > :nth-child(5) {
+    animation-delay: 60ms;
+  }
+  svg[data-icon='list'][data-play] > :nth-child(6) {
+    animation-delay: 120ms;
+  }
+
+  /* Aa: the capital hops, the small a after it. */
+  svg[data-icon='a-large-small'][data-play] > :nth-child(n + 3) {
+    animation: icon-hop 480ms both;
+  }
+  svg[data-icon='a-large-small'][data-play] > :nth-child(-n + 2) {
+    animation: icon-hop 480ms 70ms both;
+  }
+
+  /* ─── Marks ────────────────────────────────────────────────── */
+
+  /* A bookmark set: it drops into place from above, and its tick is written. */
+  svg[data-icon='bookmark-check'][data-play] {
+    animation: icon-drop 560ms both;
+  }
+  svg[data-icon='bookmark-check'][data-play] > :nth-child(2) {
+    animation: icon-draw 300ms 180ms var(--ease-standard) both;
+  }
+  /* A bookmark taken off, or one in a chip: it lifts a little and settles. */
+  svg[data-icon='bookmark'][data-play] {
+    animation: icon-lift 480ms both;
+  }
+
+  /* The highlighter makes one stroke. */
+  svg[data-icon='highlighter'][data-play] {
+    animation: icon-stroke 560ms both;
+  }
+  /* Pens write a little. */
+  svg[data-icon='pencil'][data-play],
+  svg[data-icon='notebook-pen'][data-play] > :last-child {
+    animation: icon-scribble 520ms both;
+  }
+
+  /* Done, Mark finished, the finished mark: the tick writes itself. */
+  svg[data-icon='check'][data-play] {
+    animation: icon-press 420ms both;
+  }
+  svg[data-icon='check'][data-play] > * {
+    animation: icon-draw 340ms 40ms var(--ease-standard) both;
+  }
+  svg[data-icon='circle-check'][data-play] > circle {
+    animation: icon-ring 460ms both;
+  }
+  svg[data-icon='circle-check'][data-play] > path {
+    animation: icon-draw 320ms 120ms var(--ease-standard) both;
+  }
+
+  /* ─── Adding and taking away ──────────────────────────────── */
+
+  /* Plus turns a quarter (it ends as it began), and Close does the same. */
+  svg[data-icon='plus'][data-play],
+  svg[data-icon='x'][data-play] {
+    animation: icon-quarter 520ms both;
+  }
+  /* Minus gives along its length. */
+  svg[data-icon='minus'][data-play] {
+    animation: icon-squash 400ms both;
+  }
+
+  /* The bin's lid lifts on its hinge, and the slats inside give. */
+  svg[data-icon='trash-2'][data-play] > :nth-child(4),
+  svg[data-icon='trash-2'][data-play] > :nth-child(5) {
+    transform-box: view-box;
+    transform-origin: 3px 6px;
+    animation: icon-lid 560ms both;
+  }
+  svg[data-icon='trash-2'][data-play] > :nth-child(-n + 2) {
+    animation: icon-slat 480ms 60ms both;
+  }
+
+  /* Share: the three ends pop one after another, as if passed along. */
+  svg[data-icon='share-2'][data-play] > circle {
+    animation: icon-dot 400ms both;
+  }
+  svg[data-icon='share-2'][data-play] > circle:nth-of-type(2) {
+    animation-delay: 70ms;
+  }
+  svg[data-icon='share-2'][data-play] > circle:nth-of-type(3) {
+    animation-delay: 140ms;
+  }
+
+  /* Copy: the copy slips out from behind its original. */
+  svg[data-icon='copy'][data-play] > rect {
+    animation: icon-slip 480ms both;
+  }
+
+  /* Download and save: the arrow drops into the tray. */
+  svg[data-icon='download'][data-play] > :nth-child(odd),
+  svg[data-icon='file-down'][data-play] > :nth-child(n + 3) {
+    animation: icon-fall 520ms both;
+  }
+
+  /* Undo swings back, Back to the defaults turns all the way round. */
+  svg[data-icon='undo-2'][data-play] {
+    animation: icon-swing-back 520ms both;
+  }
+  svg[data-icon='rotate-ccw'][data-play] {
+    animation: icon-unwind 720ms both;
+  }
+
+  /* More: the three dots bounce, one after another. */
+  svg[data-icon='ellipsis-vertical'][data-play] > circle {
+    animation: icon-dot 380ms both;
+  }
+  svg[data-icon='ellipsis-vertical'][data-play] > circle:nth-of-type(2) {
+    animation-delay: 0ms;
+  }
+  svg[data-icon='ellipsis-vertical'][data-play] > circle:nth-of-type(1) {
+    animation-delay: 60ms;
+  }
+  svg[data-icon='ellipsis-vertical'][data-play] > circle:nth-of-type(3) {
+    animation-delay: 120ms;
+  }
+
+  /* ─── Settings and their tabs ─────────────────────────────── */
+
+  /* The gear turns two teeth on, which looks the same once it stops. */
+  svg[data-icon='settings'][data-play] {
+    animation: icon-gear 760ms both;
+  }
+  /* General: the two knobs slide past each other along their tracks. */
+  svg[data-icon='settings-2'][data-play] > circle:nth-of-type(1) {
+    animation: icon-knob-left 560ms both;
+  }
+  svg[data-icon='settings-2'][data-play] > circle:nth-of-type(2) {
+    animation: icon-knob-right 560ms both;
+  }
+  /* The library's filter: its three knobs, each its own way. */
+  svg[data-icon='sliders-horizontal'][data-play] > :nth-child(3) {
+    animation: icon-knob-right 560ms both;
+  }
+  svg[data-icon='sliders-horizontal'][data-play] > :nth-child(4) {
+    animation: icon-knob-left 560ms 50ms both;
+  }
+  svg[data-icon='sliders-horizontal'][data-play] > :nth-child(8) {
+    animation: icon-knob-right 560ms 100ms both;
+  }
+
+  /* Reading: the book opens out from its spine. */
+  svg[data-icon='book-open'][data-play] {
+    animation: icon-open 560ms both;
+  }
+  /* Listen: the headphones bob, as to a beat. */
+  svg[data-icon='headphones'][data-play] {
+    animation: icon-bob 640ms both;
+  }
+  /* Data: the stack settles, top disc first. */
+  svg[data-icon='database'][data-play] > ellipse {
+    animation: icon-settle 520ms both;
+  }
+  svg[data-icon='database'][data-play] > :nth-child(3) {
+    animation: icon-settle-small 520ms 60ms both;
+  }
+  /* About: the dot of the i drops onto its stem. */
+  svg[data-icon='info'][data-play] > :nth-child(3) {
+    animation: icon-dot-drop 520ms both;
+  }
+  svg[data-icon='info'][data-play] > :nth-child(2) {
+    transform-origin: bottom;
+    animation: icon-grow 420ms both;
+  }
+
+  /* ─── The reading panel's tabs ────────────────────────────── */
+
+  /* Text: the T's bar comes down onto its stem. */
+  svg[data-icon='type'][data-play] > :nth-child(2) {
+    animation: icon-bar-down 480ms both;
+  }
+  svg[data-icon='type'][data-play] > :nth-child(1) {
+    transform-origin: top;
+    animation: icon-grow 420ms 40ms both;
+  }
+  /* Page: its lines are written in. */
+  svg[data-icon='book-text'][data-play] > :nth-child(n + 2) {
+    animation: icon-draw 380ms var(--ease-standard) both;
+  }
+  svg[data-icon='book-text'][data-play] > :nth-child(3) {
+    animation-delay: 80ms;
+  }
+  /* Light: the moon turns from the sun, and the rays come out. */
+  svg[data-icon='sun-moon'][data-play] {
+    animation: icon-turn-in 620ms both;
+  }
+  svg[data-icon='sun-moon'][data-play] > :is(:nth-child(1), :nth-child(4), :nth-child(5)) {
+    animation: icon-ray 420ms 80ms both;
+  }
+  svg[data-icon='moon'][data-play] {
+    animation: icon-turn-in 620ms both;
+  }
+
+  /* ─── Home's tabs ──────────────────────────────────────────── */
+
+  /* Library: the books hop one after another; the leaning one rocks. */
+  svg[data-icon='library'][data-play] > :nth-child(1) {
+    transform-origin: bottom;
+    animation: icon-rock 560ms 120ms both;
+  }
+  svg[data-icon='library'][data-play] > :nth-child(2) {
+    animation: icon-hop 440ms 80ms both;
+  }
+  svg[data-icon='library'][data-play] > :nth-child(3) {
+    animation: icon-hop 440ms 40ms both;
+  }
+  svg[data-icon='library'][data-play] > :nth-child(4) {
+    animation: icon-hop 440ms both;
+  }
+  /* Stats: the bars grow from the axis, shortest first. */
+  svg[data-icon='chart-column'][data-play] > :nth-child(n + 2) {
+    transform-origin: bottom;
+    animation: icon-rise 520ms both;
+  }
+  svg[data-icon='chart-column'][data-play] > :nth-child(3) {
+    animation-delay: 60ms;
+  }
+  svg[data-icon='chart-column'][data-play] > :nth-child(2) {
+    animation-delay: 120ms;
+  }
+
+  /* ─── Listening ────────────────────────────────────────────── */
+
+  /* Read aloud: the sound comes out, near wave then far. */
+  svg[data-icon='volume-2'][data-play] > :nth-child(n + 2) {
+    animation: icon-wave 460ms both;
+  }
+  svg[data-icon='volume-2'][data-play] > :nth-child(3) {
+    animation-delay: 90ms;
+  }
+  /* Play and pause, swapped as they're pressed: the new one springs in. */
+  svg[data-icon='play'][data-play],
+  svg[data-icon='pause'][data-play] {
+    animation: icon-spring-in 460ms both;
+  }
+
+  /* ─── Keyframes ────────────────────────────────────────────── */
+
+  /* A keyframe's timing function runs from it to the next: each motion goes
+     out quickly and comes home on a spring, so it ends with a little give. */
+
+  @keyframes icon-press {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    30% {
+      transform: scale(0.84);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-spring-in {
+    0% {
+      transform: scale(0.55);
+      opacity: 0.4;
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes icon-nudge-left {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    30% {
+      transform: translateX(-3px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-nudge-right {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    30% {
+      transform: translateX(3px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-shaft {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    30% {
+      transform: scaleX(0.8);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-peer {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: rotate(-14deg) scale(1.1);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-dot {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: scale(1.9);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-draw {
+    from {
+      stroke-dasharray: 1 2;
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dasharray: 1 2;
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes icon-hop {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: translateY(-3px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-drop {
+    0% {
+      transform: translateY(-6px) scaleY(1.08);
+      opacity: 0.3;
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes icon-lift {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: translateY(-3px) scaleY(0.94);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-stroke {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    40% {
+      transform: translate(2px, -1px) rotate(-14deg);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-scribble {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    25% {
+      transform: rotate(-10deg) translateX(-1px);
+      animation-timing-function: var(--ease-standard);
+    }
+    50% {
+      transform: rotate(6deg) translateX(1px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-ring {
+    0% {
+      transform: scale(0.7);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-quarter {
+    0% {
+      transform: none;
+      animation-timing-function: var(--spring-spatial-default);
+    }
+    100% {
+      transform: rotate(90deg);
+    }
+  }
+  @keyframes icon-squash {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    30% {
+      transform: scaleX(0.6);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-lid {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: translateY(-1.5px) rotate(-16deg);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-slat {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: scaleY(0.6);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-slip {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: translate(1.5px, 1.5px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-fall {
+    0% {
+      transform: translateY(-4px);
+      opacity: 0;
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes icon-swing-back {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: rotate(-35deg);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-unwind {
+    0% {
+      transform: none;
+      animation-timing-function: var(--spring-spatial-default);
+    }
+    100% {
+      transform: rotate(-360deg);
+    }
+  }
+  @keyframes icon-gear {
+    0% {
+      transform: none;
+      animation-timing-function: var(--spring-spatial-default);
+    }
+    100% {
+      transform: rotate(120deg);
+    }
+  }
+  @keyframes icon-knob-left {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    40% {
+      transform: translateX(-4px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-knob-right {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    40% {
+      transform: translateX(4px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-open {
+    0% {
+      transform: scaleX(0.55);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-bob {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    25% {
+      transform: translateY(-2px) rotate(-8deg);
+      animation-timing-function: var(--ease-standard);
+    }
+    55% {
+      transform: translateY(0) rotate(6deg);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-settle {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: translateY(-3px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-settle-small {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: translateY(-1.5px);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-dot-drop {
+    0% {
+      transform: translateY(-5px);
+      opacity: 0;
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes icon-grow {
+    0% {
+      transform: scaleY(0.3);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-bar-down {
+    0% {
+      transform: translateY(-3px) scaleX(0.8);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-turn-in {
+    0% {
+      transform: rotate(-40deg);
+      animation-timing-function: var(--spring-spatial-default);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-ray {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes icon-rock {
+    0% {
+      transform: none;
+      animation-timing-function: var(--ease-standard);
+    }
+    35% {
+      transform: rotate(12deg);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-rise {
+    0% {
+      transform: scaleY(0.15);
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes icon-wave {
+    0% {
+      transform: translateX(-3px);
+      opacity: 0;
+      animation-timing-function: var(--spring-spatial-fast);
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}

@@ -42,7 +42,7 @@ npm run assets       # redraw the app icon and splash screens
 | `src/platform/` | Native bridges: files in and out, theme and system bars, haptics, keep-awake, volume keys and hand-off to the other apps |
 | `src/i18n/` | The interface strings: `en.ts` is the reference, and `es.ts`, `fr.ts` and `de.ts` must have every key (a unit test checks the placeholders) |
 | `src/lib/` | Pickers, exports, quote cards, reminders and the guide |
-| `src/styles/` | `app.css`, which imports `dusk-dawn/tokens.css` and `dusk-dawn/components.css` first |
+| `src/styles/` | `app.css`, which imports `dusk-dawn/tokens.css` and `dusk-dawn/components.css` first, and `motion.css`: each icon's motion when tapped (played by `src/lib/iconMotion.ts`) |
 | `tests/` | Vitest unit tests, Playwright end-to-end tests, and the fixtures (`tests/fixtures/make-fixtures.mjs` rebuilds them) |
 | `android/`, `ios/` | The Capacitor projects |
 

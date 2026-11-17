@@ -47,7 +47,7 @@ export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | 
 export type PanelTab = 'text' | 'page' | 'light' | 'listen';
 
 /** The top-level sections, under the header as icon tabs (style.md §8.5.1). */
-export type Section = 'library' | 'notes' | 'stats' | 'catalogs';
+export type Section = 'library' | 'notes' | 'stats';
 
 /** How long a toast stays (style.md §8.12): longer when it offers an action. */
 export const TOAST_MS = 4000;

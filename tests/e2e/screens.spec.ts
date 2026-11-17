@@ -113,7 +113,7 @@ for (const scheme of ['dark', 'light'] as const) {
     await leave(page);
 
     // The other sections, and settings.
-    for (const section of ['notes', 'stats', 'catalogs']) {
+    for (const section of ['notes', 'stats']) {
       const tab = page.locator(`#tab-${section}`);
       if (!(await tab.count())) continue;
       await tab.click();

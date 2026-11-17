@@ -3,7 +3,7 @@
 // Each keeps its place as offsets into the section's text, like every other
 // place in the reader, so the resume point, contents and search all work.
 
-import { sentences } from './sentences';
+import { sentencesWithJoins, withSpaces } from './sentences';
 
 export interface Beat {
   start: number;
@@ -34,7 +34,7 @@ export function blockBreaks(html: string): number[] {
 }
 
 /** The beats of a section, from its HTML and its text (the HTML's textContent). */
-export function beats(html: string, text: string, lang?: string): Beat[] {
+export function beats(html: string, text: string, lang?: string, joins: readonly number[] = []): Beat[] {
   const tpl = document.createElement('template');
   tpl.innerHTML = html;
   const root = tpl.content;
@@ -55,13 +55,15 @@ export function beats(html: string, text: string, lang?: string): Beat[] {
     const heading = !!run.block && HEADING.test(run.block.tagName);
     const piece = text.slice(run.start, run.end);
     if (!piece.trim()) continue;
+    // A PDF's lines carry their spaces only on screen; these are where, within this piece.
+    const here = joins.filter((j) => j > run.start && j < run.end).map((j) => j - run.start);
     if (heading) {
       const lead = piece.length - piece.trimStart().length;
       const trimmed = piece.trim();
-      out.push({ start: run.start + lead, end: run.start + lead + trimmed.length, text: trimmed.replace(/\s+/g, ' '), heading });
+      out.push({ start: run.start + lead, end: run.start + lead + trimmed.length, text: withSpaces(piece, here).text.trim().replace(/\s+/g, ' '), heading });
       continue;
     }
-    for (const s of sentences(piece, 0, lang)) out.push({ start: run.start + s.start, end: run.start + s.end, text: s.text, heading: false });
+    for (const s of sentencesWithJoins(piece, here, 0, lang)) out.push({ start: run.start + s.start, end: run.start + s.end, text: s.text, heading: false });
   }
   return out;
 }

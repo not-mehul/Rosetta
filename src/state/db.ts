@@ -86,7 +86,7 @@ export interface PdfTextCache {
 export interface TextIndex {
   id: string;
   /** Each section's (or PDF page's) title and text, offsets as the reader's. */
-  sections: { title: string; text: string }[];
+  sections: { title: string; text: string; joins?: number[] }[];
 }
 
 export type HighlightColour = 'amber' | 'sage' | 'bright';

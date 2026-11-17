@@ -4,7 +4,8 @@
 
 import { openDocument, type OpenDoc } from '../formats';
 import { excerpt } from '../reader/offsets';
-import { queryPattern, searchText, type Hit } from '../reader/search';
+import { queryPattern, searchJoined, type Hit } from '../reader/search';
+import { pageToHtml } from '../formats/pdftext';
 import { t } from '../i18n/index.svelte';
 import { db, type StoredDoc, type TextIndex } from './db';
 import { library } from './library.svelte';
@@ -27,9 +28,13 @@ export interface BookHits {
 
 /** The words of an open document, as the reader's offsets count them. */
 export async function textsOf(content: OpenDoc): Promise<TextIndex['sections']> {
-  if (content.kind === 'flow') return content.pictures ? [] : content.sections.map((s) => ({ title: s.title, text: s.text }));
+  if (content.kind === 'flow') return content.pictures ? [] : content.sections.map((s) => ({ title: s.title, text: s.text, ...(s.joins?.length ? { joins: s.joins } : {}) }));
   const pages: TextIndex['sections'] = [];
-  for (let i = 0; i < content.pageCount; i++) pages.push({ title: t('reader.pageOf', { page: i + 1, pages: content.pageCount }), text: await content.pageText(i) });
+  for (let i = 0; i < content.pageCount; i++) {
+    // The page's text as search knows it, with where its lines meet, so a phrase across a line is found.
+    const { text, joins } = pageToHtml(await content.pageItems(i));
+    pages.push({ title: t('reader.pageOf', { page: i + 1, pages: content.pageCount }), text, ...(joins.length ? { joins } : {}) });
+  }
   return pages;
 }
 
@@ -66,7 +71,7 @@ async function wordsOf(doc: StoredDoc): Promise<TextIndex | null> {
 /** The places a pattern matches in one document's words, with a few excerpts. */
 export function hitsIn(words: TextIndex, pattern: RegExp): { count: number; hits: LibraryHit[] } {
   const found: Hit[] = [];
-  words.sections.forEach((s, i) => searchText(s.text, pattern, i, found));
+  words.sections.forEach((s, i) => searchJoined(s.text, s.joins ?? [], pattern, i, found));
   return {
     count: found.length,
     hits: found.slice(0, SHOWN_PER_BOOK).map((h) => ({ ...h, where: words.sections[h.section]!.title, ...excerpt(words.sections[h.section]!.text, h.start, h.end, 40) })),

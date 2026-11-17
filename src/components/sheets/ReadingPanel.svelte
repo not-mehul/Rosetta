@@ -140,6 +140,16 @@
         {/if}
       </div>
     {:else if tab === 'page'}
+      {#if reader.doc?.format === 'pdf'}
+        <div class="field">
+          <span class="t-field-label" id="pdfViewLabel">{t('type.pdfView')}</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="pdfViewLabel">
+            <button type="button" role="radio" id="pdfPages" aria-checked={!c || c.kind === 'pdf'} disabled={reader.loading} onclick={() => set({ pdfView: 'pages' })}>{t('type.pdfPages')}</button>
+            <button type="button" role="radio" id="pdfText" aria-checked={c?.kind === 'flow'} disabled={reader.loading} onclick={() => set({ pdfView: 'text' })}>{t('type.pdfText')}</button>
+          </div>
+          <span class="field-hint">{t('type.pdfViewHint')}</span>
+        </div>
+      {/if}
       {#if !pdf && !fixed}
         <div class="field">
           <span class="t-field-label" id="modeLabel">{t('type.mode')}</span>

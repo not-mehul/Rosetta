@@ -17,7 +17,7 @@
   const v = $derived(reader.view);
   const index = $derived(reader.section);
   const section = $derived(content.sections[index]!);
-  const list = $derived<Beat[]>(beats(section.html, section.text, content.lang));
+  const list = $derived<Beat[]>(beats(section.html, section.text, content.lang, section.joins));
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /** The sentence on screen. */

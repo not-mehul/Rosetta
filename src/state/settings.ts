@@ -11,6 +11,8 @@ export type LibraryShelf = 'reading' | 'all' | 'finished';
 /** The library as a grid of covers, or as a list of rows. */
 export type LibraryLayout = 'grid' | 'list';
 export type PdfFit = 'width' | 'page';
+/** A PDF as its pages, or as its words laid out in the reading column. */
+export type PdfView = 'pages' | 'text';
 /** Flow shows one sentence at a time in the middle of the screen, revealed a letter at a time. */
 export type ReadingMode = 'scroll' | 'paged' | 'flow';
 export type PageTurn = 'curl' | 'slide' | 'none';
@@ -38,6 +40,7 @@ export interface Settings {
   pdfZoom: number;
   /** What "fitted" means for a PDF page: the column's width, or the whole page on screen. */
   pdfFit: PdfFit;
+  pdfView: PdfView;
   /** Flow documents scroll, turn one screen at a time, or flow a sentence at a time. */
   readingMode: ReadingMode;
   /** Flow mode: letters revealed a second. */
@@ -114,6 +117,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pageTone: 'original',
   pdfZoom: 1,
   pdfFit: 'width',
+  pdfView: 'pages',
   readingMode: 'scroll',
   flowSpeed: 40,
   anchors: false,
@@ -151,6 +155,7 @@ const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   measure: ['narrow', 'medium', 'wide'],
   pageTone: ['original', 'theme'],
   pdfFit: ['width', 'page'],
+  pdfView: ['pages', 'text'],
   readingMode: ['scroll', 'paged', 'flow'],
   pageTurn: ['curl', 'slide', 'none'],
   locale: ['system', 'en', 'es', 'fr', 'de'],
@@ -176,7 +181,7 @@ const RANGES: Partial<Record<keyof Settings, readonly [number, number]>> = {
  * The settings a document keeps for itself. A new document reads with the
  * defaults; a change made while it is open is remembered for it alone.
  */
-export const BOOK_KEYS = ['typeface', 'fontSize', 'spacing', 'measure', 'justify', 'readingMode', 'publisherStyles', 'pdfZoom', 'pdfFit', 'pageTone', 'flowSpeed', 'anchors'] as const satisfies readonly (keyof Settings)[];
+export const BOOK_KEYS = ['typeface', 'fontSize', 'spacing', 'measure', 'justify', 'readingMode', 'publisherStyles', 'pdfZoom', 'pdfFit', 'pdfView', 'pageTone', 'flowSpeed', 'anchors'] as const satisfies readonly (keyof Settings)[];
 export type BookKey = (typeof BOOK_KEYS)[number];
 export type BookSettings = Partial<Pick<Settings, BookKey>>;
 

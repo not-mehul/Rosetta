@@ -50,6 +50,9 @@ ol {
 .amber {
   color: var(--accent-amber);
 }
+.sage {
+  color: var(--accent-sage);
+}
 .ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -412,6 +415,7 @@ ol {
   border-radius: var(--radius);
 }
 .doc-thumb {
+  position: relative;
   flex-shrink: 0;
   width: 56px;
   aspect-ratio: 2 / 3;

@@ -4,14 +4,16 @@
   // author, the series when there is one, and one trailing figure.
   import { relativeDay } from '../lib/format';
   import type { StoredDoc } from '../state/db';
+  import { docStatus } from '../state/library.svelte';
   import { reader } from '../state/reader.svelte';
   import { ui } from '../state/ui.svelte';
   import Cover from './ui/Cover.svelte';
   import Icon from './ui/Icon.svelte';
+  import StatusMark from './ui/StatusMark.svelte';
 
   let { doc }: { doc: StoredDoc } = $props();
 
-  const status = $derived(doc.finishedAt ? 'finished' : doc.openedAt ? 'reading' : 'new');
+  const status = $derived(docStatus(doc));
 
   function details() {
     ui.detailsId = doc.id;
@@ -23,9 +25,10 @@
   <button type="button" class="doc-open dd-pressable" data-doc={doc.id} onclick={() => void reader.open(doc.id)}>
     <span class="doc-thumb" aria-hidden="true">
       <Cover {doc} small />
+      <StatusMark {status} />
     </span>
     <span class="doc-text">
-      <span class="t-card-title doc-title ellipsis-2">{doc.title}</span>
+      <span class="t-card-title doc-title ellipsis-2">{doc.title}</span><span class="visually-hidden">, {t(`status.${status}`)}</span>
       {#if doc.author}<span class="doc-author ellipsis">{doc.author}</span>{/if}
       {#if doc.series || doc.offloaded}
         <span class="t-data-small faint">{[doc.series ? `${doc.series}${doc.seriesIndex !== null ? ` ${doc.seriesIndex}` : ''}` : '', doc.offloaded ? t('details.offloadedShort') : ''].filter(Boolean).join(' · ')}</span>
@@ -36,8 +39,7 @@
     </span>
     <span class="doc-figure">
       {#if status === 'finished'}
-        <span class="chip-status is-done">{t('library.finishedChip')}</span>
-        <span class="t-data-small faint doc-when">{relativeDay(doc.finishedAt!)}</span>
+        <span class="t-data-small sage doc-when">{relativeDay(doc.finishedAt!)}</span>
       {:else if status === 'reading'}
         <span class="t-data amber tabular">{Math.floor(doc.progress * 100)}%</span>
         <span class="t-data-small faint doc-when">{relativeDay(doc.openedAt!)}</span>

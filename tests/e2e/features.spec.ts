@@ -181,7 +181,7 @@ test('collections, tags and series from a document’s details', async ({ page }
   await page.getByRole('button', { name: '#sea' }).click();
   await page.keyboard.press('Escape');
   await expect(page.locator('.doc-card')).toHaveCount(1);
-  await page.click('#searchLibrary');
+  await page.fill('#libraryFilter', '');
   await page.click('#arrangeLibrary');
   await page.getByRole('radio', { name: 'Series' }).click();
   await page.keyboard.press('Escape');

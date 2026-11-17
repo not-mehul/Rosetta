@@ -6,7 +6,8 @@ export type Spacing = 'compact' | 'normal' | 'loose';
 export type Measure = 'narrow' | 'medium' | 'wide';
 export type PageTone = 'original' | 'theme';
 export type LibrarySort = 'recent' | 'title' | 'author' | 'series';
-export type LibraryShelf = 'reading' | 'all' | 'finished';
+/** Which documents the library shows, by how far along they are. */
+export type LibraryShelf = 'all' | 'reading' | 'unread' | 'finished';
 /** The library as a grid of covers, or as a list of rows. */
 export type LibraryLayout = 'grid' | 'list';
 export type PdfFit = 'width' | 'page';
@@ -165,7 +166,7 @@ const CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
   autoBackup: ['off', 'daily', 'weekly', 'monthly'],
   nightLight: ['off', 'soft', 'warm', 'evening', 'night'],
   sort: ['recent', 'title', 'author', 'series'],
-  shelf: ['reading', 'all', 'finished'],
+  shelf: ['all', 'reading', 'unread', 'finished'],
   layout: ['grid', 'list'],
   footerShows: ['book', 'chapter', 'place'],
   dailyGoal: DAILY_GOALS,

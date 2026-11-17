@@ -1,10 +1,12 @@
 <script lang="ts">
-  // Arranging the library, out of the way of the books (style.md §8.11, a
-  // sheet for filters): which collection, which tag, the order, and covers
-  // or a list. Every choice takes effect at once; Close keeps them.
+  // Filtering and arranging the library, out of the way of the books
+  // (style.md §8.11, a sheet for filters): what to show by how far along it
+  // is, covers or a list, the order, which collection and which tag. Every
+  // choice takes effect at once; Close keeps them.
   import { t } from '../../i18n/index.svelte';
   import { library } from '../../state/library.svelte';
-  import type { LibraryLayout, LibrarySort } from '../../state/settings';
+  import type { LibraryLayout, LibraryShelf, LibrarySort } from '../../state/settings';
+  import StatusMark from '../ui/StatusMark.svelte';
   import { settings } from '../../state/settings.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
@@ -28,6 +30,7 @@
     ['author', t('library.sortAuthor')],
     ['series', t('library.sortSeries')],
   ]);
+  const SHOWS: LibraryShelf[] = ['all', 'unread', 'reading', 'finished'];
   const LAYOUTS = $derived<[LibraryLayout, string][]>([
     ['grid', t('arrange.grid')],
     ['list', t('arrange.list')],
@@ -35,6 +38,17 @@
 </script>
 
 <Sheet title={t('arrange.title')} {onclose}>
+  <div class="field">
+    <span class="t-field-label" id="arrangeShow">{t('arrange.show')}</span>
+    <div class="chip-row" role="radiogroup" aria-labelledby="arrangeShow">
+      {#each SHOWS as id (id)}
+        <button type="button" class="chip show-chip" role="radio" id="show-{id}" aria-checked={v.shelf === id} onclick={() => void settings.update({ shelf: id })}>
+          {#if id !== 'all'}<span class="chip-mark"><StatusMark status={id} /></span>{/if}{t(`status.${id}`)}
+        </button>
+      {/each}
+    </div>
+  </div>
+
   <div class="field">
     <span class="t-field-label" id="arrangeLayout">{t('arrange.layout')}</span>
     <div class="segmented" role="radiogroup" aria-labelledby="arrangeLayout">
@@ -75,3 +89,24 @@
     </div>
   {/if}
 </Sheet>
+
+<style>
+  /* The same mark as on the covers, in the chip. */
+  .chip-mark {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    margin-right: var(--space-1);
+  }
+  .chip-mark :global(.status-mark) {
+    top: 0;
+    left: 0;
+    width: 18px;
+    height: 18px;
+    box-shadow: none;
+  }
+  .chip-mark :global(.status-mark svg) {
+    width: 11px;
+    height: 11px;
+  }
+</style>

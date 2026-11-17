@@ -52,7 +52,9 @@ test('restoring the archive brings back the finished shelf and tags', async ({ p
   await expect(fresh.locator('#toast')).toContainText('on 2 documents; added 2 files');
   await fresh.keyboard.press('Escape');
   await expect(fresh.locator('.doc-card')).toHaveCount(2);
-  await fresh.click('#shelf-finished');
+  await fresh.click('#arrangeLibrary');
+  await fresh.click('#show-finished');
+  await fresh.keyboard.press('Escape');
   await expect(fresh.locator('.doc-card')).toHaveCount(1);
   await expect(fresh.locator('.doc-card')).toContainText('Garden Diary');
 });

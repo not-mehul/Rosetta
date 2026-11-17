@@ -25,9 +25,16 @@ test('a grid of covers by default, a drawn one for every book without its own', 
   await expect(page.locator('.doc-tile', { hasText: 'Garden Diary' }).locator('.cover-art')).toHaveAttribute('class', tint!);
 });
 
-test('the books start high: one row of controls under the header', async ({ page }) => {
+test('the books start high: one row of controls under the header, a search field and the filter', async ({ page }) => {
   const top = (await page.locator('.doc-grid > li').first().boundingBox())!.y;
   expect(top).toBeLessThan(915 * 0.55);
+  // No shelves as tabs: the search field and the filter share one row.
+  await expect(page.locator('#shelf-reading, #shelf-all, #shelf-finished, #searchLibrary')).toHaveCount(0);
+  const field = (await page.locator('#libraryFilter').boundingBox())!;
+  const filter = (await page.locator('#arrangeLibrary').boundingBox())!;
+  expect(Math.abs(field.y + field.height / 2 - (filter.y + filter.height / 2))).toBeLessThan(4);
+  // Every cover carries a mark for how far along it is; none is opened yet.
+  await expect(page.locator('.doc-tile .status-mark[data-status=unread]')).toHaveCount(4);
   // No unread chip, no format or file size on the shelf.
   await expect(page.locator('.doc-grid')).not.toContainText('KB');
 });
@@ -43,13 +50,9 @@ test('Arrange switches to a list, and it stays a list', async ({ page }) => {
   await expect(page.locator('#arrangeLibrary')).not.toHaveClass(/is-set/);
 });
 
-test('search opens from its icon, filters, and closes clearing itself', async ({ page }) => {
-  await expect(page.locator('#libraryFilter')).toHaveCount(0);
-  await page.click('#searchLibrary');
-  await expect(page.locator('#libraryFilter')).toBeFocused();
+test('the search field filters as you type, and clearing it shows everything', async ({ page }) => {
   await page.fill('#libraryFilter', 'tide');
   await expect(page.locator('.doc-card')).toHaveCount(1);
-  await page.click('#searchLibrary');
-  await expect(page.locator('#libraryFilter')).toHaveCount(0);
+  await page.fill('#libraryFilter', '');
   await expect(page.locator('.doc-card')).toHaveCount(4);
 });

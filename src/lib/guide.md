@@ -47,7 +47,7 @@ After you jump somewhere from the contents, a search, a link or a note, **Back t
 The **Aa** button opens the reading panel over the page, so you can watch each change as you make it. Its tabs show only what fits the document:
 
 - **Text** sets the typeface, size, line spacing and width of the column, and whether lines are justified.
-- **Page** chooses scrolling, pages or Flow, and for PDFs the zoom and whether pages keep their paper.
+- **Page** chooses scrolling, pages or Flow, and for PDFs the zoom and whether pages keep their paper. A PDF can also show as **Text**: its words laid out in your type, for reading a paper on a phone, in any mode and aloud. Highlights and places carry over between the two.
 - **Light** has the theme, _Dim_, _Warmth_ and _Keep the screen on_.
 - **Listen** reads aloud, at the speed and in the voice you choose.
 

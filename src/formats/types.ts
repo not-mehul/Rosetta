@@ -49,6 +49,8 @@ export interface Section {
   text: string;
   /** The EPUB path the section came from, for resolving links. */
   path?: string;
+  /** Offsets in the text where a space is drawn but isn't in the text (a PDF's line ends): read aloud and Flow put them in. */
+  joins?: number[];
 }
 
 /** A fixed-layout page (pre-paginated EPUB): the book's own HTML and CSS at its own size. */
@@ -74,6 +76,8 @@ export interface FlowDoc {
   pictures?: boolean;
   /** Fixed-layout EPUB: one page per section, shown as the publisher laid it out. */
   fixed?: FixedPage[];
+  /** A PDF's words as text, a section a page (formats/pdftext.ts): places and marks are the PDF's. */
+  fromPdf?: boolean;
   /** Releases object URLs made for images. */
   dispose: () => void;
 }
@@ -87,6 +91,8 @@ export interface PdfDoc {
   sizes: { width: number; height: number }[];
   /** Concatenated text items per page, filled as pages are read. */
   pageText: (page: number) => Promise<string>;
+  /** A page's text items with where they sit, for the text view (formats/pdftext.ts). */
+  pageItems: (page: number) => Promise<import('./pdftext').PdfItem[]>;
   renderPage: (page: number, canvas: HTMLCanvasElement, textLayer: HTMLElement, cssWidth: number) => Promise<void>;
   /** A small picture of a page, for the page grid. */
   renderThumb: (page: number, canvas: HTMLCanvasElement, cssWidth: number) => Promise<void>;

@@ -1227,3 +1227,15 @@ mark.tts {
 [data-theme='dark'][data-oled] .glow-layer {
   display: none;
 }
+
+/* A PDF read as text (formats/pdftext.ts): the spaces between its lines and
+   words are drawn, not in the text, so places and marks match its pages. */
+.reading .pdf-eol::after,
+.reading .pdf-gap::after {
+  content: ' ';
+}
+.reading .pdf-empty::before {
+  content: attr(data-label);
+  color: var(--text-faint);
+  font-style: italic;
+}

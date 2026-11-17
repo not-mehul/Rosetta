@@ -47,3 +47,36 @@ function push(out: Sentence[], text: string, start: number, end: number) {
     a = b;
   }
 }
+
+/** Text with a space put in at each of `joins` (a PDF's line ends and word gaps), and where each of its characters came from. */
+export function withSpaces(text: string, joins: readonly number[]): { text: string; from: number[] } {
+  let out = '';
+  const from: number[] = [];
+  let j = 0;
+  for (let i = 0; i <= text.length; i++) {
+    while (j < joins.length && joins[j]! <= i) {
+      if (joins[j] === i) {
+        out += ' ';
+        from.push(i);
+      }
+      j++;
+    }
+    if (i < text.length) {
+      out += text[i];
+      from.push(i);
+    }
+  }
+  from.push(text.length);
+  return { text: out, from };
+}
+
+/**
+ * Sentences of text whose spaces are only implied at `joins`: found and
+ * spoken with the spaces in, placed by the text's own offsets.
+ */
+export function sentencesWithJoins(text: string, joins: readonly number[], from = 0, lang?: string): Sentence[] {
+  if (!joins.length) return sentences(text, from, lang);
+  const spaced = withSpaces(text, joins);
+  const start = Math.max(0, spaced.from.findIndex((o) => o >= from));
+  return sentences(spaced.text, start, lang).map((s) => ({ ...s, start: spaced.from[s.start] ?? text.length, end: spaced.from[s.end] ?? text.length }));
+}

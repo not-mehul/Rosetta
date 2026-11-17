@@ -8,7 +8,7 @@ import { FORMAT_LABEL } from '../formats/types';
 import { blockBreaks } from '../reader/cadence';
 import { excerpt } from '../reader/offsets';
 import { chapterAt, chapterTicks, endInView, FAR_CHARS, flowProgress, globalOffset, pageProgress, percent, START, type Location } from '../reader/progress';
-import { queryPattern, searchText, MAX_HITS, type Hit } from '../reader/search';
+import { queryPattern, searchJoined, MAX_HITS, type Hit } from '../reader/search';
 import { t } from '../i18n/index.svelte';
 import { duration } from '../lib/format';
 import { tick } from '../platform/device';
@@ -17,6 +17,7 @@ import { library } from './library.svelte';
 import { stats } from './stats.svelte';
 import { settings } from './settings.svelte';
 import { cleanBookSettings, isBookKey, settingsFor, type BookSettings, type Settings } from './settings';
+import { pageToHtml, pdfAsFlow } from '../formats/pdftext';
 import { ui } from './ui.svelte';
 
 export interface Jump {
@@ -135,8 +136,11 @@ class ReaderState {
     if (Object.keys(everywhere).length) await settings.update(everywhere as Partial<Settings>);
     if (!doc || !Object.keys(own).length) return;
     const reading: BookSettings = { ...doc.reading, ...(own as BookSettings) };
+    const view = (own as BookSettings).pdfView;
+    const switching = !!view && doc.format === 'pdf' && view !== settingsFor(settings.value, doc.reading).pdfView;
     this.doc = { ...doc, reading };
     await library.update(doc.id, { reading });
+    if (switching) await this.switchPdfView(view);
   }
 
   /** The open document's settings become the defaults, for every document without its own. */
@@ -251,12 +255,12 @@ class ReaderState {
     try {
       const bytes = await library.bytes(id);
       if (!bytes) throw new Error(t('error.fileMissing'));
-      const [content, marks] = await Promise.all([this.openWithPassword(bytes, doc), library.marks(id)]);
-      if (!content) {
+      const [opened, marks] = await Promise.all([this.openWithPassword(bytes, doc), library.marks(id)]);
+      if (!opened) {
         this.doc = null;
         return;
       }
-      if (content.kind === 'pdf') this.cacheText(id, content);
+      const content = await this.prepare(doc, opened);
       // Keep the words for searching the whole library (a PDF's once its pages are read).
       if (content.kind === 'flow') void import('./fulltext').then((m) => m.rememberText(id, content));
       if (this.doc?.id !== id) {
@@ -318,6 +322,52 @@ class ReaderState {
   async openAt(id: string, to: Location, flash?: Jump['flash']): Promise<void> {
     if (this.doc?.id !== id) await this.open(id);
     if (this.doc?.id === id) this.goTo(to, flash, undefined, true);
+  }
+
+  /** A PDF's text cache, and its words as a book when the document reads as text. */
+  private async prepare(doc: StoredDoc, content: OpenDoc): Promise<OpenDoc> {
+    if (content.kind !== 'pdf') return content;
+    this.cacheText(doc.id, content);
+    if (settingsFor(settings.value, doc.reading).pdfView !== 'text') return content;
+    const flow = await pdfAsFlow(content, (i) => t('reader.pageOf', { page: i + 1, pages: content.pageCount }), t('reader.noTextOnPage'));
+    if (flow) return flow;
+    // A scan: there are no words to lay out, so it stays as pages.
+    ui.notify(t('reader.pdfNoText'), 'info');
+    return content;
+  }
+
+  /**
+   * Shows the open PDF as pages or as text. The place moves with it: a PDF's
+   * place is a share of the page; the text's is a character on it.
+   */
+  private async switchPdfView(view: 'pages' | 'text'): Promise<void> {
+    const doc = this.doc;
+    const c = this.content;
+    if (!doc || !c || doc.format !== 'pdf') return;
+    const at = this.location;
+    let to = at;
+    if (c.kind === 'pdf' && view === 'text') to = { section: at.section, offset: Math.round((at.offset / 10000) * (await c.pageText(at.section)).length) };
+    else if (c.kind === 'flow' && view === 'pages') to = { section: at.section, offset: Math.min(9999, Math.round((at.offset / Math.max(1, this.lengths[at.section] ?? 1)) * 10000)) };
+    this.loading = true;
+    try {
+      const bytes = await library.bytes(doc.id);
+      const opened = bytes ? await this.openWithPassword(bytes, doc) : null;
+      if (!opened || this.doc?.id !== doc.id) return opened?.dispose();
+      const content = await this.prepare(this.doc, opened);
+      const old = this.content;
+      this.lengths = content.kind === 'flow' ? content.sections.map((s) => s.text.length) : [];
+      this.content = content;
+      old?.dispose();
+      this.location = to;
+      this.visibleEnd = 0;
+      this.section = content.kind === 'flow' ? to.section : 0;
+      this.jump = { to, key: ++this.jumpKey };
+      this.jumpedAt = performance.now();
+      this.dirty = true;
+      this.save();
+    } finally {
+      this.loading = false;
+    }
   }
 
   /** Opens the file, asking for a PDF's password when it needs one. Null when the person cancels. */
@@ -417,6 +467,8 @@ class ReaderState {
    */
   goTo(to: Location, flash?: Jump['flash'], anchor?: string, remember = false): void {
     if (!this.content) return;
+    // A PDF read as text: a mark or a search hit names its page; the words themselves are the place.
+    if (this.content.kind === 'flow' && this.content.fromPdf && flash && to.offset === 0) to = { ...to, offset: flash.start };
     if (remember) {
       const from = $state.snapshot(this.location);
       this.returnTo = this.isFar(from, to) ? from : this.returnTo;
@@ -658,13 +710,14 @@ class ReaderState {
     }
     const hits: Hit[] = [];
     if (c.kind === 'flow') {
-      c.sections.forEach((s, i) => searchText(s.text, pattern, i, hits));
+      c.sections.forEach((s, i) => searchJoined(s.text, s.joins ?? [], pattern, i, hits));
       onHits(hits, true);
       return () => undefined;
     }
     void (async () => {
       for (let i = 0; i < c.pageCount && !stopped && hits.length < MAX_HITS; i++) {
-        searchText(await c.pageText(i), pattern, i, hits);
+        const { text, joins } = pageToHtml(await c.pageItems(i));
+        searchJoined(text, joins, pattern, i, hits);
         if (i % 8 === 7) onHits([...hits], false);
       }
       if (!stopped) onHits([...hits], true);

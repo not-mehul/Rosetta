@@ -7,6 +7,7 @@ import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import { FormatError, PasswordError, type DocInfo, type PdfDoc, type TocEntry } from './types';
+import type { PdfItem } from './pdftext';
 import { t } from '../i18n/index.svelte';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
@@ -41,6 +42,13 @@ async function load(bytes: Uint8Array, password?: string): Promise<{ pdf: PDFDoc
     if (asked === NEED_PASSWORD || asked === INCORRECT_PASSWORD || (err as { name?: string })?.name === 'PasswordException') throw new PasswordError(asked === INCORRECT_PASSWORD || !!password);
     throw new FormatError(t('error.pdf', { reason: err instanceof Error ? err.message : String(err) }));
   }
+}
+
+/** A pdf.js text item as the text view needs it: its string and where it sits. */
+function toItem(raw: unknown): PdfItem {
+  const it = raw as { str?: string; transform?: number[]; width?: number; height?: number; hasEOL?: boolean };
+  const m = it.transform ?? [1, 0, 0, 1, 0, 0];
+  return { str: it.str ?? '', x: m[4] ?? 0, y: m[5] ?? 0, w: it.width ?? 0, h: it.height || Math.abs(m[3] ?? 0) || 0, eol: !!it.hasEOL };
 }
 
 const pageText = (items: unknown[]) => items.map((i) => (i as { str?: string }).str ?? '').join('');
@@ -87,6 +95,7 @@ export async function openPdf(bytes: Uint8Array, password?: string): Promise<Pdf
     }),
   );
   const texts = new Map<number, Promise<string>>();
+  const itemsByPage = new Map<number, Promise<PdfItem[]>>();
   const renders = new Map<HTMLCanvasElement, { cancel: () => void }>();
 
   return {
@@ -98,6 +107,11 @@ export async function openPdf(bytes: Uint8Array, password?: string): Promise<Pdf
       let t = texts.get(i);
       if (!t) texts.set(i, (t = page(i).then(async (p) => pageText((await p.getTextContent()).items))));
       return t;
+    },
+    pageItems: (i) => {
+      let found = itemsByPage.get(i);
+      if (!found) itemsByPage.set(i, (found = page(i).then((p) => p.getTextContent()).then(({ items }) => items.map(toItem))));
+      return found;
     },
     renderPage: async (i, canvas, textLayer, cssWidth) => {
       renders.get(canvas)?.cancel();

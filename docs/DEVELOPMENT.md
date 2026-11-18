@@ -29,7 +29,7 @@ npm run assets       # redraw the app icon and splash screens
 - **Open with.** Android registers VIEW intents for EPUB, PDF, Word, OpenDocument, RTF, FB2, CBZ, Markdown, text and HTML; iOS declares the matching document types. Both arrive through `appUrlOpen` (`src/platform/intake.ts`), and the format is read from the bytes, since Android content URIs rarely carry a file name.
 - **Links.** Both platforms register the `rosetta` URL scheme and are allowed to ask whether each sibling app (`waymark`, `bookshelf`, `ledger`, `mise`) is installed (`<queries>` on Android, `LSApplicationQueriesSchemes` on iOS).
 - **Volume keys** turn pages through a small Android plugin (`VolumeKeysPlugin.java`); iOS has no public API for them.
-- **System.** The back button closes the topmost sheet, then the reader, then the app. The system bars follow the theme, and the splash is Dusk's `--bg-grad-mid` behind the amber R.
+- **System.** The back button closes the topmost sheet, then the reader, then the app. The system bars follow the theme, and the splash is Dusk's `--bg-grad-mid` behind the amber book. The icon, the splash screens, the favicon, Android's themed-icon layer and the status-bar icon are all drawn by `npm run assets` (`scripts/build-app-icons.mjs`).
 - **Haptics.** A light tick on a choice, a success buzz on a goal, a streak or a finished book (`src/platform/device.ts`), when the Haptics setting is on.
 - Notes and backups are saved to `Documents/Rosetta/` (the app's folder in Files on iOS), or downloaded in a browser. The sync file and the automatic backups go to a folder chosen with the system picker (`src/platform/folders.ts`, `FolderPlugin.java`, `FoldersPlugin.swift`), falling back to `Documents/Rosetta/` until one is chosen.
 

@@ -12,9 +12,10 @@
   <Modal title={request.title} closeLabel={t('action.close')} onclose={() => request.resolve(null)}>
     <div class="action-list" role="group" aria-label={request.title}>
       {#each request.actions as a (a.id)}
-        <button type="button" class="action-row" class:is-danger={a.danger} data-action={a.id} onclick={() => request.resolve(a.id)}>
-          <Icon name={a.icon} />
-          <span>{a.label}</span>
+        <button type="button" class="action-row" class:is-danger={a.danger} data-action={a.id} aria-current={a.current || undefined} onclick={() => request.resolve(a.id)}>
+          {#if a.swatch}<span class="hl-dot hl-{a.swatch} action-swatch" aria-hidden="true"></span>{:else if a.icon}<Icon name={a.icon} />{/if}
+          <span class="action-label">{a.label}</span>
+          {#if a.current}<Icon name="check" />{/if}
         </button>
       {/each}
     </div>
@@ -44,6 +45,16 @@
   .action-row:hover,
   .action-row:focus-visible {
     background: var(--hover-bg);
+  }
+  .action-label {
+    flex: 1;
+    min-width: 0;
+  }
+  .action-swatch {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 2px;
   }
   .action-row :global(svg) {
     flex: none;

@@ -19,6 +19,7 @@ import { stats } from './stats.svelte';
 import { settings } from './settings.svelte';
 import { cleanBookSettings, isBookKey, settingsFor, type BookSettings, type Settings } from './settings';
 import { pageToHtml, pdfAsFlow } from '../formats/pdftext';
+import { eraseMarks, storeMark } from './marks';
 import { ui } from './ui.svelte';
 
 export interface Jump {
@@ -619,18 +620,11 @@ class ReaderState {
   private async putMark(mark: Mark): Promise<void> {
     mark = { ...mark, updatedAt: Date.now() };
     this.marks = [...this.marks.filter((m) => m.id !== mark.id), mark];
-    await db.transaction('rw', db.marks, db.tombstones, async () => {
-      await db.marks.put($state.snapshot(mark) as Mark);
-      await db.tombstones.delete(mark.id);
-    });
+    await storeMark($state.snapshot(mark) as Mark);
   }
 
-  private async deleteMarks(ids: string[]): Promise<void> {
-    const at = Date.now();
-    await db.transaction('rw', db.marks, db.tombstones, async () => {
-      await db.marks.bulkDelete(ids);
-      await db.tombstones.bulkPut(ids.map((id) => ({ id, deletedAt: at })));
-    });
+  private deleteMarks(ids: string[]): Promise<void> {
+    return eraseMarks(ids);
   }
 
   async toggleBookmark(): Promise<void> {

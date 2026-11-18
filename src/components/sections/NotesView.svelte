@@ -6,6 +6,8 @@
   import { t } from '../../i18n/index.svelte';
   import { relativeDay } from '../../lib/format';
   import { shareQuote } from '../../lib/quote';
+  import { hold } from '../../lib/hold';
+  import { bookmarkActions, bookmarkName, highlightActions, type MarkChange } from '../../lib/markActions';
   import { db, type HighlightColour, type Mark } from '../../state/db';
   import { library } from '../../state/library.svelte';
   import { reader } from '../../state/reader.svelte';
@@ -51,6 +53,12 @@
   const highlights = $derived(shown.filter((m) => m.kind === 'highlight').length);
   const bookmarks = $derived(shown.length - highlights);
 
+  /** A hold's change, kept in this list's own copy of the marks. */
+  function follow(c: MarkChange) {
+    if ('saved' in c) marks = [...marks.filter((m) => m.id !== c.saved.id), c.saved];
+    else marks = marks.filter((m) => m.id !== c.removed.id);
+  }
+
   async function go(m: Mark) {
     const doc = library.get(m.docId);
     if (!doc) return;
@@ -90,7 +98,7 @@
                 {@const doc = library.get(m.docId)}
                 <li class="row-with-action">
                   {#if m.kind === 'highlight'}
-                    <button type="button" class="row highlight-row" data-mark={m.id} onclick={() => void go(m)}>
+                    <button type="button" class="row highlight-row" data-mark={m.id} use:hold={() => void highlightActions(m, { onchange: follow })} onclick={() => void go(m)}>
                       <span class="hl-bar hl-{m.colour}" aria-hidden="true"></span>
                       <span class="row-main">
                         <span class="row-quote ellipsis-3">{m.text}</span>
@@ -100,10 +108,10 @@
                     </button>
                     {#if doc}<button type="button" class="btn-icon" aria-label={t('mark.share')} onclick={() => void shareQuote(m, doc)}><Icon name="share-2" /></button>{/if}
                   {:else}
-                    <button type="button" class="row bookmark-row" data-mark={m.id} onclick={() => void go(m)}>
+                    <button type="button" class="row bookmark-row" data-mark={m.id} use:hold={() => void bookmarkActions(m, { onchange: follow })} onclick={() => void go(m)}>
                       <span class="bookmark-icon" aria-hidden="true"><Icon name="bookmark" /></span>
                       <span class="row-main">
-                        <span class="row-title">{m.where || t('notes.bookmark')}</span>
+                        <span class="row-title">{bookmarkName(m)}</span>
                         {#if m.text}<span class="row-sub ellipsis-2">{m.text}</span>{/if}
                         <span class="t-data-small faint">{relativeDay(m.createdAt)}</span>
                       </span>

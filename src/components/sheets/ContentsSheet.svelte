@@ -1,6 +1,8 @@
 <script lang="ts">
   // Contents, bookmarks and highlights, each a list that takes you there.
   import { t } from '../../i18n/index.svelte';
+  import { hold } from '../../lib/hold';
+  import { bookmarkActions, bookmarkName, highlightActions } from '../../lib/markActions';
   import { notesMarkdown, slug } from '../../lib/export';
   import { relativeDay } from '../../lib/format';
   import { saveFile } from '../../platform/output';
@@ -96,9 +98,9 @@
         <ul class="row-list">
           {#each reader.bookmarks as b (b.id)}
             <li class="row-with-action">
-              <button type="button" class="row" onclick={() => go(b.section, content.kind === 'pdf' ? 0 : b.start)}>
+              <button type="button" class="row" data-mark={b.id} use:hold={() => void bookmarkActions(b)} onclick={() => go(b.section, content.kind === 'pdf' ? 0 : b.start)}>
                 <span class="row-main">
-                  <span class="row-title">{b.where}</span>
+                  <span class="row-title">{bookmarkName(b)}</span>
                   {#if b.text}<span class="row-sub ellipsis-2">{b.text}</span>{/if}
                 </span>
                 <span class="t-data-small faint">{relativeDay(b.createdAt)}</span>
@@ -114,7 +116,7 @@
       <ul class="row-list">
         {#each reader.highlights as h (h.id)}
           <li class="row-with-action">
-            <button type="button" class="row highlight-row" onclick={() => go(h.section, content.kind === 'pdf' ? 0 : h.start, undefined, { start: h.start, end: h.end })}>
+            <button type="button" class="row highlight-row" data-mark={h.id} use:hold={() => void highlightActions(h, { edit: () => (editing = h.id) })} onclick={() => go(h.section, content.kind === 'pdf' ? 0 : h.start, undefined, { start: h.start, end: h.end })}>
               <span class="hl-bar hl-{h.colour}" aria-hidden="true"></span>
               <span class="row-main">
                 <span class="row-quote ellipsis-3">{h.text}</span>

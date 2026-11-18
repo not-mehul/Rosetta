@@ -117,6 +117,24 @@ class LibraryState {
     return [...count].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([t]) => t);
   }
 
+  /** Renames a tag on every document that has it; one already called that absorbs it. */
+  async renameTag(from: string, to: string): Promise<number> {
+    const name = parseTags(to)[0];
+    if (!name || name === from) return 0;
+    const docs = this.items.filter((d) => d.tags.includes(from));
+    for (const d of docs) await this.update(d.id, { tags: [...new Set(d.tags.map((x) => (x === from ? name : x)))] });
+    return docs.length;
+  }
+
+  /** Takes a tag off every document; returns a function that puts it back. */
+  async deleteTag(tag: string): Promise<() => Promise<void>> {
+    const docs = this.items.filter((d) => d.tags.includes(tag)).map((d) => ({ id: d.id, tags: d.tags }));
+    for (const d of docs) await this.update(d.id, { tags: d.tags.filter((x) => x !== tag) });
+    return async () => {
+      for (const d of docs) await this.update(d.id, { tags: d.tags });
+    };
+  }
+
   // ─── Collections ───────────────────────────────────────────
 
   async createCollection(name: string): Promise<Collection> {

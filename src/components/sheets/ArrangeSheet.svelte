@@ -6,7 +6,7 @@
   // tag or collection is tapped again to let it go; a collection held offers
   // Rename and Delete. Every choice takes effect at once; Close keeps them.
   import { t } from '../../i18n/index.svelte';
-  import { collectionActions } from '../../lib/collections';
+  import { collectionActions, tagActions } from '../../lib/collections';
   import { hold } from '../../lib/hold';
   import { library } from '../../state/library.svelte';
   import type { LibraryLayout, LibraryShelf, LibrarySort } from '../../state/settings';
@@ -34,6 +34,11 @@
     ['author', t('library.sortAuthor')],
     ['series', t('library.sortSeries')],
   ]);
+  /** A tag held: renamed or deleted everywhere, and the filter follows it. */
+  async function holdTag(tag: string) {
+    const now = await tagActions(tag);
+    if (now !== null && filter.trim() === `#${tag}`) onfilter(now ? `#${now}` : '');
+  }
   const SHOWS: Exclude<LibraryShelf, 'all'>[] = ['unread', 'reading', 'finished'];
   const LAYOUTS = $derived<[LibraryLayout, string][]>([
     ['grid', t('arrange.grid')],
@@ -76,7 +81,7 @@
       <span class="t-field-label" id="arrangeTags">{t('library.tags')}</span>
       <div class="chip-row" aria-labelledby="arrangeTags">
         {#each tags as tag (tag)}
-          <button type="button" class="chip" aria-pressed={filter.trim() === `#${tag}`} onclick={() => onfilter(filter.trim() === `#${tag}` ? '' : `#${tag}`)}>#{tag}</button>
+          <button type="button" class="chip tag-chip" aria-pressed={filter.trim() === `#${tag}`} data-tag={tag} use:hold={() => void holdTag(tag)} onclick={() => onfilter(filter.trim() === `#${tag}` ? '' : `#${tag}`)}>#{tag}</button>
         {/each}
       </div>
     </div>
@@ -98,7 +103,7 @@
       {/each}
       <button type="button" class="chip" id="addCollection" onclick={onnewcollection}><Icon name="plus" />{t('collections.new')}</button>
     </div>
-    {#if library.collections.length}<p class="field-hint">{t('collections.holdHint')}</p>{/if}
+    {#if library.collections.length || tags.length}<p class="field-hint">{t(tags.length ? 'collections.holdBothHint' : 'collections.holdHint')}</p>{/if}
   </div>
 </Sheet>
 

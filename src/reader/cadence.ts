@@ -3,6 +3,7 @@
 // Each keeps its place as offsets into the section's text, like every other
 // place in the reader, so the resume point, contents and search all work.
 
+import { shown } from './notes';
 import { sentencesWithJoins, withSpaces } from './sentences';
 
 export interface Beat {
@@ -33,7 +34,7 @@ export function blockBreaks(html: string): number[] {
   return out;
 }
 
-/** The beats of a section, from its HTML and its text (the HTML's textContent). */
+/** The beats of a section, from its HTML and its text (the HTML's textContent, its note numbers hidden by hideNoteRefs). */
 export function beats(html: string, text: string, lang?: string, joins: readonly number[] = []): Beat[] {
   const tpl = document.createElement('template');
   tpl.innerHTML = html;
@@ -60,10 +61,13 @@ export function beats(html: string, text: string, lang?: string, joins: readonly
     if (heading) {
       const lead = piece.length - piece.trimStart().length;
       const trimmed = piece.trim();
-      out.push({ start: run.start + lead, end: run.start + lead + trimmed.length, text: withSpaces(piece, here).text.trim().replace(/\s+/g, ' '), heading });
+      out.push({ start: run.start + lead, end: run.start + lead + trimmed.length, text: shown(withSpaces(piece, here).text).trim().replace(/\s+/g, ' '), heading });
       continue;
     }
-    for (const s of sentencesWithJoins(piece, here, 0, lang)) out.push({ start: run.start + s.start, end: run.start + s.end, text: s.text, heading: false });
+    for (const s of sentencesWithJoins(piece, here, 0, lang)) {
+      const words = shown(s.text);
+      if (words.trim()) out.push({ start: run.start + s.start, end: run.start + s.end, text: words, heading: false });
+    }
   }
   return out;
 }

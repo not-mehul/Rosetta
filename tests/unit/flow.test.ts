@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addAnchors, anchorLength, anchorRuns } from '../../src/reader/anchors';
-import { beatAt, beats } from '../../src/reader/cadence';
+import { beatAt, beats, blockBreaks } from '../../src/reader/cadence';
 import { mergeSettings } from '../../src/state/settings';
 
 describe('visual anchors', () => {
@@ -62,12 +62,37 @@ describe('audit fixes', () => {
     const text = 'Every ship.Paragraph one.';
     const at = text.indexOf('Paragraph');
     const e = excerpt(text, at, at + 9, 48, blockBreaks(html));
-    expect(e.before + e.match + e.after).toBe('Every ship. · Paragraph one.');
+    expect(e.before + e.match + e.after).toBe('Every ship.\nParagraph one.');
   });
 
   it('gives large sizes in GB', async () => {
     const { fileSize } = await import('../../src/lib/format');
     expect(fileSize(3072 * 1024 * 1024)).toBe('3.0 GB');
     expect(fileSize(5 * 1024 * 1024)).toBe('5.0 MB');
+  });
+});
+
+describe('note numbers', () => {
+  const html = '<p>The keeper kept a log<a epub:type="noteref" href="#n1">1</a> of every ship.</p><p>Paragraph<sup><a href="#n2">2</a></sup> one.</p>';
+  const text = 'The keeper kept a log1 of every ship.Paragraph2 one.';
+
+  it('blank the note numbers in the running text, keeping every offset', async () => {
+    const { hideNoteRefs, shown } = await import('../../src/reader/notes');
+    const hidden = hideNoteRefs(html, text);
+    expect(hidden.length).toBe(text.length);
+    expect(shown(hidden)).toBe('The keeper kept a log of every ship.Paragraph one.');
+    // A link that isn't a note keeps its words.
+    expect(hideNoteRefs('<p>See <a href="#c2">chapter 2</a>.</p>', 'See chapter 2.')).toBe('See chapter 2.');
+  });
+
+  it('are left out of Flow and search excerpts', async () => {
+    const { hideNoteRefs } = await import('../../src/reader/notes');
+    const { beats } = await import('../../src/reader/cadence');
+    const { excerpt } = await import('../../src/reader/offsets');
+    const hidden = hideNoteRefs(html, text);
+    expect(beats(html, hidden).map((b) => b.text)).toEqual(['The keeper kept a log of every ship.', 'Paragraph one.']);
+    const at = text.indexOf('every');
+    const e = excerpt(hidden, at, at + 5, 48, blockBreaks(html));
+    expect(e.before + e.match + e.after).toBe('The keeper kept a log of every ship.\nParagraph one.');
   });
 });

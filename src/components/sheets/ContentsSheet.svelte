@@ -11,7 +11,7 @@
   import EmptyState from '../ui/EmptyState.svelte';
   import Icon from '../ui/Icon.svelte';
   import Sheet from '../ui/Sheet.svelte';
-  import { TabRail } from 'dusk-dawn';
+  import { IconTabs } from 'dusk-dawn';
 
   let { onclose }: { onclose: () => void } = $props();
   type View = 'contents' | 'pages' | 'bookmarks' | 'highlights';
@@ -20,12 +20,20 @@
   let view = $state<View>(reader.content?.toc.length ? 'contents' : reader.content?.kind === 'pdf' ? 'pages' : 'bookmarks');
   let editing = $state<string | null>(null);
 
+  // Icon tabs sharing the row evenly, as in Settings and Aa; only the open one shows its word.
   const tabs = $derived([
-    { id: 'contents' as const, label: t('contents.contents'), domId: 'tab-contents', controls: 'contents-panel' },
-    ...(content.kind === 'pdf' ? [{ id: 'pages' as const, label: t('contents.pages'), domId: 'tab-pages', controls: 'contents-panel' }] : []),
-    { id: 'bookmarks' as const, label: t('contents.bookmarks'), badge: reader.bookmarks.length || undefined, domId: 'tab-bookmarks', controls: 'contents-panel' },
-    { id: 'highlights' as const, label: t('contents.highlights'), badge: reader.highlights.length || undefined, domId: 'tab-highlights', controls: 'contents-panel' },
+    { id: 'contents' as const, label: t('contents.contents'), icon: contentsIcon, domId: 'tab-contents', controls: 'contents-panel' },
+    ...(content.kind === 'pdf' ? [{ id: 'pages' as const, label: t('contents.pages'), icon: pagesIcon, domId: 'tab-pages', controls: 'contents-panel' }] : []),
+    { id: 'bookmarks' as const, label: t('contents.bookmarks'), icon: bookmarksIcon, badge: reader.bookmarks.length || undefined, domId: 'tab-bookmarks', controls: 'contents-panel' },
+    { id: 'highlights' as const, label: t('contents.highlights'), icon: highlightsIcon, badge: reader.highlights.length || undefined, domId: 'tab-highlights', controls: 'contents-panel' },
   ]);
+
+  /** Which side a list slides in from: the side its tab is on. */
+  let from = $state(0);
+  function choose(id: View) {
+    from = Math.sign(tabs.findIndex((x) => x.id === id) - tabs.findIndex((x) => x.id === view));
+    view = id;
+  }
 
   /** The contents entry the reader is in: the last one at or before the place. */
   const currentEntry = $derived.by(() => {
@@ -55,9 +63,17 @@
   }
 </script>
 
+{#snippet contentsIcon()}<Icon name="list" />{/snippet}
+{#snippet pagesIcon()}<Icon name="layout-grid" />{/snippet}
+{#snippet bookmarksIcon()}<Icon name="bookmark" />{/snippet}
+{#snippet highlightsIcon()}<Icon name="highlighter" />{/snippet}
+
 <Sheet title={reader.doc?.title ?? t('contents.contents')} {onclose} wide={view === 'pages'} tall>
-  <TabRail {tabs} value={view} label={t('contents.lists')} onselect={(id) => (view = id)} />
-  <div id="contents-panel" role="tabpanel" aria-labelledby="tab-{view}">
+  <div class="sheet-icon-tabs contents-tabs">
+    <IconTabs {tabs} value={view} label={t('contents.lists')} onselect={choose} />
+  </div>
+  {#key view}
+  <div class="axis-stage axis-small" style:--from={from} id="contents-panel" role="tabpanel" aria-labelledby="tab-{view}">
     {#if view === 'contents'}
       {#if content.toc.length}
         <ul class="row-list toc-list dd-stagger" {@attach showCurrent}>
@@ -117,6 +133,7 @@
       <EmptyState icon="highlighter" title={t('contents.noHighlights')} text={t('contents.noHighlightsText')} />
     {/if}
   </div>
+  {/key}
 </Sheet>
 
 {#if editing}
@@ -124,6 +141,9 @@
 {/if}
 
 <style>
+  .contents-tabs {
+    margin-bottom: var(--space-3);
+  }
   .toc-row {
     padding-left: calc(var(--space-2) + var(--depth, 0) * 1.25rem);
   }

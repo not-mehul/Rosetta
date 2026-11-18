@@ -108,7 +108,9 @@
     margin: 0 0 var(--space-2);
     min-width: 0;
   }
+  /* Where one paragraph or heading ends and the next begins, a new line. */
   .search-excerpt {
+    white-space: pre-line;
     color: var(--text-body);
   }
 </style>

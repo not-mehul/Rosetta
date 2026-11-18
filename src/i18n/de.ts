@@ -560,6 +560,9 @@ const de: Messages = {
   'notes.bookmark': 'Lesezeichen',
   'notes.bookmarkCount': { one: '{count} Lesezeichen', other: '{count} Lesezeichen' },
   'mark.remove': 'Markierung entfernen',
+  'stats.emptyTitle': 'Noch nichts gelesen',
+  'stats.emptyText': 'Öffne ein Buch, und hier sammeln sich Minuten, Tage und Serien.',
+  'stats.streakMet': { one: '{count} Tag Lesen in Folge.', other: '{count} Tage Lesen in Folge.' },
 };
 
 export default de;

@@ -31,3 +31,45 @@ export function noteHtml(target: Element): string {
   for (const n of copy.querySelectorAll('[id]')) n.removeAttribute('id');
   return copy.innerHTML.trim() || copy.outerHTML;
 }
+
+// ─── Note numbers out of the running text ──────────────────────
+
+/** Stands in for a note reference's characters, so offsets stay as they are. */
+export const NOTE_GAP = '\u200B';
+const GAPS = /\u200B/g;
+
+/** A note reference by its look alone: marked as one, or a number (or *, †) linked in a superscript. */
+function looksLikeNoteRef(a: Element): boolean {
+  const type = `${a.getAttribute('epub:type') ?? ''} ${a.getAttribute('role') ?? ''}`;
+  if (/noteref|doc-noteref/i.test(type)) return true;
+  return NOTE_TEXT.test((a.textContent ?? '').trim()) && (!!a.closest('sup') || !!a.querySelector('sup'));
+}
+
+/**
+ * The section's text with its note numbers blanked (each character a
+ * zero-width space), so "kept a log¹ of every ship" reads "kept a log of
+ * every ship" in Flow, aloud, in search results and in a highlight's words,
+ * while every offset still points at the same place on the page.
+ */
+export function hideNoteRefs(html: string, text: string): string {
+  if (!/<a\b/i.test(html)) return text;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const walker = document.createTreeWalker(tpl.content, NodeFilter.SHOW_TEXT);
+  const out = text.split('');
+  let at = 0;
+  let any = false;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const len = n.nodeValue?.length ?? 0;
+    const link = n.parentElement?.closest('a');
+    if (link && looksLikeNoteRef(link)) {
+      for (let i = at; i < at + len && i < out.length; i++) out[i] = NOTE_GAP;
+      any = true;
+    }
+    at += len;
+  }
+  return any ? out.join('') : text;
+}
+
+/** Words to show or speak: without the blanks left by note numbers. */
+export const shown = (s: string) => s.replace(GAPS, '');

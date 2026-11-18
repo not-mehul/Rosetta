@@ -177,6 +177,9 @@
     if (!root) return;
     unpaint(root);
     paint(root, paints);
+    // A highlight just made is swept on (motion.css, marker-sweep).
+    const fresh = untrack(() => reader.freshMark);
+    if (fresh) for (const m of root.querySelectorAll(`mark[data-mark="${fresh}"]`)) m.classList.add('is-fresh');
     // Painting splits text nodes; the index points at nodes.
     if (paged) text = new TextIndex(root);
     // The curl's copy shows marks too.

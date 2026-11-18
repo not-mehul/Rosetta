@@ -3,7 +3,7 @@
   // Settings at the top right, and the three sections as icon tabs under
   // them (style.md §8.5.1): Library, Notes and Stats.
   import { IconTabs, konami, play, secretTaps } from 'dusk-dawn';
-  import type { Snippet } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
   import { t, type MessageKey } from '../i18n/index.svelte';
   import { hatch } from '../lib/delight';
   import { ui, type Section } from '../state/ui.svelte';
@@ -25,6 +25,17 @@
     { id: 'stats', label: 'sections.stats', icon: statsIcon },
   ];
   const tabs = $derived(TABS.map((tab) => ({ id: tab.id, label: t(tab.label), icon: tab.icon, domId: `tab-${tab.id}`, controls: `view-${tab.id}` })));
+
+  // A section slides in from the side of the tab it was reached from, and
+  // the one before fades (style.md §11: motion shows where something went).
+  const ORDER = TABS.map((tab) => tab.id);
+  let from = $state(0);
+  let last = untrack(() => ui.section);
+  $effect.pre(() => {
+    const now = ui.section;
+    from = Math.sign(ORDER.indexOf(now) - ORDER.indexOf(last));
+    last = now;
+  });
 
   // Easter eggs (style.md §11.3). The Konami code reads the name off the
   // stone in Greek and Latin before coming home; seven taps on the name dust
@@ -68,13 +79,17 @@
     <IconTabs {tabs} value={ui.section} label={t('sections.label')} onselect={(id) => ui.go(id)} />
   </nav>
 
-  {#if ui.section === 'library'}
-    <LibraryView />
-  {:else if ui.section === 'notes'}
-    <NotesView />
-  {:else}
-    <StatsView />
-  {/if}
+  {#key ui.section}
+    <div class="axis-stage" style:--from={from}>
+      {#if ui.section === 'library'}
+        <LibraryView />
+      {:else if ui.section === 'notes'}
+        <NotesView />
+      {:else}
+        <StatsView />
+      {/if}
+    </div>
+  {/key}
 </div>
 
 <style>

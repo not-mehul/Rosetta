@@ -163,14 +163,16 @@ export function excerpt(text: string, start: number, end: number, around = 48, b
     const space = text.slice(end, to).search(/\s\S*$/);
     if (space >= 0) to = end + space;
   }
-  const squash = (s: string) => s.replace(/\s+/g, ' ');
-  /** The text from a to b, with a mid-dot where one block (a paragraph, a heading) ends and the next begins, so a heading doesn't read into the paragraph under it. */
+  // Note numbers hidden by hideNoteRefs go; where one block (a paragraph, a
+  // heading) ends and the next begins, a new line, so a heading doesn't read
+  // into the paragraph under it (shown with white-space: pre-line).
+  const squash = (s: string) => s.replace(/\u200B/g, '').replace(/\s+/g, ' ').replace(/ ?\uE000 ?/g, '\n');
   const cut = (a: number, b: number) => {
     let out = '';
     let at = a;
     for (const k of breaks) {
       if (k <= a || k > b) continue;
-      out += text.slice(at, k) + ' · ';
+      out += text.slice(at, k) + '\uE000';
       at = k;
     }
     return out + text.slice(at, b);

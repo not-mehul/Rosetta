@@ -3,7 +3,7 @@
 // where the platform can't do it.
 
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { isNative, platform } from './native';
 
@@ -51,6 +51,16 @@ export async function keepAwake(on: boolean): Promise<void> {
 export function tick(): void {
   if (isNative) void Haptics.impact({ style: ImpactStyle.Light }).catch(() => undefined);
   else (navigator as Navigator & { vibrate?: (ms: number) => boolean }).vibrate?.(8);
+}
+
+/** The lightest tick there is: a tab, a switch or a choice changing (phones only). */
+export function selectTick(): void {
+  if (isNative) void Haptics.selectionChanged().catch(() => undefined);
+}
+
+/** Something accomplished: a book finished, a goal met (phones only). */
+export function successTick(): void {
+  if (isNative) void Haptics.notification({ type: NotificationType.Success }).catch(() => undefined);
 }
 
 // ─── Volume keys (Android) ───────────────────────────────────

@@ -95,6 +95,7 @@
 <style>
   /* The three states share one row evenly, the mark beside the word. */
   .show-row {
+    container: show / inline-size;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-2);
@@ -105,10 +106,18 @@
     min-width: 0;
     padding: var(--space-1) var(--space-2);
     text-align: center;
+    white-space: normal;
   }
   .show-word {
     min-width: 0;
-    overflow-wrap: anywhere;
+  }
+  /* Large text: the mark over its word, the word on as many lines as it needs, never cut. */
+  @container show (max-width: 21rem) {
+    .show-chip {
+      flex-direction: column;
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-1);
+    }
   }
   /* A collection not chosen is dotted; chosen, it fills (the chip's own pressed state). */
   .collection-chip[aria-pressed='false'] {

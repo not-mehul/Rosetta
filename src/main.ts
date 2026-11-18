@@ -25,6 +25,10 @@ import { followForWidget } from './state/widget.svelte';
 import './styles/app.css';
 import './styles/motion.css';
 import { startIconMotion } from './lib/iconMotion';
+import { startFitting } from './lib/fit';
+import { startFeel } from './lib/feel';
+import { cheer } from './lib/delight';
+import { successTick } from './platform/device';
 
 async function start(): Promise<void> {
   await Promise.all([settings.load(), library.load(), stats.load()]).catch((err) => console.error('Loading saved data failed:', err));
@@ -43,6 +47,10 @@ async function start(): Promise<void> {
   mount(App, { target: document.getElementById('app')! });
   // Icons answer a tap with their own small motion (src/styles/motion.css).
   startIconMotion();
+  // A light tick as tabs, switches and choices change (src/lib/feel.ts).
+  startFeel();
+  // Tabs and segmented controls that adjust to large text (src/lib/fit.ts).
+  startFitting();
 
   // Back into the document that was open, at the same place.
   const last = settings.value.lastDocId;
@@ -57,9 +65,18 @@ async function start(): Promise<void> {
   // The Continue Reading widget follows the library: the book last opened and not finished.
   followForWidget();
 
-  // Today's goal, met while reading: said once, quietly.
+  // Today's goal, met while reading: said once, with a small burst from the
+  // place it shows (the page's footer) and a tick to feel.
   stats.onGoal = (minutes) => {
     if (!ui.toast?.action) ui.notify(t('stats.goalMet', { count: minutes }), 'success');
+    if (settings.value.haptics) successTick();
+    cheer(document.querySelector('.reader-foot, #goalToday'), { count: 28, spread: 0.45 });
+  };
+  // A week, a month, a hundred days, a year of reading in a row.
+  stats.onStreak = (days) => {
+    ui.notify(t('stats.streakMet', { count: days }), 'celebrate');
+    if (settings.value.haptics) successTick();
+    cheer(null, { count: days >= 100 ? 90 : 50 });
   };
 
   ui.onBack = () => {

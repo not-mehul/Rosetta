@@ -15,6 +15,14 @@ const MAX_CHARS_PER_STEP = 4000;
 
 export { calendarWeeks, dayKey, longestRun, readingLevel, type CalendarDay } from '../lib/calendar';
 
+/** Streaks worth marking: a week, a month, a hundred days, a year. */
+export const STREAK_MILESTONES = [7, 30, 100, 365] as const;
+
+/** The milestone a streak just reached in going from `was` to `now`, if any. */
+export function streakMilestone(was: number, now: number): number | null {
+  return STREAK_MILESTONES.find((m) => was < m && now >= m) ?? null;
+}
+
 export interface Summary {
   todayMs: number;
   /** The last seven days, oldest first. */
@@ -119,6 +127,11 @@ class StatsState {
   todayMs = $state(0);
   /** Called once when today's reading reaches the daily goal (main.ts shows a toast). */
   onGoal: ((minutes: number) => void) | null = null;
+  /** Days in a row with some reading, as last loaded. */
+  streak = $state(0);
+  /** Called once when the streak reaches a milestone while reading (main.ts celebrates it). */
+  onStreak: ((days: number) => void) | null = null;
+  private loaded = false;
 
   private docId: string | null = null;
   private last = 0;
@@ -138,6 +151,14 @@ class StatsState {
     // Only a crossing made while reading: not on start, and not when the goal is moved below today's time.
     const goal = settings.value.dailyGoal;
     if (goal && before > 0 && before < goal * 60_000 && summary.todayMs >= goal * 60_000) this.onGoal?.(goal);
+    // A milestone crossed while reading, not on opening the app with it already passed.
+    const was = this.streak;
+    this.streak = summary.streak;
+    if (this.loaded) {
+      const reached = streakMilestone(was, summary.streak);
+      if (reached) this.onStreak?.(reached);
+    }
+    this.loaded = true;
   }
 
   begin(docId: string): void {

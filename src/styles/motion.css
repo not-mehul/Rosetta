@@ -783,6 +783,18 @@ svg[data-icon] {
    wait. Under reduced motion none of it plays. */
 
 @media (prefers-reduced-motion: no-preference) {
+  /* A hold sinks a little as it builds, and springs back if let go. */
+  [data-hold] {
+    transition:
+      transform var(--spring-spatial-fast-dur) var(--spring-spatial-fast),
+      background-color var(--spring-effects-default-dur) var(--spring-effects-default),
+      border-color var(--spring-effects-default-dur) var(--spring-effects-default);
+  }
+  [data-hold].is-holding {
+    transform: scale(0.95);
+    transition: transform 500ms var(--ease-standard);
+  }
+
   /* Tabs, shared axis: Home's sections and a sheet's tabs slide in a little
      from the side their tab is on (--from is -1, 0 or 1), fading up as they
      come. Home moves its panel only, so the add button keeps its place. */

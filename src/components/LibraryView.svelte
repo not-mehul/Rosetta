@@ -16,6 +16,7 @@
   import type { LibraryShelf } from '../state/settings';
   import { ui } from '../state/ui.svelte';
   import { addGuide } from '../lib/guide';
+  import { deleteCollection, renameCollection } from '../lib/collections';
   import DocCard from './DocCard.svelte';
   import DocTile from './DocTile.svelte';
   import ArrangeSheet from './sheets/ArrangeSheet.svelte';
@@ -63,22 +64,6 @@
     if (!name?.trim()) return;
     const c = await library.createCollection(name);
     await settings.update({ collection: c.id });
-  }
-
-  async function renameCollection() {
-    const c = library.collections.find((x) => x.id === collection);
-    if (!c) return;
-    const name = await ui.prompt({ title: t('collections.rename'), message: '', label: t('collections.name'), action: t('action.save'), value: c.name });
-    if (name?.trim()) await library.renameCollection(c.id, name);
-  }
-
-  async function deleteCollection() {
-    const c = library.collections.find((x) => x.id === collection);
-    if (!c) return;
-    const ok = await ui.confirm({ title: t('collections.deleteTitle', { name: c.name }), message: t('collections.deleteMessage'), action: t('collections.delete'), danger: true });
-    if (!ok) return;
-    await settings.update({ collection: '' });
-    await library.deleteCollection(c.id);
   }
 
   const EMPTY = $derived<Record<LibraryShelf, string>>({
@@ -158,8 +143,8 @@
         <div class="collection-bar">
           <span class="t-data-small dim">{t('arrange.in')}</span>
           <span class="t-card-title collection-name ellipsis">{collectionName}</span>
-          <button type="button" class="btn-icon" aria-label={t('collections.rename')} onclick={() => void renameCollection()}><Icon name="pencil" /></button>
-          <button type="button" class="btn-icon" aria-label={t('collections.delete')} onclick={() => void deleteCollection()}><Icon name="trash-2" /></button>
+          <button type="button" class="btn-icon" aria-label={t('collections.rename')} onclick={() => void renameCollection(collection)}><Icon name="pencil" /></button>
+          <button type="button" class="btn-icon" aria-label={t('collections.delete')} onclick={() => void deleteCollection(collection)}><Icon name="trash-2" /></button>
           <button type="button" class="btn-icon" aria-label={t('arrange.showEverything')} onclick={() => void settings.update({ collection: '' })}><Icon name="x" /></button>
         </div>
       {/if}

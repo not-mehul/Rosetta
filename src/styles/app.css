@@ -1336,3 +1336,13 @@ mark.tts {
 .t-tagline {
   text-wrap: pretty;
 }
+
+/* Something that can be held (src/lib/hold.ts): no text selection or
+   callout while held, and a wash as the hold builds. */
+[data-hold] {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+[data-hold].is-holding {
+  background: var(--hover-bg);
+}

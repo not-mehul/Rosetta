@@ -73,3 +73,50 @@ test('the filter: three states in one row, toggled; collections at the bottom', 
   const fields = page.locator('dialog[open] .field > .t-field-label');
   await expect(fields.last()).toHaveText('Collections');
 });
+
+test('holding a collection offers Rename and Delete; a tap still chooses it', async ({ page }) => {
+  await page.click('#arrangeLibrary');
+  await page.click('#addCollection');
+  await page.fill('#promptInput', 'Sea');
+  await page.click('#promptAction');
+  const chip = page.locator('.collection-chip').first();
+  await expect(chip).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('dialog[open] .field-hint', { hasText: 'Hold a collection' })).toBeVisible();
+
+  // Hold: the actions open, and the hold doesn't also let the collection go.
+  const hold = async () => {
+    const box = (await chip.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await expect(chip).toHaveClass(/is-holding/);
+    await page.waitForTimeout(650);
+    await page.mouse.up();
+  };
+  await hold();
+  await expect(page.locator('.action-row')).toHaveText(['Rename', 'Delete']);
+  await expect(chip).toHaveAttribute('aria-pressed', 'true');
+  await page.click('[data-action=rename]');
+  await expect(page.locator('#promptInput')).toHaveValue('Sea');
+  await page.fill('#promptInput', 'Coast');
+  await page.click('#promptAction');
+  await expect(page.locator('.collection-chip')).toHaveText(['Coast']);
+
+  // A right click (or the menu key) opens the same, without touch.
+  await page.locator('.collection-chip').click({ button: 'right' });
+  await expect(page.locator('.action-row')).toHaveCount(2);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.action-row')).toHaveCount(0);
+
+  // A quick tap is still a tap.
+  await page.locator('.collection-chip').click();
+  await expect(page.locator('.collection-chip')).toHaveAttribute('aria-pressed', 'false');
+
+  // Delete asks first; the books stay.
+  await hold();
+  await page.click('[data-action=delete]');
+  await expect(page.locator('#confirmAction')).toHaveText('Delete collection');
+  await page.click('#confirmAction');
+  await expect(page.locator('.collection-chip')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.doc-card')).toHaveCount(4);
+});

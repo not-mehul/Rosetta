@@ -3,9 +3,11 @@
   // (style.md §8.11, a sheet for filters): one of the three states (not
   // started, reading, finished; none chosen shows everything), covers or a
   // list, the order, a tag, and at the bottom a collection. A chosen state,
-  // tag or collection is tapped again to let it go. Every choice takes effect
-  // at once; Close keeps them.
+  // tag or collection is tapped again to let it go; a collection held offers
+  // Rename and Delete. Every choice takes effect at once; Close keeps them.
   import { t } from '../../i18n/index.svelte';
+  import { collectionActions } from '../../lib/collections';
+  import { hold } from '../../lib/hold';
   import { library } from '../../state/library.svelte';
   import type { LibraryLayout, LibraryShelf, LibrarySort } from '../../state/settings';
   import StatusMark from '../ui/StatusMark.svelte';
@@ -85,10 +87,18 @@
     <span class="t-field-label" id="arrangeCollection">{t('collections.title')}</span>
     <div class="chip-row" aria-labelledby="arrangeCollection">
       {#each library.collections as c (c.id)}
-        <button type="button" class="chip collection-chip" aria-pressed={collection === c.id} data-collection={c.name} onclick={() => void settings.update({ collection: collection === c.id ? '' : c.id })}>{c.name}</button>
+        <button
+          type="button"
+          class="chip collection-chip"
+          aria-pressed={collection === c.id}
+          aria-keyshortcuts="Shift+F10"
+          data-collection={c.name}
+          use:hold={() => void collectionActions(c.id)}
+          onclick={() => void settings.update({ collection: collection === c.id ? '' : c.id })}>{c.name}</button>
       {/each}
       <button type="button" class="chip" id="addCollection" onclick={onnewcollection}><Icon name="plus" />{t('collections.new')}</button>
     </div>
+    {#if library.collections.length}<p class="field-hint">{t('collections.holdHint')}</p>{/if}
   </div>
 </Sheet>
 

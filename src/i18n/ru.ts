@@ -508,6 +508,8 @@ const ru: Messages = {
   'stats.emptyTitle': 'Пока ничего не прочитано',
   'stats.emptyText': 'Откройте книгу — здесь соберутся минуты, дни и серии.',
   'stats.streakMet': { one: '{count} день чтения подряд.', few: '{count} дня чтения подряд.', many: '{count} дней чтения подряд.', other: '{count} дня чтения подряд.' },
+  'collections.holdHint': 'Удерживайте подборку, чтобы переименовать или удалить её.',
+  'action.delete': 'Удалить',
 };
 
 export default ru;

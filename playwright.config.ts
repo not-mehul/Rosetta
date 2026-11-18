@@ -8,6 +8,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // A CI runner (or a laptop running four workers on two cores) can take a few
+  // seconds to read a PDF or a Word file; give each expectation room for that.
+  expect: { timeout: 10_000 },
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     ...devices['Pixel 7'],

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { placeSettled } from './place';
 
 const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
 
@@ -151,7 +152,8 @@ test('resumes where reading stopped and keeps the place through type changes', a
   // The chapter opens with a picture, so the eleventh paragraph is the tenth of text.
   expect(top).toBe('Paragraph 10 ');
 
-  // Reload: back in the same chapter at the same place.
+  // Reload: back in the same chapter at the same place, once it's saved.
+  await placeSettled(page, '[null]');
   await page.reload();
   await expect(page.locator('.reading h1')).toHaveText('The ledger');
   await expect(page.locator('#progressLabel')).toHaveText(before!);

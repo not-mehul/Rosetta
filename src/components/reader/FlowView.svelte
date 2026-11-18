@@ -114,12 +114,19 @@
     root.style.transform = `translateX(${tx}px)`;
   }
 
-  function reportPage() {
+  /**
+   * Says which page is on screen. After a turn the place is the page's first
+   * word. When a place was asked for (opening the book, a new layout), it
+   * stays the place itself (`kept`), as scroll mode keeps its own: a page laid
+   * out before the typeface arrives can be a page early, and saving its first
+   * word would leave the book there once the type settles.
+   */
+  function reportPage(kept?: number) {
     if (!text || !root) return;
     const c = columns();
-    const offset = firstOffsetOnPage(text, page, c);
-    const end = page < pages - 1 ? Math.max(offset, firstOffsetOnPage(text, page + 1, c) - 1) : text.length;
-    reader.report({ section: index, offset }, end);
+    const first = firstOffsetOnPage(text, page, c);
+    const end = page < pages - 1 ? Math.max(first, firstOffsetOnPage(text, page + 1, c) - 1) : text.length;
+    reader.report({ section: index, offset: kept ?? first }, Math.max(end, kept ?? 0));
   }
 
   function showOffset(offset: number) {
@@ -131,7 +138,7 @@
       if (p === null) return;
       place(p);
     }
-    reportPage();
+    reportPage(Math.max(0, offset));
   }
 
   // ─── Scrolling ─────────────────────────────────────────────

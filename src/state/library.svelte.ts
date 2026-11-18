@@ -103,6 +103,17 @@ class LibraryState {
     await db.docs.update(id, full);
   }
 
+  /** Changes several documents in one write and one redraw of the shelf (choosing several, a tag on all). */
+  async updateMany(changes: readonly (readonly [string, Partial<Omit<StoredDoc, 'id'>>])[]): Promise<void> {
+    if (!changes.length) return;
+    const now = Date.now();
+    const full = new Map(changes.map(([id, patch]) => [id, { ...($state.snapshot(patch) as Partial<Omit<StoredDoc, 'id'>>), updatedAt: now }]));
+    this.items = this.items.map((d) => (full.has(d.id) ? { ...d, ...full.get(d.id) } : d));
+    await db.transaction('rw', db.docs, async () => {
+      for (const [id, patch] of full) await db.docs.update(id, patch);
+    });
+  }
+
   /** Lets go of a document's file to save space, keeping its marks, place and details. */
   async offload(id: string): Promise<void> {
     await db.bytes.delete(id);
@@ -122,17 +133,15 @@ class LibraryState {
     const name = parseTags(to)[0];
     if (!name || name === from) return 0;
     const docs = this.items.filter((d) => d.tags.includes(from));
-    for (const d of docs) await this.update(d.id, { tags: [...new Set(d.tags.map((x) => (x === from ? name : x)))] });
+    await this.updateMany(docs.map((d) => [d.id, { tags: [...new Set(d.tags.map((x) => (x === from ? name : x)))] }] as const));
     return docs.length;
   }
 
   /** Takes a tag off every document; returns a function that puts it back. */
   async deleteTag(tag: string): Promise<() => Promise<void>> {
     const docs = this.items.filter((d) => d.tags.includes(tag)).map((d) => ({ id: d.id, tags: d.tags }));
-    for (const d of docs) await this.update(d.id, { tags: d.tags.filter((x) => x !== tag) });
-    return async () => {
-      for (const d of docs) await this.update(d.id, { tags: d.tags });
-    };
+    await this.updateMany(docs.map((d) => [d.id, { tags: d.tags.filter((x) => x !== tag) }] as const));
+    return () => this.updateMany(docs.map((d) => [d.id, { tags: d.tags }] as const));
   }
 
   // ─── Collections ───────────────────────────────────────────
@@ -182,22 +191,30 @@ class LibraryState {
   }
 
   /** Removes a document with its marks, returning a function that puts it all back. */
-  async remove(id: string): Promise<() => Promise<void>> {
-    const [doc, blob, marks] = await Promise.all([db.docs.get(id), db.bytes.get(id), db.marks.where('docId').equals(id).toArray()]);
+  remove(id: string): Promise<() => Promise<void>> {
+    return this.removeMany([id]);
+  }
+
+  /** Removes several documents with their marks in one write, returning a function that puts them all back. */
+  async removeMany(ids: readonly string[]): Promise<() => Promise<void>> {
+    const list = [...ids];
+    const [docs, blobs, marks] = await Promise.all([db.docs.bulkGet(list), db.bytes.bulkGet(list), db.marks.where('docId').anyOf(list).toArray()]);
     await db.transaction('rw', [db.docs, db.bytes, db.marks, db.pdfText, db.texts], async () => {
-      await db.docs.delete(id);
-      await db.bytes.delete(id);
-      await db.marks.where('docId').equals(id).delete();
-      await db.pdfText.delete(id);
-      await db.texts.delete(id);
+      await db.docs.bulkDelete(list);
+      await db.bytes.bulkDelete(list);
+      await db.marks.where('docId').anyOf(list).delete();
+      await db.pdfText.bulkDelete(list);
+      await db.texts.bulkDelete(list);
     });
-    this.items = this.items.filter((d) => d.id !== id);
+    const gone = new Set(list);
+    this.items = this.items.filter((d) => !gone.has(d.id));
     return async () => {
       // An offloaded document has no file to put back, but its details and marks come back all the same.
-      if (!doc) return;
+      const back = docs.filter((d): d is StoredDoc => !!d);
+      if (!back.length) return;
       await db.transaction('rw', db.docs, db.bytes, db.marks, async () => {
-        await db.docs.put(doc);
-        if (blob) await db.bytes.put(blob);
+        await db.docs.bulkPut(back);
+        await db.bytes.bulkPut(blobs.filter((b) => !!b));
         await db.marks.bulkPut(marks);
       });
       await this.load();

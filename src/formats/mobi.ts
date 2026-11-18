@@ -38,9 +38,6 @@ function records(bytes: Uint8Array): Uint8Array[] {
   );
 }
 
-export const isMobi = (bytes: Uint8Array) =>
-  bytes.length > 68 && ascii(bytes, 60, 8) === "BOOKMOBI";
-
 interface Header {
   /** Index of this header's record 0 (non-zero for the KF8 half of a joint file). */
   start: number;

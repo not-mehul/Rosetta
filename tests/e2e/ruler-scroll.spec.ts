@@ -45,9 +45,7 @@ test('auto-scroll moves the page, pauses on a tap, and stops', async ({ page }) 
   await page.click('#panel-page');
   await page.click('#startAutoScroll');
   const y0 = await page.evaluate(() => scrollY);
-  await page.waitForTimeout(1500);
-  const y1 = await page.evaluate(() => scrollY);
-  expect(y1).toBeGreaterThan(y0);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(y0);
   // A tap pauses it, and the bars come with it.
   await page.mouse.click(200, 450);
   await expect(page.locator('#autoScrollPlay')).toBeVisible();

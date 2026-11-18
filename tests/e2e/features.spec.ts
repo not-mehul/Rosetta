@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { placeSettled, storedPlace } from './place';
 
 const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
 
@@ -105,12 +106,14 @@ test('pages turn by tap, key and swipe, and the place survives a reload', async 
   await expect(number).toHaveText(/^Page 2 of/);
   await page.mouse.click(box.x + box.width * 0.1, box.y + box.height / 2);
   await expect(number).toHaveText(/^Page 1 of/);
+  await placeSettled(page, '');
+  const atOne = await storedPlace(page);
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
   await expect(number).toHaveText(/^Page 4 of/);
 
-  await page.waitForTimeout(1200);
+  await placeSettled(page, atOne);
   await page.reload();
   await expect(page.locator('.page-number')).toHaveText(/^Page 4 of/);
 });
@@ -512,6 +515,7 @@ test('OLED turns Dusk to true black, and stays on through a reload', async ({ pa
   // Dawn is left as it is.
   await page.click('#openSettings');
   await page.click('#settings-general');
+  // The new theme spreads from the tap, so it lands a frame or two later.
   await page.locator('[data-theme-option=light]').click();
-  expect(await black()).not.toContain('rgb(0, 0, 0)');
+  await expect.poll(black).not.toContain('rgb(0, 0, 0)');
 });

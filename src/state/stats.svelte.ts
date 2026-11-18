@@ -36,6 +36,9 @@ export interface Summary {
   pace: number;
   /** Ten minutes of reading have measured the pace; before that it's only the default. */
   paceMeasured: boolean;
+  /** What the pace is worked out from: time read in sessions with a count of characters, and the characters. */
+  paceMs: number;
+  paceChars: number;
   /** Time read on each day, by YYYY-MM-DD. */
   byDay: ReadonlyMap<string, number>;
   /** Time read in each document, most first. */
@@ -74,6 +77,22 @@ export function lastWeek(sessions: readonly ReadingSession[], finishedAt: readon
   return { week, ms, days: days.size, finished, topDocId: top?.[0] ?? null };
 }
 
+/** Days in a row with some reading, up to today (or yesterday, this morning). */
+function streakIn(byDay: ReadonlyMap<string, number>, now: number): number {
+  const today = dayKey(now);
+  let streak = 0;
+  // A streak still counts this morning if yesterday was read.
+  let day = byDay.get(today) ? today : daysBefore(today);
+  while (byDay.get(day)) {
+    streak++;
+    day = daysBefore(day);
+  }
+  return streak;
+}
+
+/** Characters a minute, once there are ten minutes with a count to go on. */
+const paceOf = (paceMs: number, paceChars: number) => Math.max(300, Math.min(6000, paceMs >= 10 * 60_000 ? Math.round(paceChars / (paceMs / 60_000)) : DEFAULT_PACE));
+
 /** Figures from stored sessions; pure, for the tests. */
 export function summarise(sessions: readonly ReadingSession[], now = Date.now()): Summary {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -99,21 +118,15 @@ export function summarise(sessions: readonly ReadingSession[], now = Date.now())
     const day = daysBefore(today, 6 - i);
     return { day, ms: byDay.get(day) ?? 0 };
   });
-  let streak = 0;
-  // A streak still counts this morning if yesterday was read.
-  let day = byDay.get(today) ? today : daysBefore(today);
-  while (byDay.get(day)) {
-    streak++;
-    day = daysBefore(day);
-  }
-  const pace = paceMs >= 10 * 60_000 ? Math.round(paceChars / (paceMs / 60_000)) : DEFAULT_PACE;
   return {
     todayMs: byDay.get(dayKey(now)) ?? 0,
     week,
-    streak,
+    streak: streakIn(byDay, now),
     longest: longestRun([...byDay].filter(([, ms]) => ms > 0).map(([day]) => day)),
     totalMs,
-    pace: Math.max(300, Math.min(6000, pace)),
+    pace: paceOf(paceMs, paceChars),
+    paceMs,
+    paceChars,
     paceMeasured: paceMs >= 10 * 60_000,
     byDay,
     byDoc: [...docs].map(([docId, d]) => ({ docId, ...d })).sort((a, b) => b.ms - a.ms),
@@ -143,19 +156,29 @@ class StatsState {
     return this.sessionTime;
   }
 
+  /** The running totals behind pace, today and the streak, so a save adds to them rather than reading every session again. */
+  private totals: { byDay: Map<string, number>; paceMs: number; paceChars: number } | null = null;
+
   async load(): Promise<void> {
-    const before = this.todayMs;
     const summary = summarise(await db.sessions.toArray().catch(() => []));
-    this.pace = summary.pace;
-    this.todayMs = summary.todayMs;
+    // Plain bookkeeping, shown through todayMs, pace and streak.
+    this.totals = { byDay: new Map(summary.byDay), paceMs: summary.paceMs, paceChars: summary.paceChars };
+    this.show(summary.todayMs, summary.pace, summary.streak);
+  }
+
+  /** Puts new figures on screen, and says when the goal or a streak milestone has just been reached. */
+  private show(todayMs: number, pace: number, streak: number): void {
+    const before = this.todayMs;
+    this.pace = pace;
+    this.todayMs = todayMs;
     // Only a crossing made while reading: not on start, and not when the goal is moved below today's time.
     const goal = settings.value.dailyGoal;
-    if (goal && before > 0 && before < goal * 60_000 && summary.todayMs >= goal * 60_000) this.onGoal?.(goal);
+    if (goal && before > 0 && before < goal * 60_000 && todayMs >= goal * 60_000) this.onGoal?.(goal);
     // A milestone crossed while reading, not on opening the app with it already passed.
     const was = this.streak;
-    this.streak = summary.streak;
+    this.streak = streak;
     if (this.loaded) {
-      const reached = streakMilestone(was, summary.streak);
+      const reached = streakMilestone(was, streak);
       if (reached) this.onStreak?.(reached);
     }
     this.loaded = true;
@@ -194,17 +217,21 @@ class StatsState {
     const day = dayKey();
     const id = `${day}|${docId}`;
     try {
+      let was: ReadingSession | undefined;
+      let now!: ReadingSession;
       await db.transaction('rw', db.sessions, async () => {
-        const row = await db.sessions.get(id);
-        await db.sessions.put({
-          id,
-          day,
-          docId,
-          ms: (row?.ms ?? 0) + Math.round(ms),
-          chars: (row?.chars ?? 0) + chars,
-        });
+        was = await db.sessions.get(id);
+        now = { id, day, docId, ms: (was?.ms ?? 0) + Math.round(ms), chars: (was?.chars ?? 0) + chars };
+        await db.sessions.put(now);
       });
-      await this.load();
+      const totals = this.totals;
+      if (!totals) return this.load();
+      // The same figures summarise() would give, from the one row that changed.
+      totals.byDay.set(day, (totals.byDay.get(day) ?? 0) + (now.ms - (was?.ms ?? 0)));
+      totals.paceMs += (now.chars > 0 ? now.ms : 0) - (was && was.chars > 0 ? was.ms : 0);
+      totals.paceChars += now.chars - (was?.chars ?? 0);
+      const at = Date.now();
+      this.show(totals.byDay.get(dayKey(at)) ?? 0, paceOf(totals.paceMs, totals.paceChars), streakIn(totals.byDay, at));
     } catch (err) {
       console.warn('Saving reading time failed:', err);
     }

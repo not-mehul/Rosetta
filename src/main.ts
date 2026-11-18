@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { dismissOverlay } from 'dusk-dawn';
 import { mount } from 'svelte';
 import App from './App.svelte';
+import { prefetchParts } from './components/parts';
 import { setLocale, t } from './i18n/index.svelte';
 import { canOpen, parseRosettaUrl, sendToBookShelf } from './platform/handoff';
 import { listenForFiles } from './platform/intake';
@@ -40,11 +41,17 @@ async function start(): Promise<void> {
   whenMerged((result) => {
     for (const { id, patch } of result.docs) reader.followRemote(id, patch);
   });
-  await syncNow().catch((err) => console.warn('Sync failed:', err));
-  // A backup when one is due: into the sync folder, or Documents/Rosetta/backups on a phone.
-  void autoBackup();
 
+  // The library shows first; the sync folder is read after, and what it
+  // brings in (a newer place, another device's notes) arrives on screen as it
+  // merges. Then a backup, when one is due: into the sync folder, or
+  // Documents/Rosetta/backups on a phone.
   mount(App, { target: document.getElementById('app')! });
+  // The reader and the sheets, fetched ahead while nothing else is happening.
+  prefetchParts();
+  void syncNow()
+    .catch((err) => console.warn('Sync failed:', err))
+    .then(() => autoBackup());
   // Icons answer a tap with their own small motion (src/styles/motion.css).
   startIconMotion();
   // A light tick as tabs, switches and choices change (src/lib/feel.ts).

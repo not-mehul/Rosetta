@@ -8,8 +8,8 @@
   import { hatch } from '../lib/delight';
   import { ui, type Section } from '../state/ui.svelte';
   import LibraryView from './LibraryView.svelte';
-  import NotesView from './sections/NotesView.svelte';
-  import StatsView from './sections/StatsView.svelte';
+  import Lazy from './Lazy.svelte';
+  import { NotesView, StatsView } from './parts';
   import Icon from './ui/Icon.svelte';
 
   /** The line under the name: what the section on screen holds. */
@@ -84,9 +84,9 @@
       {#if ui.section === 'library'}
         <LibraryView />
       {:else if ui.section === 'notes'}
-        <NotesView />
+        <Lazy load={NotesView} />
       {:else}
-        <StatsView />
+        <Lazy load={StatsView} />
       {/if}
     </div>
   {/key}

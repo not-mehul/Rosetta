@@ -1,9 +1,13 @@
 <script lang="ts">
-  // An <img> for bytes in memory; the object URL is revoked when it changes.
+  // An <img> for bytes in memory. The object URL is made once the picture
+  // comes near the screen (a long shelf makes only the ones it shows), and
+  // revoked when the bytes change or the picture goes.
   import { blobUrl } from '../../lib/format';
+  import { near } from '../../lib/near';
 
   let { bytes, alt }: { bytes: Uint8Array | null | undefined; alt: string } = $props();
-  const src = $derived(blobUrl(bytes));
+  let shown = $state(false);
+  const src = $derived(shown ? blobUrl(bytes) : null);
   $effect(() => {
     const url = src;
     return () => {
@@ -12,4 +16,4 @@
   });
 </script>
 
-{#if src}<img {src} {alt} decoding="async" />{/if}
+{#if bytes?.length}<img src={src ?? undefined} {alt} decoding="async" use:near={() => (shown = true)} />{/if}

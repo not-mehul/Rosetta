@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readInfo, openDocument, FormatError } from '../../src/formats';
-import { isComicArchive } from '../../src/formats/cbz';
+import { isComicArchive } from '../../src/formats/sniff';
 import { rtfToHtml } from '../../src/formats/rtf';
 import { scopeCss } from '../../src/formats/styles';
 import type { FlowDoc } from '../../src/formats/types';

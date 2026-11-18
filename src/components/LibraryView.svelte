@@ -19,7 +19,8 @@
   import { deleteCollection, renameCollection } from '../lib/collections';
   import DocCard from './DocCard.svelte';
   import DocTile from './DocTile.svelte';
-  import ArrangeSheet from './sheets/ArrangeSheet.svelte';
+  import Lazy from './Lazy.svelte';
+  import { ArrangeSheet } from './parts';
   import Cover from './ui/Cover.svelte';
   import EmptyState from './ui/EmptyState.svelte';
   import Icon from './ui/Icon.svelte';
@@ -228,7 +229,7 @@
 {/if}
 
 {#if arranging}
-  <ArrangeSheet {collection} {filter} onfilter={(f) => (filter = f)} onnewcollection={() => void newCollection()} onclose={() => (arranging = false)} />
+  <Lazy load={ArrangeSheet} {collection} {filter} onfilter={(f: string) => (filter = f)} onnewcollection={() => void newCollection()} onclose={() => (arranging = false)} />
 {/if}
 
 {#if library.batch}
@@ -290,6 +291,18 @@
   }
   .doc-grid > li {
     min-width: 0;
+  }
+  /* A long shelf: books off screen are laid out and painted only as they
+     come near it. The sizes stand in for them until then. */
+  .doc-grid > li,
+  .doc-list > li {
+    content-visibility: auto;
+  }
+  .doc-grid > li {
+    contain-intrinsic-size: auto 140px auto 300px;
+  }
+  .doc-list > li {
+    contain-intrinsic-size: auto 100% auto 96px;
   }
   .list-count {
     margin-top: var(--space-4);

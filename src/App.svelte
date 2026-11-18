@@ -7,14 +7,8 @@
   import IdleStone from './components/IdleStone.svelte';
   import Home from './components/Home.svelte';
   import IdleDock from './components/ui/IdleDock.svelte';
-  import ReaderView from './components/reader/ReaderView.svelte';
-  import ContentsSheet from './components/sheets/ContentsSheet.svelte';
-  import DetailsSheet from './components/sheets/DetailsSheet.svelte';
-  import EditSheet from './components/sheets/EditSheet.svelte';
-  import SearchSheet from './components/sheets/SearchSheet.svelte';
-  import SettingsSheet from './components/sheets/SettingsSheet.svelte';
-  import StorageSheet from './components/sheets/StorageSheet.svelte';
-  import ReadingPanel from './components/sheets/ReadingPanel.svelte';
+  import Lazy from './components/Lazy.svelte';
+  import { ContentsSheet, DetailsSheet, EditSheet, ReaderView, ReadingPanel, SearchSheet, SettingsSheet, StorageSheet } from './components/parts';
   import ActionsModal from './components/ui/ActionsModal.svelte';
   import ConfirmModal from './components/ui/ConfirmModal.svelte';
   import PromptModal from './components/ui/PromptModal.svelte';
@@ -53,7 +47,7 @@
 </div>
 
 {#if reader.doc}
-  <ReaderView />
+  <Lazy load={ReaderView} />
 {:else}
   <Home />
 {/if}
@@ -63,20 +57,20 @@
 {/if}
 
 {#if ui.overlay === 'settings'}
-  <SettingsSheet onclose={close} />
+  <Lazy load={SettingsSheet} onclose={close} />
 {:else if ui.overlay === 'details' && ui.detailsId}
-  <DetailsSheet id={ui.detailsId} onclose={close} />
+  <Lazy load={DetailsSheet} id={ui.detailsId} onclose={close} />
 {:else if ui.overlay === 'edit' && ui.detailsId}
-  <EditSheet id={ui.detailsId} onclose={() => ui.open('details')} />
+  <Lazy load={EditSheet} id={ui.detailsId} onclose={() => ui.open('details')} />
 {:else if ui.overlay === 'storage'}
-  <StorageSheet onclose={close} />
+  <Lazy load={StorageSheet} onclose={close} />
 {:else if ui.overlay === 'type'}
-  <ReadingPanel onclose={close} />
+  <Lazy load={ReadingPanel} onclose={close} />
 {:else if reader.content}
   {#if ui.overlay === 'contents'}
-    <ContentsSheet onclose={close} />
+    <Lazy load={ContentsSheet} onclose={close} />
   {:else if ui.overlay === 'search'}
-    <SearchSheet onclose={close} />
+    <Lazy load={SearchSheet} onclose={close} />
   {/if}
 {/if}
 

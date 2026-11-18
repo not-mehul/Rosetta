@@ -13,7 +13,7 @@ npm run test:pdf     # the PDF tests alone, for pdf.js upgrades
 SCREENS=/tmp/screens npx playwright test screens   # a screenshot tour of every screen, in Dusk and Dawn
 ```
 
-Svelte 5, TypeScript and Vite. The library lives in IndexedDB (Dexie). pdf.js and mammoth load only when a PDF or a Word file is opened, and each language other than English only when it is chosen. pdf.js's CMaps, standard fonts and decoders are copied into `public/pdfjs/` at build time, so PDFs open offline.
+Svelte 5, TypeScript and Vite. The library lives in IndexedDB (Dexie). The first download is the library alone: the reader, the sheets, Notes and Stats are separate parts (`src/components/parts.ts`, shown through `Lazy.svelte`) fetched while the phone is idle, each format's reader loads when a file of its kind is added or opened, pdf.js and mammoth with it, and each language other than English only when it is chosen. pdf.js's CMaps, standard fonts and decoders are copied into `public/pdfjs/` at build time, so PDFs open offline.
 
 ## Android and iOS
 

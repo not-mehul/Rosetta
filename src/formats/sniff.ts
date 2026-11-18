@@ -1,8 +1,6 @@
 // Which reader a file needs, from its first bytes and, failing that, its name.
 
 import { strFromU8, unzipSync } from 'fflate';
-import { isComicArchive } from './cbz';
-import { isMobi } from './mobi';
 import { decodeText, isUtf8, looksLikeText } from './text';
 import type { Format } from './types';
 
@@ -54,6 +52,19 @@ export const isReadableName = (name: string) => extension(name) in EXT;
 export function extension(name: string): string {
   return /\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase() ?? '';
 }
+
+/** A page image in a comic archive. */
+export const IMAGE = /\.(jpe?g|png|gif|webp|avif)$/i;
+
+/** A zip of page images, with nothing in it but pictures and the odd bit of metadata. */
+export function isComicArchive(names: string[]): boolean {
+  const files = names.filter((n) => !n.endsWith('/'));
+  // Besides the pages: metadata, release notes, and what Windows and macOS leave behind (Thumbs.db, desktop.ini, __MACOSX).
+  return files.some((n) => IMAGE.test(n)) && files.every((n) => IMAGE.test(n) || n.startsWith('__MACOSX/') || /(^|\/)\./.test(n) || /\.(xml|json|txt|nfo|sfv|md5|url|ini|db)$/i.test(n));
+}
+
+/** A Palm database whose type and creator say MOBI (the KF8 .azw3 too). */
+export const isMobi = (bytes: Uint8Array) => bytes.length > 68 && String.fromCharCode(...bytes.subarray(60, 68)) === 'BOOKMOBI';
 
 const startsWith = (bytes: Uint8Array, ascii: string) => [...ascii].every((c, i) => bytes[i] === c.charCodeAt(0));
 

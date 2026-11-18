@@ -44,19 +44,18 @@ class SelectionState {
   /** Changes every chosen book, with an Undo that puts each one back as it was. */
   private async change(patch: (d: StoredDoc) => Patch | null, message: (count: number) => string): Promise<void> {
     const before: [string, Patch][] = [];
+    const after: [string, Patch][] = [];
     for (const d of this.chosen()) {
       const p = patch(d);
       if (!p) continue;
       before.push([d.id, Object.fromEntries(Object.keys(p).map((k) => [k, d[k as keyof StoredDoc]])) as Patch]);
-      await library.update(d.id, p);
+      after.push([d.id, p]);
     }
+    // One write and one redraw, however many are chosen.
+    await library.updateMany(after);
     this.clear();
     if (!before.length) return;
-    ui.undoable(message(before.length), () => {
-      void (async () => {
-        for (const [id, p] of before) await library.update(id, p);
-      })();
-    });
+    ui.undoable(message(before.length), () => void library.updateMany(before));
   }
 
   finish(): Promise<void> {
@@ -101,16 +100,11 @@ class SelectionState {
   }
 
   async remove(): Promise<void> {
-    const docs = this.chosen();
-    const undos: (() => Promise<void>)[] = [];
-    for (const d of docs) undos.push(await library.remove(d.id));
+    const ids = this.chosen().map((d) => d.id);
+    if (!ids.length) return;
+    const undo = await library.removeMany(ids);
     this.clear();
-    if (!undos.length) return;
-    ui.undoable(t('select.removed', { count: undos.length }), () => {
-      void (async () => {
-        for (const undo of undos) await undo();
-      })();
-    });
+    ui.undoable(t('select.removed', { count: ids.length }), () => void undo());
   }
 }
 

@@ -5,10 +5,10 @@
 
 import { strFromU8, unzipSync } from 'fflate';
 import { imageType } from './epub';
+import { IMAGE } from './sniff';
 import { FormatError, type DocInfo, type FlowDoc } from './types';
 import { t } from '../i18n/index.svelte';
 
-const IMAGE = /\.(jpe?g|png|gif|webp|avif)$/i;
 const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 
 function pages(bytes: Uint8Array): {
@@ -26,12 +26,6 @@ function pages(bytes: Uint8Array): {
     .sort(natural);
   if (!names.length) throw new FormatError(t('error.cbzEmpty'));
   return { names, files };
-}
-
-export function isComicArchive(names: string[]): boolean {
-  const files = names.filter((n) => !n.endsWith('/'));
-  // Besides the pages: metadata, release notes, and what Windows and macOS leave behind (Thumbs.db, desktop.ini, __MACOSX).
-  return files.some((n) => IMAGE.test(n)) && files.every((n) => IMAGE.test(n) || n.startsWith('__MACOSX/') || /(^|\/)\./.test(n) || /\.(xml|json|txt|nfo|sfv|md5|url|ini|db)$/i.test(n));
 }
 
 /** ComicInfo.xml, read: its fields by name, or empty when there is none. */

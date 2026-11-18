@@ -1,11 +1,8 @@
 // The one door into the formats: what a file is, what it's called, and the
-// readable document inside it. PDF and Word are loaded only when needed.
+// readable document inside it. Each reader (and the sanitiser, Markdown and
+// pdf.js behind them) loads only when a file of its kind is added or opened,
+// so the library shows without them.
 
-import { cbzInfo, openCbz } from './cbz';
-import { epubInfo, openEpub } from './epub';
-import { fb2Info, openFb2 } from './fb2';
-import { mobiInfo, openMobi } from './mobi';
-import { htmlInfo, markdownInfo, openHtml, openMarkdown, openText } from './flow';
 import { detectFormat, titleFromName } from './sniff';
 import { FormatError, PasswordError, type DocInfo, type Format, type OpenDoc } from './types';
 import { t } from '../i18n/index.svelte';
@@ -34,7 +31,7 @@ export async function readInfo(bytes: Uint8Array, name: string, password?: strin
   let info: DocInfo;
   switch (format) {
     case 'epub': {
-      const { coverBytes, coverType, ...rest } = epubInfo(bytes);
+      const { coverBytes, coverType, ...rest } = (await import('./epub')).epubInfo(bytes);
       info = {
         ...rest,
         cover: coverBytes ? await thumbnail(coverBytes, coverType) : null,
@@ -42,13 +39,13 @@ export async function readInfo(bytes: Uint8Array, name: string, password?: strin
       break;
     }
     case 'mobi': {
-      const { coverBytes, coverType, ...rest } = mobiInfo(bytes);
+      const { coverBytes, coverType, ...rest } = (await import('./mobi')).mobiInfo(bytes);
       info = { ...rest, cover: coverBytes ? await thumbnail(coverBytes, coverType) : null };
       break;
     }
     case 'fb2':
     case 'cbz': {
-      const { coverBytes, coverType, ...rest } = format === 'fb2' ? fb2Info(bytes) : cbzInfo(bytes);
+      const { coverBytes, coverType, ...rest } = format === 'fb2' ? (await import('./fb2')).fb2Info(bytes) : (await import('./cbz')).cbzInfo(bytes);
       info = {
         ...rest,
         cover: coverBytes ? await thumbnail(coverBytes, coverType) : null,
@@ -68,10 +65,10 @@ export async function readInfo(bytes: Uint8Array, name: string, password?: strin
       info = { ...(await import('./docx')).docxInfo(bytes), cover: null };
       break;
     case 'md':
-      info = { ...markdownInfo(bytes), cover: null };
+      info = { ...(await import('./flow')).markdownInfo(bytes), cover: null };
       break;
     case 'html':
-      info = { ...htmlInfo(bytes), cover: null };
+      info = { ...(await import('./flow')).htmlInfo(bytes), cover: null };
       break;
     default:
       info = { format, title: '', author: '', cover: null };
@@ -82,11 +79,11 @@ export async function readInfo(bytes: Uint8Array, name: string, password?: strin
 export async function openDocument(bytes: Uint8Array, format: Format, password?: string): Promise<OpenDoc> {
   switch (format) {
     case 'epub':
-      return openEpub(bytes);
+      return (await import('./epub')).openEpub(bytes);
     case 'fb2':
-      return openFb2(bytes);
+      return (await import('./fb2')).openFb2(bytes);
     case 'cbz':
-      return openCbz(bytes);
+      return (await import('./cbz')).openCbz(bytes);
     case 'rtf':
       return (await import('./rtf')).openRtf(bytes);
     case 'odt':
@@ -96,13 +93,13 @@ export async function openDocument(bytes: Uint8Array, format: Format, password?:
     case 'docx':
       return (await import('./docx')).openDocx(bytes);
     case 'md':
-      return openMarkdown(bytes);
+      return (await import('./flow')).openMarkdown(bytes);
     case 'html':
-      return openHtml(bytes);
+      return (await import('./flow')).openHtml(bytes);
     case 'txt':
-      return openText(bytes);
+      return (await import('./flow')).openText(bytes);
     case 'mobi':
-      return openMobi(bytes);
+      return (await import('./mobi')).openMobi(bytes);
   }
 }
 

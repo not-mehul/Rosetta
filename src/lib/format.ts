@@ -43,6 +43,6 @@ export function relativeTime(when: number, now = Date.now()): string {
 }
 
 /** An object URL for bytes, for <img>; the caller revokes it. */
-export function blobUrl(bytes: Uint8Array | null | undefined, type = 'image/jpeg'): string | null {
-  return bytes?.length ? URL.createObjectURL(new Blob([bytes as BlobPart], { type })) : null;
+export function blobUrl(bytes: Uint8Array | null | undefined): string | null {
+  return bytes?.length ? URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'image/jpeg' })) : null;
 }

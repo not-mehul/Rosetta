@@ -2,7 +2,7 @@
   // style.md §9: Lucide, inlined, stroke in currentColor. Sized by the parent's CSS.
   import { ICONS, type IconName } from './icons';
 
-  let { name, label }: { name: IconName; label?: string } = $props();
+  let { name }: { name: IconName } = $props();
 </script>
 
 <svg
@@ -15,9 +15,7 @@
   stroke-width="2"
   stroke-linecap="round"
   stroke-linejoin="round"
-  role={label ? 'img' : undefined}
-  aria-label={label}
-  aria-hidden={label ? undefined : 'true'}
+  aria-hidden="true"
   data-icon={name}
 >
   <!-- Trusted, inlined Lucide markup (icons.ts), never external data. -->

@@ -61,11 +61,9 @@ const en = {
 
   'details.format': 'Format',
   'details.added': 'Added',
-  'details.read': 'Read',
   'details.marks': 'Marks',
   'details.markCounts': '{highlights} highlights · {bookmarks} bookmarks',
   'details.finishedOn': 'Finished {when}',
-  'details.progress': '{percent}%, last {when}',
   'details.notOpened': 'Not opened',
   'details.continue': 'Continue',
   'details.readAction': 'Read',
@@ -312,7 +310,6 @@ const en = {
   'speech.sleepChapterShort': 'ch.',
   'speech.slept': 'Reading aloud paused by the sleep timer.',
 
-  'stats.title': 'Reading',
   'stats.leftUnder': 'Under a minute left',
   'stats.leftMin': '{min} min left',
   'stats.leftHours': '{h} h left',
@@ -383,7 +380,6 @@ const en = {
   'type.rulerHint': 'A band over the line you’re reading, the rest of the page veiled. Drag its tab on the right to move it.',
   'ruler.move': 'Move the reading ruler',
   'autoscroll.start': 'Start auto-scroll',
-  'autoscroll.hint': 'The page moves up at a steady pace. Tap to pause and go on; scroll by hand to take over.',
   'autoscroll.label': 'Auto-scroll',
   'autoscroll.pause': 'Pause auto-scroll',
   'autoscroll.resume': 'Go on scrolling',

@@ -60,11 +60,9 @@ const es: Messages = {
 
   'details.format': 'Formato',
   'details.added': 'Añadido',
-  'details.read': 'Leído',
   'details.marks': 'Marcas',
   'details.markCounts': '{highlights} subrayados · {bookmarks} marcadores',
   'details.finishedOn': 'Terminado {when}',
-  'details.progress': '{percent} %, la última vez {when}',
   'details.notOpened': 'Sin abrir',
   'details.continue': 'Continuar',
   'details.readAction': 'Leer',
@@ -314,7 +312,6 @@ const es: Messages = {
   'speech.sleepChapterShort': 'cap.',
   'speech.slept': 'El temporizador ha pausado la lectura en voz alta.',
 
-  'stats.title': 'Lectura',
   'stats.leftUnder': 'Queda menos de un minuto',
   'stats.leftMin': 'Quedan {min} min',
   'stats.leftHours': 'Quedan {h} h',
@@ -385,7 +382,6 @@ const es: Messages = {
   'type.rulerHint': 'Una banda sobre la línea que lees, el resto de la página velado. Arrastra su pestaña de la derecha para moverla.',
   'ruler.move': 'Mover la regla de lectura',
   'autoscroll.start': 'Desplazamiento automático',
-  'autoscroll.hint': 'La página sube a un ritmo constante. Toca para pausar y seguir; desplázate a mano para tomar el control.',
   'autoscroll.label': 'Desplazamiento automático',
   'autoscroll.pause': 'Pausar el desplazamiento',
   'autoscroll.resume': 'Seguir desplazando',

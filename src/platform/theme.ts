@@ -14,9 +14,6 @@ const media = globalThis.matchMedia?.('(prefers-color-scheme: dark)');
 let current: ThemeSetting = 'system';
 let black = false;
 
-/** The theme on screen now, after "system" is resolved. */
-export const shown = $state({ dark: true });
-
 function resolved(setting: ThemeSetting): 'light' | 'dark' {
   if (setting !== 'system') return setting;
   return media?.matches === false ? 'light' : 'dark';
@@ -28,7 +25,6 @@ function paint(): void {
   // OLED: Dusk's surfaces go to true black (app.css); Dawn is unchanged.
   if (black) document.documentElement.dataset.oled = '';
   else delete document.documentElement.dataset.oled;
-  shown.dark = theme === 'dark';
   const surface = getComputedStyle(document.documentElement).getPropertyValue('--bg-grad-mid').trim();
   if (surface) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', surface);
   if (isNative) {
@@ -52,9 +48,4 @@ export function applyTheme(setting: ThemeSetting, oled = false): void {
     // Private mode: the first paint falls back to the system theme.
   }
   paint();
-}
-
-/** The header switch: picks the side opposite to the one on screen. */
-export function toggledTheme(): ThemeSetting {
-  return shown.dark ? 'light' : 'dark';
 }

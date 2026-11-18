@@ -36,10 +36,10 @@ const STONE_STROKE = 1.1;
  * An SVG of the mark: the stone, `glyph` tall, centred in a size × size
  * square; the frame sits `inset` in from the edge. `stroke` is the frame's hairline in px.
  */
-function mark(size, { glyph, inset, stroke = 1, background = true, round = 0 }) {
+function mark(size, { glyph, inset, stroke = 1, background = true }) {
   const scale = glyph / 24;
   const offset = (size - glyph) / 2;
-  const frame = inset > 0 ? `<rect x="${inset + stroke / 2}" y="${inset + stroke / 2}" width="${size - 2 * inset - stroke}" height="${size - 2 * inset - stroke}" fill="none" stroke="${AMBER}" stroke-opacity="0.6" stroke-width="${stroke}" rx="${round}"/>` : '';
+  const frame = inset > 0 ? `<rect x="${inset + stroke / 2}" y="${inset + stroke / 2}" width="${size - 2 * inset - stroke}" height="${size - 2 * inset - stroke}" fill="none" stroke="${AMBER}" stroke-opacity="0.6" stroke-width="${stroke}"/>` : '';
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
 ${background ? `<rect width="${size}" height="${size}" fill="${BG}"/>` : ''}
 ${frame}
@@ -99,7 +99,6 @@ if (existsSync(ios)) {
   }
 }
 
-jobs.push(png(mark(512, { glyph: 360, inset: 48, stroke: 2, round: 8 }), join(root, 'public/icon-512.png')));
 writeFileSync(join(root, 'public/favicon.svg'), favicon());
 await Promise.all(jobs);
 console.log(`Wrote ${jobs.length} images.`);

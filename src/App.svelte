@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { applyTheme } from './platform/theme.svelte';
+  import { applyTheme } from './platform/theme';
   import { reader } from './state/reader.svelte';
   import { settings } from './state/settings.svelte';
   import { ui } from './state/ui.svelte';

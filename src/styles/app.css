@@ -141,26 +141,6 @@ ol {
   gap: var(--space-4);
 }
 
-/* ─── Sections ───────────────────────────────────────────────── */
-
-.section-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-bottom: var(--space-7);
-}
-.section-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--border-soft);
-}
-.section-head-action {
-  margin-left: auto;
-  align-self: center;
-}
 .btn-row-start {
   justify-content: flex-start;
   flex-wrap: wrap;
@@ -177,36 +157,6 @@ ol {
 }
 .btn-grid > .btn:last-child:nth-child(odd) {
   grid-column: 1 / -1;
-}
-.panel.form-stack {
-  padding: var(--space-5);
-}
-.pair-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-5);
-}
-@media (min-width: 560px) {
-  .pair-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-.placeholder {
-  color: var(--text-faint);
-}
-
-/* Rows settle in the first time they appear (style.md §11). */
-.settle-wait {
-  opacity: 0;
-}
-.settle-in {
-  animation: settle-in var(--spring-spatial-calm-dur) var(--spring-spatial-calm) both;
-}
-@keyframes settle-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
 }
 
 /* ─── Settings list ──────────────────────────────────────────── */
@@ -289,12 +239,6 @@ ol {
   width: 18px;
   height: 18px;
   color: var(--text-faint);
-}
-/* Search and Arrange sit on the tab rail's baseline, its rule running under them too. */
-.shelf-row > .btn-icon {
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-soft);
-  border-radius: 0;
 }
 .filter-field {
   position: relative;
@@ -1106,7 +1050,6 @@ mark.hl-flash {
 .reading.pictures {
   max-width: 960px;
 }
-.reading.pictures figure.r-picture,
 .reading.pictures figure.picture {
   margin: 0 0 var(--space-4);
   text-align: center;
@@ -1151,22 +1094,8 @@ mark.tts {
   color: var(--accent-amber);
 }
 
-/* ─── Library: collections, tags, edit ──────────────────────── */
+/* ─── Highlight colours ─────────────────────────────────────── */
 
-.chip-row.collections {
-  margin: var(--space-4) 0 var(--space-2);
-}
-.collection-tools {
-  margin: 0 0 var(--space-2);
-}
-.tag-row {
-  margin: var(--space-2) 0 0;
-}
-.chip-small {
-  min-height: 32px;
-  padding: 0 var(--space-3);
-  font-size: 0.8rem;
-}
 .hl-dot.hl-amber {
   background: rgba(var(--accent-amber-rgb), 0.85);
 }

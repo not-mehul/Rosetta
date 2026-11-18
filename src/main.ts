@@ -11,7 +11,7 @@ import { canOpen, parseRosettaUrl, sendToBookShelf } from './platform/handoff';
 import { listenForFiles } from './platform/intake';
 import { listenForSharedText, sharedDocument } from './platform/shared';
 import { isNative } from './platform/native';
-import { applyTheme } from './platform/theme.svelte';
+import { applyTheme } from './platform/theme';
 import { addFiles } from './state/intake';
 import { library } from './state/library.svelte';
 import { reader } from './state/reader.svelte';

@@ -38,17 +38,6 @@ export function pageProgress(pageCount: number, at: Location): number {
   return Math.max(0, Math.min(1, (at.section + at.offset / 10000) / pageCount));
 }
 
-/** The location a fraction of the way through a flow document. */
-export function flowLocationAt(lengths: readonly number[], fraction: number): Location {
-  const total = lengths.reduce((a, b) => a + b, 0);
-  let target = Math.round(Math.max(0, Math.min(1, fraction)) * total);
-  for (let i = 0; i < lengths.length; i++) {
-    if (target < lengths[i]! || i === lengths.length - 1) return { section: i, offset: Math.min(target, lengths[i]!) };
-    target -= lengths[i]!;
-  }
-  return START;
-}
-
 export const percent = (fraction: number) => `${Math.floor(fraction * 100)}%`;
 
 /** About 250 words a minute, in characters: the pace before the reader's own is known. */

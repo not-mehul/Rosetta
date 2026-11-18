@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// Draws Rosetta's app icon and splash screens: the Rosetta Stone as a
-// Lucide-style line mark (a broken tablet carrying its three scripts: signs,
-// a running hand, and lines of Greek) in amber inside a 1px hairline frame, on
-// Dusk's --bg-grad-mid (style.md §14).
+// Draws Rosetta's app icon and splash screens: an open book, its right page
+// lit as if by a reading lamp, a ribbon at the place, as a Lucide-style line
+// mark in amber inside a 1px hairline frame, on Dusk's --bg-grad-mid
+// (style.md §14). Android also gets a one-colour layer for themed icons, and
+// the status-bar icon is the same book in white.
 //
 //   npm run assets
 //
@@ -19,39 +20,60 @@ const tokens = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('dusk-d
 const BG = tokens['bg-grad-mid'].dusk;
 const AMBER = tokens['accent-amber'].dusk;
 
-// The stone, on a 24 × 24 grid: the tablet with its broken top, then the three bands of script.
-const STONE = [
-  'M5 20.5V8.2l2.2-2.6 2.4.9 2.6-3 3.1 1.6 3.7-1.2v16.6z',
-  'M9.35 10.2a.95.95 0 1 1-1.9 0a.95.95 0 1 1 1.9 0z',
-  'M10.6 11.1l1.15-2.1 1.15 2.1z',
-  'M14.4 9.2v1.9M15.9 9.2v1.9',
-  'M7.5 13.9c.7-.8 1.4-.8 2.1 0s1.4.8 2.1 0 1.4-.8 2.1 0 1.4.8 2.1 0',
-  'M7.5 16.7h8.5',
-  'M7.5 18.6h5.2',
-];
-/** The stone's stroke on the 24-unit grid. */
-const STONE_STROKE = 1.1;
+// The book, on a 24 × 24 grid. Each page rises from the spine and levels off,
+// its outer corners softened; the right page carries the light and the ribbon.
+const LEFT = 'M12 8.4C10 6.5 7.4 5.8 4.4 6.1a1 1 0 0 0-.9 1v10.3a.8.8 0 0 0 .9.8c3-.3 5.6.4 7.6 2.3';
+const RIGHT = 'M12 8.4c2-1.9 4.6-2.6 7.6-2.3a1 1 0 0 1 .9 1v10.3a.8.8 0 0 1-.9.8c-3-.3-5.6.4-7.6 2.3';
+const SPINE = 'M12 8.4v12.4';
+const RIBBON = 'M15.2 6.1h2.7v6.3l-1.35-1.1-1.35 1.1z';
+/** The book's stroke on the 24-unit grid. */
+const STROKE = 1.15;
+
+/** The book in one colour: the outline, the ribbon solid, the lit page a light tint. */
+function book(colour, { light = true } = {}) {
+  return `<defs><linearGradient id="lamp" x1="12" y1="6" x2="20.5" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${colour}" stop-opacity="0.42"/><stop offset="1" stop-color="${colour}" stop-opacity="0.12"/></linearGradient></defs>${light ? `<path d="${RIGHT}z" fill="url(#lamp)"/>` : ''}<path d="${LEFT}"/><path d="${RIGHT}"/><path d="${SPINE}"/><path d="${RIBBON}" fill="${colour}" stroke="none"/>`;
+}
 
 /**
- * An SVG of the mark: the stone, `glyph` tall, centred in a size × size
+ * An SVG of the mark: the book, `glyph` tall, centred in a size × size
  * square; the frame sits `inset` in from the edge. `stroke` is the frame's hairline in px.
  */
-function mark(size, { glyph, inset, stroke = 1, background = true }) {
+function mark(size, { glyph, inset, stroke = 1, background = true, colour = AMBER, light = true }) {
   const scale = glyph / 24;
   const offset = (size - glyph) / 2;
-  const frame = inset > 0 ? `<rect x="${inset + stroke / 2}" y="${inset + stroke / 2}" width="${size - 2 * inset - stroke}" height="${size - 2 * inset - stroke}" fill="none" stroke="${AMBER}" stroke-opacity="0.6" stroke-width="${stroke}"/>` : '';
+  const frame = inset > 0 ? `<rect x="${inset + stroke / 2}" y="${inset + stroke / 2}" width="${size - 2 * inset - stroke}" height="${size - 2 * inset - stroke}" fill="none" stroke="${colour}" stroke-opacity="0.6" stroke-width="${stroke}"/>` : '';
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
 ${background ? `<rect width="${size}" height="${size}" fill="${BG}"/>` : ''}
 ${frame}
-<g transform="translate(${offset} ${offset}) scale(${scale})" fill="none" stroke="${AMBER}" stroke-width="${STONE_STROKE}" stroke-linecap="round" stroke-linejoin="round">
-${STONE.map((d) => `<path d="${d}"/>`).join('\n')}
+<g transform="translate(${offset} ${offset}) scale(${scale})" fill="none" stroke="${colour}" stroke-width="${STROKE}" stroke-linecap="round" stroke-linejoin="round">
+${book(colour, { light })}
 </g>
 </svg>`);
 }
 
 /** The browser tab's icon: the same mark on a rounded square. */
 function favicon() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="${BG}"/><rect x="6.5" y="6.5" width="51" height="51" rx="7" fill="none" stroke="${AMBER}" stroke-opacity=".55"/><g transform="translate(11 11) scale(1.75)" fill="none" stroke="${AMBER}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">${STONE.map((d) => `<path d="${d}"/>`).join('')}</g></svg>\n`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="${BG}"/><rect x="6.5" y="6.5" width="51" height="51" rx="7" fill="none" stroke="${AMBER}" stroke-opacity=".55"/><g transform="translate(11 11) scale(1.75)" fill="none" stroke="${AMBER}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">${book(AMBER)}</g></svg>\n`;
+}
+
+/** The status-bar icon (reminders): the book in white on clear, as Android wants, as a vector. */
+function statusIcon() {
+  const path = (d, fill = false) =>
+    fill
+      ? `    <path android:fillColor="#FFFFFFFF" android:pathData="${d}" />`
+      : `    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="${d}" />`;
+  return `<?xml version="1.0" encoding="utf-8"?>
+<!-- The reading-reminder notification's icon: Rosetta's book, white on clear
+     as Android's status bar wants; tinted by iconColor in capacitor.config.ts.
+     Drawn by npm run assets (scripts/build-app-icons.mjs). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+${[path(LEFT), path(RIGHT), path(SPINE), path(RIBBON, true)].join('\n')}
+</vector>
+`;
 }
 
 const png = (svg, file) => {
@@ -70,7 +92,10 @@ if (existsSync(res)) {
     jobs.push(png(icon, join(res, `mipmap-${name}/ic_launcher.png`)), png(icon, join(res, `mipmap-${name}/ic_launcher_round.png`)));
     const f = Math.round(108 * d);
     jobs.push(png(mark(f, { glyph: f * 0.44, inset: f * 0.27, stroke: Math.max(1, d), background: false }), join(res, `mipmap-${name}/ic_launcher_foreground.png`)));
+    // Themed icons (Android 13+) tint this one-colour layer to the wallpaper: the book alone, no light, no frame.
+    jobs.push(png(mark(f, { glyph: f * 0.44, inset: 0, background: false, colour: '#ffffff', light: false }), join(res, `mipmap-${name}/ic_launcher_monochrome.png`)));
   }
+  writeFileSync(join(res, 'drawable/ic_stat_rosetta.xml'), statusIcon());
   // Splash screens: every size the template ships, the mark at a quarter of the short side.
   for (const dir of readdirSync(res).filter((d) => d.startsWith('drawable'))) {
     const file = join(res, dir, 'splash.png');

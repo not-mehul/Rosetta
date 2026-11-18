@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import type { IconName } from '../components/ui/icons';
 // Transient UI state: the open sheet, the toast, confirm requests and
 // the overlay stack that Android's back button unwinds.
 
@@ -40,6 +41,21 @@ export interface PromptRequest {
   resolve: (value: string | null) => void;
 }
 
+export interface Action {
+  id: string;
+  label: string;
+  /** Drawn only if some <Icon name> elsewhere uses it too (npm run icons). */
+  icon: IconName;
+  danger?: boolean;
+}
+
+export interface ActionsRequest {
+  /** What the actions act on: the collection's name, say. */
+  title: string;
+  actions: Action[];
+  resolve: (id: string | null) => void;
+}
+
 /** Overlays the app opens; one at a time per kind. */
 export type Overlay = 'settings' | 'contents' | 'search' | 'type' | 'details' | 'edit' | 'storage' | null;
 
@@ -71,6 +87,7 @@ class UiState {
   toast = $state.raw<Toast | null>(null);
   confirmRequest = $state.raw<ConfirmRequest | null>(null);
   promptRequest = $state.raw<PromptRequest | null>(null);
+  actionsRequest = $state.raw<ActionsRequest | null>(null);
   /** Called by back when no overlay is open: closes the reader. False when there is nothing to close. */
   onBack: (() => boolean) | null = null;
 
@@ -131,6 +148,20 @@ class UiState {
         resolve: (ok) => {
           this.confirmRequest = null;
           resolve(ok);
+        },
+      };
+    });
+  }
+
+  /** Offers what can be done to one thing, as a long press does. Null when dismissed. */
+  actions(request: Omit<ActionsRequest, 'resolve'>): Promise<string | null> {
+    this.actionsRequest?.resolve(null);
+    return new Promise((resolve) => {
+      this.actionsRequest = {
+        ...request,
+        resolve: (id) => {
+          this.actionsRequest = null;
+          resolve(id);
         },
       };
     });

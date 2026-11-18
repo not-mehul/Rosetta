@@ -566,6 +566,8 @@ const es: Messages = {
   'stats.emptyTitle': 'Aún no hay lectura',
   'stats.emptyText': 'Abre un libro y aquí se irán reuniendo los minutos, los días y las rachas.',
   'stats.streakMet': { one: '{count} día seguido de lectura.', other: '{count} días seguidos de lectura.' },
+  'collections.holdHint': 'Mantén pulsada una colección para cambiarle el nombre o eliminarla.',
+  'action.delete': 'Eliminar',
 };
 
 export default es;

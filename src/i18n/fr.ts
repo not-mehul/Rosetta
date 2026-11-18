@@ -563,6 +563,8 @@ const fr: Messages = {
   'stats.emptyTitle': 'Rien de lu pour l’instant',
   'stats.emptyText': 'Ouvrez un livre : les minutes, les jours et les séries s’assembleront ici.',
   'stats.streakMet': { one: '{count} jour de lecture d’affilée.', other: '{count} jours de lecture d’affilée.' },
+  'collections.holdHint': 'Maintenez une collection appuyée pour la renommer ou la supprimer.',
+  'action.delete': 'Supprimer',
 };
 
 export default fr;

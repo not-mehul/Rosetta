@@ -15,6 +15,7 @@
   import SettingsSheet from './components/sheets/SettingsSheet.svelte';
   import StorageSheet from './components/sheets/StorageSheet.svelte';
   import ReadingPanel from './components/sheets/ReadingPanel.svelte';
+  import ActionsModal from './components/ui/ActionsModal.svelte';
   import ConfirmModal from './components/ui/ConfirmModal.svelte';
   import PromptModal from './components/ui/PromptModal.svelte';
   import { setLocale, t } from './i18n/index.svelte';
@@ -81,6 +82,7 @@
 
 <IdleDock label={t('idle.label')} disabled={!!reader.doc || !!ui.overlay || ui.section !== 'library'}><IdleStone /></IdleDock>
 
+<ActionsModal />
 <ConfirmModal />
 <PromptModal />
 

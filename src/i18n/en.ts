@@ -564,6 +564,8 @@ const en = {
   'stats.emptyTitle': 'Nothing read yet',
   'stats.emptyText': 'Open a book, and the minutes, days and streaks gather here.',
   'stats.streakMet': { one: '{count} day of reading in a row.', other: '{count} days of reading in a row.' },
+  'collections.holdHint': 'Hold a collection to rename or delete it.',
+  'action.delete': 'Delete',
 };
 
 export default en;

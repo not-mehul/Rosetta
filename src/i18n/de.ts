@@ -563,6 +563,8 @@ const de: Messages = {
   'stats.emptyTitle': 'Noch nichts gelesen',
   'stats.emptyText': 'Öffne ein Buch, und hier sammeln sich Minuten, Tage und Serien.',
   'stats.streakMet': { one: '{count} Tag Lesen in Folge.', other: '{count} Tage Lesen in Folge.' },
+  'collections.holdHint': 'Halte eine Sammlung gedrückt, um sie umzubenennen oder zu löschen.',
+  'action.delete': 'Löschen',
 };
 
 export default de;

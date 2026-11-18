@@ -367,7 +367,12 @@ describe('sync and restore', () => {
 
 describe('translations', async () => {
   const en = (await import('../../src/i18n/en')).default as Record<string, unknown>;
-  const locales = { es: (await import('../../src/i18n/es')).default, fr: (await import('../../src/i18n/fr')).default, de: (await import('../../src/i18n/de')).default };
+  const locales = {
+    es: (await import('../../src/i18n/es')).default,
+    fr: (await import('../../src/i18n/fr')).default,
+    de: (await import('../../src/i18n/de')).default,
+    ru: (await import('../../src/i18n/ru')).default,
+  };
   const holes = (v: unknown) => [...new Set(JSON.stringify(v).match(/\{\w+\}/g) ?? [])].sort();
 
   for (const [name, messages] of Object.entries(locales) as [string, Record<string, unknown>][]) {
@@ -379,4 +384,10 @@ describe('translations', async () => {
       }
     });
   }
+
+  it('ru has every plural form Russian needs (one, few, many, other)', () => {
+    for (const [key, value] of Object.entries(locales.ru as Record<string, unknown>)) {
+      if (typeof value === 'object') expect(Object.keys(value as object).sort(), key).toEqual(['few', 'many', 'one', 'other']);
+    }
+  });
 });

@@ -25,8 +25,9 @@ Rosetta is a quiet library and reader for EPUB, PDF, Word, OpenDocument, RTF, FB
 
 - **A library with marks and collections.** Documents as cards with their covers, each marked as not opened, being read or finished, a *Continue reading* panel (and an Android home-screen widget that opens the book at your place), one search field and one filter, and collections a document can be on any number of.
 - **Up next.** When nothing is in progress, Rosetta offers the next volume of a series you just finished.
-- **Find anything.** Sort by recent, title, author or series, and filter by title, author, series or `#tag`. *Edit details* fixes the title, author, series, tags and cover.
-- **Add in bulk.** Add a whole folder at once where the browser allows it. Adding the same file twice keeps one copy.
+- **Find anything.** Sort by recent, title, author or series, and filter by title, author, series or `#tag`. The same search finds the words inside every book. *Edit details* fixes the title, author, series, tags and cover.
+- **Several at once.** Hold a book to choose more, then mark them finished or not started, put them in a collection or remove them, each with an Undo. Holding a collection or tag renames or deletes it; holding *Continue reading* finishes it or starts it over.
+- **Add in bulk.** Add a whole folder at once where the device allows it. Adding the same file twice keeps one copy.
 
 ### Every format
 
@@ -38,20 +39,25 @@ EPUB 2 and 3 (including fixed-layout books, footnotes, language and reading dire
 - **Flow.** One sentence at a time in the middle of the screen, its letters appearing at the speed you set. Hold a sentence to highlight it. The sentence count and bar stay put at the bottom centre.
 - **A reading panel that stays out of the way.** Text, Page, Light and Listen, each with only what applies; the defaults, and niche aids such as a reading ruler and visual anchors, live in Settings.
 - **Read aloud**, sentence by sentence with the sentence highlighted. On Android it keeps reading with the screen off, with controls on the lock screen, pauses when headphones are unplugged, and a sleep timer stops it after 15 to 60 minutes or at the end of the chapter.
-- **Footnotes open in place**, and pictures open full screen with pinch zoom.
+- **Footnotes open in place**, and their numbers stay out of Flow, search, quotes and reading aloud. Pictures open full screen with pinch zoom.
 - **Night comfort.** True black for OLED screens, night light in five steps that dim and warm the page together, and the screen can stay on.
 - **Always know where you are.** The footer shows the time left in the book or chapter, or which chapter this is. After a jump, *Back to* returns you to where you were.
-- **Contents, bookmarks and highlights** in one sheet, with page thumbnails for PDFs. Highlights come in three colours with an optional note, export as Markdown and share as a quote card. *Notes* gathers every highlight and bookmark from every document, by book, searchable, each opening at its place. *Look up* sends a word to the system dictionary.
+- **Contents, bookmarks and highlights** in one sheet, with page thumbnails for PDFs. Highlights come in three colours with an optional note, export as Markdown and share as a quote card; hold one to recolour, copy or delete it, or hold a bookmark to rename it. *Notes* gathers every highlight and bookmark from every document, by book, searchable, each opening at its place. *Look up* hands a word to the phone's dictionary apps (Wiktionary in a browser).
 
 ### Reading habits
 
-- **Stats.** Time read today and this week, your streak and longest streak, pace, a calendar of the last four months, the documents that took the most time, and what you finished this year.
+- **Stats.** Time read today and this week, your streak and longest streak, pace, a calendar of the last four months, the documents that took the most time, and what you finished this year. Before there's anything to count, it suggests a goal.
 - **Goals and a reminder.** A daily goal of 15, 30 or 60 minutes and a number of books for the year, set in Settings and followed in Stats, and an optional reminder to read at a time you choose.
-- **A little delight.** Confetti when you finish a book, an idle stone that says "read" in nine scripts, and four easter eggs, counted in Settings. All of it respects reduced motion.
+- **A little delight.** Confetti when you finish a book, meet the day's goal or reach a 7, 30, 100 or 365-day streak, an idle stone that says "read" in nine scripts, and four easter eggs, counted in Settings.
+
+### Made with care
+
+- **Motion with a purpose.** Icons answer a tap with a small motion of their own, sections slide the way you moved, a new highlight sweeps in like a marker, new books pop onto the shelf, and the theme spreads from where you tapped. On a phone, light haptics confirm choices. Reduced motion turns all of it off.
+- **Large text and screen readers.** The layout follows the phone's text size up to 200% without anything cut off: tabs keep their icons, choices wrap into an even grid. Every control is labelled, works from the keyboard, and passes automated WCAG 2.1 AA checks; anything a hold does, a right click or the menu key does too.
 
 ### Your data
 
-- **Back up and sync.** Your places, marks, details, collections and settings as JSON, or the whole library with its files as a zip. Sync and automatic backups (daily, weekly or monthly) go through a folder you choose, and a reading reminder can come once a day.
+- **Back up and sync.** Your places, marks, details, collections and settings as JSON, or the whole library with its files as a zip. Sync and automatic backups (daily, weekly or monthly) go through a folder you choose.
 - **Storage.** See what each file takes, and offload a file while keeping its place and notes.
 - **Five languages.** English, Spanish, French, German and Russian.
 - **The other apps.** Log a finished book in BookShelf, and let other apps open a document with `rosetta://open?title=…`.
@@ -86,6 +92,7 @@ Svelte 5 and TypeScript, built by Vite, with Dexie for storage and Capacitor 8 f
 npm install
 npm run dev          # http://localhost:5173
 npm run check        # tokens, lint, literal colours, typecheck, unit tests
+npm run test:e2e     # build, then the Playwright tests at phone size
 npm run android      # build, sync and open Android Studio
 npm run ios          # build, sync and open Xcode
 ```

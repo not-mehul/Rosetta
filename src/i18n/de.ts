@@ -60,11 +60,9 @@ const de: Messages = {
 
   'details.format': 'Format',
   'details.added': 'Hinzugefügt',
-  'details.read': 'Gelesen',
   'details.marks': 'Markierungen',
   'details.markCounts': '{highlights} Markierungen · {bookmarks} Lesezeichen',
   'details.finishedOn': 'Beendet {when}',
-  'details.progress': '{percent} %, zuletzt {when}',
   'details.notOpened': 'Nicht geöffnet',
   'details.continue': 'Weiterlesen',
   'details.readAction': 'Lesen',
@@ -311,7 +309,6 @@ const de: Messages = {
   'speech.sleepChapterShort': 'Kap.',
   'speech.slept': 'Vorlesen vom Schlaftimer pausiert.',
 
-  'stats.title': 'Lesen',
   'stats.leftUnder': 'Weniger als eine Minute übrig',
   'stats.leftMin': 'Noch {min} Min.',
   'stats.leftHours': 'Noch {h} Std.',
@@ -382,7 +379,6 @@ const de: Messages = {
   'type.rulerHint': 'Ein Band über der Zeile, die du liest, der Rest der Seite verschleiert. Zieh seinen Griff rechts, um es zu bewegen.',
   'ruler.move': 'Leselineal bewegen',
   'autoscroll.start': 'Automatisch scrollen',
-  'autoscroll.hint': 'Die Seite wandert gleichmäßig nach oben. Tippen pausiert und setzt fort; von Hand scrollen übernimmt.',
   'autoscroll.label': 'Automatisch scrollen',
   'autoscroll.pause': 'Scrollen pausieren',
   'autoscroll.resume': 'Weiter scrollen',

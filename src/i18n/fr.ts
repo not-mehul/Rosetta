@@ -60,11 +60,9 @@ const fr: Messages = {
 
   'details.format': 'Format',
   'details.added': 'Ajouté',
-  'details.read': 'Lu',
   'details.marks': 'Marques',
   'details.markCounts': '{highlights} surlignages · {bookmarks} signets',
   'details.finishedOn': 'Terminé {when}',
-  'details.progress': '{percent} %, dernière lecture {when}',
   'details.notOpened': 'Jamais ouvert',
   'details.continue': 'Reprendre',
   'details.readAction': 'Lire',
@@ -311,7 +309,6 @@ const fr: Messages = {
   'speech.sleepChapterShort': 'ch.',
   'speech.slept': 'Lecture à voix haute mise en pause par le minuteur.',
 
-  'stats.title': 'Lecture',
   'stats.leftUnder': 'Moins d’une minute restante',
   'stats.leftMin': '{min} min restantes',
   'stats.leftHours': '{h} h restantes',
@@ -382,7 +379,6 @@ const fr: Messages = {
   'type.rulerHint': 'Une bande sur la ligne lue, le reste de la page voilé. Faites glisser son onglet à droite pour la déplacer.',
   'ruler.move': 'Déplacer la règle de lecture',
   'autoscroll.start': 'Défilement automatique',
-  'autoscroll.hint': 'La page monte à un rythme régulier. Touchez pour mettre en pause et reprendre ; faites défiler à la main pour reprendre la main.',
   'autoscroll.label': 'Défilement automatique',
   'autoscroll.pause': 'Mettre le défilement en pause',
   'autoscroll.resume': 'Reprendre le défilement',

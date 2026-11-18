@@ -1,4 +1,4 @@
-// The Continue Reading widget (Android, ContinueReadingWidget.java): the book
+// The Continue Reading widget (Android, ReadingWidget.java): the book
 // last opened and not yet finished, with its cover and how far in, and a tap
 // that opens it at the same place (rosetta://open?id=…). The widget can't read
 // the library, so the app sends it the book whenever it changes.
@@ -9,14 +9,6 @@ import { isReading } from "../state/library.svelte";
 import { bytesToBase64 } from "../lib/base64";
 import { drawCover } from "../lib/cover";
 import { platform } from "./native";
-
-export interface WidgetBook {
-  id: string;
-  title: string;
-  author: string;
-  /** Whole percent read. */
-  percent: number;
-}
 
 interface WidgetIO {
   update(options: {

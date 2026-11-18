@@ -2,11 +2,12 @@
 
 import { t } from '../i18n/index.svelte';
 import { booksIn, type FolderEntry } from '../lib/calibre';
-import { coverFrom, fileBytes, pickFolder } from '../lib/pick';
+import { ACCEPT } from '../formats/sniff';
+import { coverFrom, fileBytes, pickFiles, pickFolder } from '../lib/pick';
 import { pickFolder as pickNativeFolder, readFolderBytes, walkFolder } from '../platform/folders';
 import { isNative } from '../platform/native';
 import { library } from './library.svelte';
-import type { StoredDoc } from './db';
+import { hashBytes, type StoredDoc } from './db';
 import { reader } from './reader.svelte';
 import { ui } from './ui.svelte';
 
@@ -65,9 +66,6 @@ export async function addFiles(files: (File | IncomingFile)[], { openSingle = fa
 
 /** Brings back the file of an offloaded document: it must be the same file. */
 export async function restoreFile(id: string): Promise<void> {
-  const { pickFiles } = await import('../lib/pick');
-  const { ACCEPT } = await import('../formats/sniff');
-  const { hashBytes } = await import('./db');
   const [file] = await pickFiles(ACCEPT, false);
   if (!file) return;
   const bytes = await fileBytes(file);

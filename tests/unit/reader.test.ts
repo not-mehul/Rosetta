@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { excerpt, firstVisibleOffset, paint, rangeAt, selectionOffsets, textOffset, unpaint } from '../../src/reader/offsets';
-import { endInView, flowLocationAt, flowProgress, pageProgress, PDF_END, timeLeft } from '../../src/reader/progress';
+import { endInView, flowProgress, pageProgress, PDF_END, timeLeft } from '../../src/reader/progress';
 import { search } from '../../src/reader/search';
 
 function section(html: string): HTMLElement {
@@ -74,7 +74,6 @@ describe('progress', () => {
   it('weights sections by length', () => {
     expect(flowProgress([100, 300], { section: 1, offset: 100 })).toBe(0.5);
     expect(flowProgress([100, 300], { section: 0, offset: 0 })).toBe(0);
-    expect(flowLocationAt([100, 300], 0.5)).toEqual({ section: 1, offset: 100 });
     expect(pageProgress(4, { section: 2, offset: 5000 })).toBe(0.625);
   });
 

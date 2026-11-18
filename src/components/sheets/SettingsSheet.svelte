@@ -17,7 +17,7 @@
   import { folderStatus } from '../../platform/folders';
   import { isNative } from '../../platform/native';
   import { saveFile } from '../../platform/output';
-  import { applyTheme } from '../../platform/theme.svelte';
+  import { applyTheme } from '../../platform/theme';
   import { reveal } from '../../lib/reveal';
   import { remindersAvailable } from '../../platform/reminders';
   import { addFolder } from '../../state/intake';

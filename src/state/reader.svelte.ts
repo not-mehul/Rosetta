@@ -20,6 +20,7 @@ import { settings } from './settings.svelte';
 import { cleanBookSettings, isBookKey, settingsFor, type BookSettings, type Settings } from './settings';
 import { pageToHtml, pdfAsFlow } from '../formats/pdftext';
 import { eraseMarks, storeMark } from './marks';
+import { rememberText } from './fulltext';
 import { ui } from './ui.svelte';
 
 export interface Jump {
@@ -252,6 +253,7 @@ class ReaderState {
     if (doc.offloaded) {
       ui.notify(t('reader.offloaded', { title: doc.title }), 'info', {
         label: t('reader.addFile'),
+        // Imported when needed: intake imports the reader, and this keeps the two apart.
         run: () => void import('./intake').then((m) => m.restoreFile(id)),
       });
       return;
@@ -269,7 +271,7 @@ class ReaderState {
       }
       const content = await this.prepare(doc, opened);
       // Keep the words for searching the whole library (a PDF's once its pages are read).
-      if (content.kind === 'flow') void import('./fulltext').then((m) => m.rememberText(id, content));
+      if (content.kind === 'flow') void rememberText(id, content);
       if (this.doc?.id !== id) {
         content.dispose();
         return;

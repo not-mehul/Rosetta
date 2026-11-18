@@ -2,15 +2,8 @@
   // An <img> for bytes in memory; the object URL is revoked when it changes.
   import { blobUrl } from '../../lib/format';
 
-  interface Props {
-    bytes: Uint8Array | null | undefined;
-    type?: string;
-    alt: string;
-    class?: string;
-  }
-
-  let { bytes, type = 'image/jpeg', alt, class: className = '' }: Props = $props();
-  const src = $derived(blobUrl(bytes, type));
+  let { bytes, alt }: { bytes: Uint8Array | null | undefined; alt: string } = $props();
+  const src = $derived(blobUrl(bytes));
   $effect(() => {
     const url = src;
     return () => {
@@ -19,4 +12,4 @@
   });
 </script>
 
-{#if src}<img {src} {alt} class={className} decoding="async" />{/if}
+{#if src}<img {src} {alt} decoding="async" />{/if}

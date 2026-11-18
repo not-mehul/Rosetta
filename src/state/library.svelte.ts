@@ -231,7 +231,6 @@ export const library = new LibraryState();
 
 export const isFinished = (d: StoredDoc) => d.finishedAt !== null;
 export const isReading = (d: StoredDoc) => !isFinished(d) && d.openedAt !== null;
-export const isUnread = (d: StoredDoc) => !isFinished(d) && d.openedAt === null;
 
 /** How far along a document is: what its mark on the shelf shows. */
 export type DocStatus = 'unread' | 'reading' | 'finished';

@@ -67,11 +67,13 @@ Settings, at the top right of the library, has five tabs:
 
 The tabs under the name are **Library**, **Notes** and **Stats**. Each book in the Library carries a small mark: a dashed ring if it hasn't been opened, an open book if you're reading it, a tick once it's finished. The search field finds titles and authors, and under _Inside the books_ the places in every book where the words appear (the first search reads each book once). Search with `#tag` for a tag. The filter beside it shows only what's unopened, being read or finished, and chooses covers or a list, the order, and a collection or tag. Tap a book's **⋮** for its details, where you can put it in a **collection**, and _Edit details_ fixes the title, author, series, tags and cover.
 
+**Hold** a book to choose several at once: tap others to add them, then mark them finished or not started, add them to a collection or remove them, each with an Undo. Holding also opens a short menu on a collection or tag in the filter (rename, delete), on _Continue reading_ (finish, start over, details) and on the **+** button (files or a folder). A right click or the menu key does the same.
+
 **Stats** shows time read today and this week, your streak, how far along your goals are, a calendar of the last few months and what you finished this year. The first time the library opens in a new week, it shows last week's reading until you put it away; when nothing is in progress, it shows a line from your highlights instead.
 
 ## Your notes
 
-The **Notes** tab gathers every highlight and bookmark from every document, under each book's title. Search finds words, notes and chapters in both; the chips show bookmarks only, or one colour. Tap any of them to open the book at that place. A book's details have room for a note on the whole book, and from there, or from a book's highlights list, its notes export as Markdown.
+The **Notes** tab gathers every highlight and bookmark from every document, under each book's title. Search finds words, notes and chapters in both; the chips show bookmarks only, or one colour. Tap any of them to open the book at that place; hold a highlight to change its colour, copy, share or delete it, or a bookmark to rename or delete it, here or in the book's Contents. A book's details have room for a note on the whole book, and from there, or from a book's highlights list, its notes export as Markdown.
 
 **Storage**, in Settings, shows what each file takes and can offload one, keeping its place and notes until you add it again.
 

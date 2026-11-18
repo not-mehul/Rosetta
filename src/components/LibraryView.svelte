@@ -26,6 +26,10 @@
   import { WavyProgress } from 'dusk-dawn';
   import TextResults from './TextResults.svelte';
   import LibraryCards from './LibraryCards.svelte';
+  import SelectionBar from './SelectionBar.svelte';
+  import { selection } from '../state/selection.svelte';
+  import { hold } from '../lib/hold';
+  import type { StoredDoc } from '../state/db';
   import { hatch } from '../lib/delight';
 
   let filter = $state('');
@@ -58,6 +62,45 @@
   const addFolder = () => void addBooksFolder();
   /** Phones and tablets pick folders with the system picker; browsers that can, with their folder input. */
   const canAddFolder = isNative || canPickFolder;
+
+  /** The add button held: files, or a whole folder. */
+  async function addChoices() {
+    if (!canAddFolder) return add();
+    const choice = await ui.actions({
+      title: t('library.add'),
+      actions: [
+        { id: 'files', label: t('library.addFiles'), icon: 'file-plus' },
+        ...(canAddFolder ? [{ id: 'folder', label: t('library.addFolder'), icon: 'folder-open' as const }] : []),
+      ],
+    });
+    if (choice === 'files') await add();
+    else if (choice === 'folder') addFolder();
+  }
+
+  /** Continue reading held: go on, mark it finished, start over, or its details. */
+  async function resumeActions(doc: StoredDoc) {
+    const choice = await ui.actions({
+      title: doc.title,
+      actions: [
+        { id: 'open', label: t('details.continue'), icon: 'book-open' },
+        { id: 'finish', label: t('details.markFinished'), icon: 'check' },
+        { id: 'over', label: t('details.startOver'), icon: 'rotate-ccw' },
+        { id: 'details', label: t('details.title'), icon: 'info' },
+      ],
+    });
+    if (choice === 'open') await reader.open(doc.id);
+    else if (choice === 'finish') {
+      await library.update(doc.id, { finishedAt: Date.now() });
+      ui.undoable(t('select.finished', { count: 1 }), () => void library.update(doc.id, { finishedAt: null }));
+    } else if (choice === 'over') {
+      const { location, progress } = doc;
+      await library.update(doc.id, { location: null, progress: 0 });
+      ui.undoable(t('details.startedOver'), () => void library.update(doc.id, { location, progress }));
+    } else if (choice === 'details') {
+      ui.detailsId = doc.id;
+      ui.open('details');
+    }
+  }
 
   async function newCollection() {
     const name = await ui.prompt({ title: t('collections.new'), message: t('collections.newHint'), label: t('collections.name'), action: t('collections.create') });
@@ -95,7 +138,7 @@
       {#if current}
         <section class="resume panel" aria-label={t('library.continue')}>
           <p class="t-section-label">{t('library.continue')}</p>
-          <button type="button" class="resume-body" id="resume" onclick={() => void reader.open(current.id)}>
+          <button type="button" class="resume-body" id="resume" use:hold={() => void resumeActions(current)} onclick={() => void reader.open(current.id)}>
             <span class="doc-thumb resume-thumb" aria-hidden="true"><Cover doc={current} small /></span>
             <span class="resume-text">
               <span class="t-card-title ellipsis-2">{current.title}</span>
@@ -178,8 +221,10 @@
   </main>
 </div>
 
-{#if library.items.length}
-  <button type="button" class="fab" id="addDocs" aria-label={t('library.add')} onclick={() => void add()}><Icon name="plus" /></button>
+{#if selection.active}
+  <SelectionBar shown={docs.map((d) => d.id)} />
+{:else if library.items.length}
+  <button type="button" class="fab" id="addDocs" aria-label={t('library.add')} use:hold={() => void addChoices()} onclick={() => void add()}><Icon name="plus" /></button>
 {/if}
 
 {#if arranging}

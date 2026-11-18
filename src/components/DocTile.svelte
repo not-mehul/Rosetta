@@ -8,6 +8,8 @@
   import type { StoredDoc } from '../state/db';
   import { docStatus } from '../state/library.svelte';
   import { reader } from '../state/reader.svelte';
+  import { hold } from '../lib/hold';
+  import { selection } from '../state/selection.svelte';
   import { ui } from '../state/ui.svelte';
   import Cover from './ui/Cover.svelte';
   import Icon from './ui/Icon.svelte';
@@ -18,15 +20,23 @@
   /** Added a moment ago: it pops onto the shelf (motion.css, shelf-pop). */
   const isNew = untrack(() => Date.now() - doc.addedAt < 4000);
 
+  const chosen = $derived(selection.has(doc.id));
+
+  /** A tap opens the book, or, while choosing several, chooses it. */
+  function tap() {
+    if (selection.active) selection.toggle(doc.id);
+    else void reader.open(doc.id);
+  }
+
   function details() {
     ui.detailsId = doc.id;
     ui.open('details');
   }
 </script>
 
-<div class="doc-card doc-tile dd-lift" class:is-new={isNew}>
-  <button type="button" class="doc-open dd-pressable" data-doc={doc.id} onclick={() => void reader.open(doc.id)}>
-    <span class="doc-thumb tile-cover" aria-hidden="true"><Cover {doc} /><StatusMark {status} /></span>
+<div class="doc-card doc-tile dd-lift" class:is-new={isNew} class:is-chosen={chosen}>
+  <button type="button" class="doc-open dd-pressable" data-doc={doc.id} aria-pressed={selection.active ? chosen : undefined} use:hold={() => selection.toggle(doc.id)} onclick={tap}>
+    <span class="doc-thumb tile-cover" aria-hidden="true"><Cover {doc} /><StatusMark {status} />{#if selection.active}<span class="doc-check" class:is-on={chosen}><Icon name="check" /></span>{/if}</span>
     {#if status === 'reading'}
       <span class="meter tile-meter" aria-hidden="true"><span class="meter-fill" style:transform="scaleX({doc.progress})"></span></span>
     {/if}
@@ -41,7 +51,7 @@
       {#if doc.offloaded}<span class="t-data-small faint">{t('details.offloadedShort')}</span>{/if}
     </span>
   </button>
-  <button type="button" class="btn-icon doc-more" aria-label={t('library.detailsFor', { title: doc.title })} onclick={details}><Icon name="ellipsis-vertical" /></button>
+  {#if !selection.active}<button type="button" class="btn-icon doc-more" aria-label={t('library.detailsFor', { title: doc.title })} onclick={details}><Icon name="ellipsis-vertical" /></button>{/if}
 </div>
 
 <style>

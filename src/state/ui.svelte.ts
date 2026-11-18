@@ -1,5 +1,6 @@
 import { t } from '../i18n/index.svelte';
 import type { IconName } from '../components/ui/icons';
+import type { HighlightColour } from './db';
 // Transient UI state: the open sheet, the toast, confirm requests and
 // the overlay stack that Android's back button unwinds.
 
@@ -44,8 +45,12 @@ export interface PromptRequest {
 export interface Action {
   id: string;
   label: string;
-  /** Drawn only if some <Icon name> elsewhere uses it too (npm run icons). */
-  icon: IconName;
+  /** Written out as a quoted literal, so npm run icons picks it up. */
+  icon?: IconName;
+  /** A highlight colour's dot, in place of an icon. */
+  swatch?: HighlightColour;
+  /** The one in effect now, of a set (the colour a highlight has). */
+  current?: boolean;
   danger?: boolean;
 }
 

@@ -1346,3 +1346,39 @@ mark.tts {
 [data-hold].is-holding {
   background: var(--hover-bg);
 }
+
+/* Choosing several books (SelectionBar): each cover gets a ring at its
+   top-right corner, filled with a tick once chosen; a chosen book's cover
+   takes an amber outline. */
+.doc-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--corner-full);
+  border: 2px solid var(--text-heading);
+  background: rgba(var(--shadow-rgb), 0.35);
+  color: transparent;
+}
+.doc-check svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 3;
+}
+.doc-check.is-on {
+  border-color: var(--accent-bright);
+  background: var(--accent-bright);
+  color: var(--on-accent);
+}
+.doc-card.is-chosen .doc-thumb {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+.doc-list .doc-card.is-chosen {
+  border-color: var(--accent-amber);
+  background: rgba(var(--accent-amber-rgb), 0.08);
+}

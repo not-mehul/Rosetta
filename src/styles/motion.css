@@ -795,6 +795,11 @@ svg[data-icon] {
     transition: transform 500ms var(--ease-standard);
   }
 
+  /* A book chosen: its tick pops in. */
+  .doc-check.is-on svg {
+    animation: icon-spring-in var(--spring-spatial-fast-dur) var(--spring-spatial-fast);
+  }
+
   /* Tabs, shared axis: Home's sections and a sheet's tabs slide in a little
      from the side their tab is on (--from is -1, 0 or 1), fading up as they
      come. Home moves its panel only, so the add button keeps its place. */
